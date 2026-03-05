@@ -24,7 +24,8 @@
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
 | GET | `/v1/books/search?q=` | 書籍検索 | 必須 |
-| GET | `/v1/books/:google_books_id` | 書籍詳細＋読んだユーザー一覧 | 不要 |
+| GET | `/v1/books/:google_books_id` | 書籍詳細 | 不要 |
+| GET | `/v1/books/:google_books_id/users` | その書籍を読んだユーザー一覧 | 不要 |
 
 ## 本棚投稿
 
