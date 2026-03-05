@@ -52,6 +52,7 @@
 | [user_book_purchase_links](./tables/user_book_purchase_links.md) | 購入リンク |
 | [follows](./tables/follows.md) | フォロー関係 |
 | [likes](./tables/likes.md) | いいね |
+| [refresh_tokens](./tables/refresh_tokens.md) | リフレッシュトークン管理 |
 
 ---
 

@@ -2,15 +2,15 @@
 
 ## 概要
 
-ユーザー情報を管理するテーブル。Google OAuth によるログイン情報と、プロフィール情報を保持します。
-Google アカウントから取得・保存するのは `google_uid` と `email` のみです。
+ユーザー情報を管理するテーブル。Clerk による認証情報と、プロフィール情報を保持します。
+Clerk から取得・保存するのは `clerk_user_id` と `email` のみです。
 
 ## カラム定義
 
 | カラム名 | 型 | NULL | 制約 | 説明 |
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
-| google_uid | string | NO | UNIQUE | Google OAuth の識別子 |
+| clerk_user_id | string | NO | UNIQUE | Clerk のユーザー ID（JWT の `sub` クレーム） |
 | email | string | NO | UNIQUE | Google アカウントのメールアドレス |
 | nickname | string | NO | | アプリ上の表示名（初回ログイン時に設定必須）|
 | username | string | NO | UNIQUE | @ ハンドル（初回ログイン時に設定必須）|
@@ -24,7 +24,7 @@ Google アカウントから取得・保存するのは `google_uid` と `email`
 | インデックス | カラム | 用途 |
 |---|---|---|
 | PRIMARY KEY | id | |
-| UNIQUE | google_uid | OAuth ログイン時のユーザー特定 |
+| UNIQUE | clerk_user_id | ログイン時のユーザー特定 |
 | UNIQUE | email | メールアドレスの一意性保証 |
 | UNIQUE | username | ユーザー名の一意性保証 |
 | INDEX | username | ユーザー検索 |
@@ -41,6 +41,6 @@ Google アカウントから取得・保存するのは `google_uid` と `email`
 
 ## 備考
 
-- 初回ログイン時は Google の表示名を `nickname` の入力欄にプリフィルして表示しますが、DB には保存しません
+- 初回ログイン時は Clerk JWT の `name` クレーム（Google アカウントの表示名）を `nickname` の入力欄にプリフィルして表示しますが、DB には保存しません
 - `avatar_url` が NULL の場合、アプリケーション側でデフォルト画像を表示します
 - ユーザーが独自のアイコン画像をアップロードする場合は画像ストレージ（Active Storage + S3 等）が必要です
