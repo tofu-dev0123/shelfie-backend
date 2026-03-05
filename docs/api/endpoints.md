@@ -32,10 +32,10 @@
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
 | GET | `/v1/users/:username/books` | ユーザーの本棚一覧 | 不要 |
-| GET | `/v1/user_books/:id` | 投稿詳細 | 不要 |
+| GET | `/v1/users/:username/books/:google_books_id` | 投稿詳細 | 不要 |
 | POST | `/v1/me/books` | 本棚に追加 | 必須 |
-| PATCH | `/v1/me/books/:id` | 投稿内容更新 | 必須 |
-| DELETE | `/v1/me/books/:id` | 投稿削除 | 必須 |
+| PATCH | `/v1/me/books/:google_books_id` | 投稿内容更新 | 必須 |
+| DELETE | `/v1/me/books/:google_books_id` | 投稿削除 | 必須 |
 
 ## フォロー
 
@@ -50,8 +50,8 @@
 
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
-| POST | `/v1/user_books/:id/like` | いいね | 必須 |
-| DELETE | `/v1/user_books/:id/like` | いいね取り消し | 必須 |
+| POST | `/v1/users/:username/books/:google_books_id/like` | いいね | 必須 |
+| DELETE | `/v1/users/:username/books/:google_books_id/like` | いいね取り消し | 必須 |
 
 ## フィード
 
