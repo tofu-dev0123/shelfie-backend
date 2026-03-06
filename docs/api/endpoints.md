@@ -16,8 +16,10 @@
 | GET | `/v1/users/username/check?value=` | username重複チェック | 不要 |
 | GET | `/v1/users/:username` | ユーザープロフィール取得 | 不要 |
 | GET | `/v1/me` | 自分のプロフィール取得 | 必須 |
-| PATCH | `/v1/me` | 自分のプロフィール更新 | 必須 |
+| PATCH | `/v1/me` | 自分のプロフィール更新（テキスト情報） | 必須 |
 | PUT | `/v1/me/links` | プロフィールリンク一括更新 | 必須 |
+| POST | `/v1/me/avatar` | アバター画像アップロード | 必須 |
+| DELETE | `/v1/me/avatar` | アバター画像削除 | 必須 |
 
 ## 書籍
 
