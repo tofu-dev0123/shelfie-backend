@@ -41,8 +41,8 @@
 
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
-| POST | `/v1/users/:username/follow` | フォロー | 必須 |
-| DELETE | `/v1/users/:username/follow` | フォロー解除 | 必須 |
+| POST | `/v1/me/follows/:username` | フォロー | 必須 |
+| DELETE | `/v1/me/follows/:username` | フォロー解除 | 必須 |
 | GET | `/v1/users/:username/followers` | フォロワー一覧 | 不要 |
 | GET | `/v1/users/:username/following` | フォロー中一覧 | 不要 |
 
@@ -50,11 +50,11 @@
 
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
-| POST | `/v1/users/:username/books/:google_books_id/like` | いいね | 必須 |
-| DELETE | `/v1/users/:username/books/:google_books_id/like` | いいね取り消し | 必須 |
+| POST | `/v1/me/likes/:username/:google_books_id` | いいね | 必須 |
+| DELETE | `/v1/me/likes/:username/:google_books_id` | いいね取り消し | 必須 |
 
 ## フィード
 
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
-| GET | `/v1/feed` | フォロー中ユーザーの投稿一覧 | 必須 |
+| GET | `/v1/feed` | フィード（ログイン時はフォロー中、未ログイン時は全体） | 任意 |
