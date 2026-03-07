@@ -62,7 +62,7 @@ SNS 的な気軽さで読了記録を投稿・管理でき、エンジニアの�
 │ id       │──────<│ user_id     │>──────│ id       │
 │ name     │       │ book_id     │       │ title    │
 │ email    │       │ status      │       │ authors  │
-│ avatar   │       │ review      │       │ isbn     │
+│ avatar   │       │ content     │       │ isbn     │
 │ bio      │       │ created_at  │       │ thumbnail│
 └──────────┘       └─────────────┘       │ google_  │
                                          │ books_id │
@@ -70,7 +70,7 @@ SNS 的な気軽さで読了記録を投稿・管理でき、エンジニアの�
 ```
 
 - `Books` テーブルは Google Books API から取得したデータをキャッシュします
-- `UserBooks` がユーザーの「本棚エントリ」であり、読了ステータスやレビューを保持します
+- `UserBooks` がユーザーの「本棚エントリ」であり、読了ステータスや投稿本文（`content`）を保持します
 - 同一書籍の `UserBooks` を集計することで「この本を読んだユーザー」を特定します
 
 ---

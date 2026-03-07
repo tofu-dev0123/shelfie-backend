@@ -26,8 +26,7 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 | PRIMARY KEY | id | |
 | UNIQUE | clerk_user_id | ログイン時のユーザー特定 |
 | UNIQUE | email | メールアドレスの一意性保証 |
-| UNIQUE | username | ユーザー名の一意性保証 |
-| INDEX | username | ユーザー検索 |
+| UNIQUE | username | ユーザー名の一意性保証（PostgreSQL では UNIQUE 制約により検索用インデックスが自動生成されるため、別途 INDEX は不要）|
 
 ## リレーション
 

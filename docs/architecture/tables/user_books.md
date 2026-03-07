@@ -23,9 +23,8 @@
 |---|---|---|
 | PRIMARY KEY | id | |
 | UNIQUE | (user_id, book_id) | 同じ本の重複投稿防止 |
-| INDEX | user_id | ユーザーの本棚一覧取得 |
+| INDEX | (user_id, created_at DESC) | フィード取得クエリ（IN + ORDER BY created_at DESC）の効率化 |
 | INDEX | book_id | 書籍を登録しているユーザー一覧取得 |
-| INDEX | created_at | フィードの時系列ソート |
 
 ## 備考
 
