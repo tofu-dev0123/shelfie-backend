@@ -10,12 +10,12 @@ Google Books API から取得した書籍データのキャッシュテーブル
 | カラム名 | 型 | NULL | 制約 | 説明 |
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
-| google_books_id | string | NO | UNIQUE | Google Books API の書籍 ID |
-| title | string | NO | | 書籍タイトル |
+| google_books_id | string(50) | NO | UNIQUE | Google Books API の書籍 ID |
+| title | string(255) | NO | | 書籍タイトル |
 | authors | string[] | NO | | 著者名の配列（Google Books API のレスポンスをそのまま保存）|
-| isbn | string | YES | | ISBN-13（存在しない場合は NULL）|
-| thumbnail_url | string | YES | | 書影画像 URL |
-| published_date | string | YES | | 出版日（Google Books の形式に準拠: YYYY or YYYY-MM-DD）|
+| isbn | string(17) | YES | | ISBN-13（存在しない場合は NULL）|
+| thumbnail_url | string(2048) | YES | | 書影画像 URL |
+| published_date | string(10) | YES | | 出版日（Google Books の形式に準拠: YYYY or YYYY-MM-DD）|
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
 

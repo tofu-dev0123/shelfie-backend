@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
 | user_book_id | bigint | NO | FK → user_books | |
-| url | string | NO | | 購入 URL |
+| url | string(2048) | NO | | 購入 URL |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
 

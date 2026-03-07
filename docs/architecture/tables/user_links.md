@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
 | user_id | bigint | NO | FK → users | |
-| url | string | NO | | リンク URL |
+| url | string(2048) | NO | | リンク URL |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
 

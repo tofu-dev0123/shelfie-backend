@@ -11,10 +11,10 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
 | clerk_user_id | string | NO | UNIQUE | Clerk のユーザー ID（JWT の `sub` クレーム） |
-| email | string | NO | UNIQUE | Google アカウントのメールアドレス |
-| nickname | string | NO | | アプリ上の表示名（初回ログイン時に設定必須）|
-| username | string | NO | UNIQUE | @ ハンドル（初回ログイン時に設定必須）|
-| avatar_url | string | YES | | プロフィールアイコン画像 URL（NULL の場合はデフォルト画像を表示）|
+| email | string(254) | NO | UNIQUE | Google アカウントのメールアドレス |
+| nickname | string(30) | NO | | アプリ上の表示名（初回ログイン時に設定必須）|
+| username | string(40) | NO | UNIQUE | @ ハンドル（初回ログイン時に設定必須）|
+| avatar_url | string(2048) | YES | | プロフィールアイコン画像 URL（NULL の場合はデフォルト画像を表示）|
 | bio | text | YES | | 自己紹介文 |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
@@ -43,3 +43,4 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 - 初回ログイン時は Clerk JWT の `name` クレーム（Google アカウントの表示名）を `nickname` の入力欄にプリフィルして表示しますが、DB には保存しません
 - `avatar_url` が NULL の場合、アプリケーション側でデフォルト画像を表示します
 - ユーザーが独自のアイコン画像をアップロードする場合は画像ストレージ（Active Storage + S3 等）が必要です
+- `bio` の最大文字数（500文字）はアプリケーション層のバリデーションで制御します
