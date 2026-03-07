@@ -131,4 +131,3 @@ likes
 
 - [システム概要](./overview.md)
 - [認証フロー](./auth.md)
-- [外部サービス連携](./external-services.md)

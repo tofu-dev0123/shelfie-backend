@@ -31,7 +31,7 @@ SNS 的な気軽さで読了記録を投稿・管理でき、エンジニアの�
 └─────────────────────┘   └────────────────────────────-─┘
 
 ┌─────────────────────────────────────────────────────────┐
-│                    Google OAuth 2.0                     │
+│                Clerk（Google OAuth 2.0）                 │
 │                      (認証基盤)                          │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -61,16 +61,16 @@ SNS 的な気軽さで読了記録を投稿・管理でき、エンジニアの�
 ├──────────┤       ├─────────────┤       ├──────────┤
 │ id       │──────<│ user_id     │>──────│ id       │
 │ name     │       │ book_id     │       │ title    │
-│ email    │       │ status      │       │ authors  │
-│ avatar   │       │ content     │       │ isbn     │
-│ bio      │       │ created_at  │       │ thumbnail│
-└──────────┘       └─────────────┘       │ google_  │
+│ email    │       │ content     │       │ authors  │
+│ avatar   │       │ created_at  │       │ isbn     │
+│ bio      │       └─────────────┘       │ thumbnail│
+└──────────┘                             │ google_  │
                                          │ books_id │
                                          └──────────┘
 ```
 
 - `Books` テーブルは Google Books API から取得したデータをキャッシュします
-- `UserBooks` がユーザーの「本棚エントリ」であり、読了ステータスや投稿本文（`content`）を保持します
+- `UserBooks` がユーザーの「本棚エントリ」であり、投稿本文（`content`）を保持します
 - 同一書籍の `UserBooks` を集計することで「この本を読んだユーザー」を特定します
 
 ---
@@ -125,7 +125,6 @@ SNS 的な気軽さで読了記録を投稿・管理でき、エンジニアの�
 
 - [データモデル詳細](./data-model.md)
 - [認証フロー](./auth.md)
-- [外部サービス連携](./external-services.md)
 - [API 設計方針](../api/README.md)
 - [開発環境構築](../development/README.md)
 - [アーキテクチャ決定記録](../decisions/README.md)
