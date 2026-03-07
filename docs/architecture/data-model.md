@@ -118,6 +118,24 @@ likes
 
 `books` テーブルは他ユーザーも参照する共有データのため、ユーザー削除時には削除しません。
 
+#### FK の ON DELETE 動作
+
+全ての外部キーは **ON DELETE RESTRICT** とします。CASCADE は使用しません。
+
+アプリケーション層で上記の順序を明示的に制御するため、DB 側での自動削除は行わない設計です。RESTRICT を設定することで、削除順序を誤った実装を DB レベルで検知できます。
+
+| テーブル | FK カラム | 参照先 | ON DELETE |
+|---|---|---|---|
+| user_books | user_id | users | RESTRICT |
+| user_books | book_id | books | RESTRICT |
+| user_links | user_id | users | RESTRICT |
+| user_book_purchase_links | user_book_id | user_books | RESTRICT |
+| follows | follower_id | users | RESTRICT |
+| follows | followee_id | users | RESTRICT |
+| likes | user_id | users | RESTRICT |
+| likes | user_book_id | user_books | RESTRICT |
+| refresh_tokens | user_id | users | RESTRICT |
+
 ---
 
 ### 購入リンクの拡張性

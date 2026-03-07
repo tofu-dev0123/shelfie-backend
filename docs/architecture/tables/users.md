@@ -10,7 +10,7 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 | カラム名 | 型 | NULL | 制約 | 説明 |
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
-| clerk_user_id | string | NO | UNIQUE | Clerk のユーザー ID（JWT の `sub` クレーム） |
+| clerk_user_id | string(50) | NO | UNIQUE | Clerk のユーザー ID（JWT の `sub` クレーム）。Clerk の形式は `user_` + 24文字英数字で計29文字程度のため、余裕を持たせて50文字に設定 |
 | email | string(254) | NO | UNIQUE | Google アカウントのメールアドレス |
 | nickname | string(30) | NO | | アプリ上の表示名（初回ログイン時に設定必須）|
 | username | string(40) | NO | UNIQUE | @ ハンドル（初回ログイン時に設定必須）|
