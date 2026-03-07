@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
 | user_id | bigint | NO | FK → users | |
-| url | string | NO | | リンク URL |
+| url | string(2048) | NO | | リンク URL |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
 
@@ -35,3 +35,4 @@
 
 - 5件上限はアプリケーション層のバリデーションで制御します
 - アイコン表示の判定はフロントエンド側で URL パターンマッチングにより行います
+- 同一ユーザーによる重複 URL の登録を意図的に許可します。`UNIQUE (user_id, url)` 制約は設けません（同じサービスを用途別（仕事用・プロフィール用など）で複数登録するケースを想定しているため）

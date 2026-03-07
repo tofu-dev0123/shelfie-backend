@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
 | user_book_id | bigint | NO | FK → user_books | |
-| url | string | NO | | 購入 URL |
+| url | string(2048) | NO | | 購入 URL |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
 
@@ -31,4 +31,5 @@
 ## 備考
 
 - 現在は1件運用ですが、複数件対応への移行はアプリケーション層の変更のみで対応可能です
+- 複数リンク対応時に同一 URL の重複を許可しない場合は `UNIQUE (user_book_id, url)` を検討する
 - アイコン表示の判定はフロントエンド側で URL パターンマッチングにより行います（user_links と同様の設計）

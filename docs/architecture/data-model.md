@@ -8,16 +8,15 @@
 ├──────────────┤       ├──────────────────┤       ├──────────────────────────┤
 │ id           │       │ id               │───────│ id                       │
 │ user_id      │  N:1  │ user_id          │       │ user_book_id             │
-│ url          │       │ book_id          │       │ label                    │
-└──────┬───────┘       │ summary          │       │ url                      │
-       │               │ review           │       └──────────────────────────┘
+│ url          │       │ book_id          │       │ url                      │
+└──────┬───────┘       │ content          │       └──────────────────────────┘
        │               └──┬───────────┬───┘
        │ N:1              │ N:1       │ 1:N
 ┌──────▼───────┐          │       ┌───▼──────┐
 │    users     │──────────┘       │  likes   │
 ├──────────────┤                  ├──────────┤
 │ id           │  1:N             │ id       │
-│ google_uid   │◄─────────────────│ user_id  │
+│ clerk_user_id│◄─────────────────│ user_id  │
 │ email        │                  │ user_    │
 │ nickname     │                  │ book_id  │
 │ username     │                  └──────────┘
@@ -60,7 +59,7 @@
 
 | テーブル | 制約 | 意図 |
 |---|---|---|
-| users | UNIQUE (google_uid) | Google アカウントの重複防止 |
+| users | UNIQUE (clerk_user_id) | Clerk アカウントの重複防止 |
 | users | UNIQUE (username) | ユーザー名の一意性 |
 | books | UNIQUE (google_books_id) | 同一書籍の重複登録防止 |
 | user_books | UNIQUE (user_id, book_id) | 同じ本を複数回投稿不可 |
@@ -98,6 +97,47 @@ WHERE user_books.user_id IN (
 ORDER BY user_books.created_at DESC;
 ```
 
+このクエリの効率化のため、`user_books` に複合インデックス `INDEX (user_id, created_at DESC)` を設けています。
+`IN` 句によるユーザー絞り込みと `ORDER BY created_at DESC` の両方をカバーします。
+
+### 削除ポリシー
+
+ユーザーデータは**物理削除**とし、論理削除（`deleted_at` カラム等）は使用しません。
+
+ユーザー削除時はアプリケーション層でトランザクション内の順次削除を行います。削除順序は以下の通りです（FK 制約の依存関係に従う）。
+
+```
+likes
+  → follows
+    → refresh_tokens
+      → user_links
+        → user_book_purchase_links
+          → user_books
+            → users
+```
+
+`books` テーブルは他ユーザーも参照する共有データのため、ユーザー削除時には削除しません。
+
+#### FK の ON DELETE 動作
+
+全ての外部キーは **ON DELETE RESTRICT** とします。CASCADE は使用しません。
+
+アプリケーション層で上記の順序を明示的に制御するため、DB 側での自動削除は行わない設計です。RESTRICT を設定することで、削除順序を誤った実装を DB レベルで検知できます。
+
+| テーブル | FK カラム | 参照先 | ON DELETE |
+|---|---|---|---|
+| user_books | user_id | users | RESTRICT |
+| user_books | book_id | books | RESTRICT |
+| user_links | user_id | users | RESTRICT |
+| user_book_purchase_links | user_book_id | user_books | RESTRICT |
+| follows | follower_id | users | RESTRICT |
+| follows | followee_id | users | RESTRICT |
+| likes | user_id | users | RESTRICT |
+| likes | user_book_id | user_books | RESTRICT |
+| refresh_tokens | user_id | users | RESTRICT |
+
+---
+
 ### 購入リンクの拡張性
 
 現在は1件運用ですが、`user_book_purchase_links` を別テーブルにすることで
@@ -109,4 +149,3 @@ ORDER BY user_books.created_at DESC;
 
 - [システム概要](./overview.md)
 - [認証フロー](./auth.md)
-- [外部サービス連携](./external-services.md)
