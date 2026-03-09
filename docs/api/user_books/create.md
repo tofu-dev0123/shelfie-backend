@@ -15,7 +15,9 @@
 ```json
 {
   "google_books_id": "xxxxxxxx",
+  "status": "completed",
   "content": "とても良い本でした",
+  "tags": ["Go", "Architecture"],
   "purchase_links": [
     "https://www.amazon.co.jp/..."
   ]
@@ -25,7 +27,9 @@
 | フィールド | 型 | 必須 | バリデーション |
 |---|---|---|---|
 | `google_books_id` | string | 必須 | |
+| `status` | string | 必須 | `want_to_read` / `reading` / `completed` のいずれか |
 | `content` | string | 任意 | 最大1000文字 |
+| `tags` | array | 任意 | 最大5件。存在するタグ名のみ有効 |
 | `purchase_links` | array | 任意 | URL形式 |
 
 ## 処理詳細
@@ -34,7 +38,8 @@
 2. `google_books_id` で Books テーブルを検索し、未登録なら Google Books API から取得して登録
 3. 既に同じ書籍を登録済みでないか確認
 4. `user_books` レコードを作成
-5. `purchase_links` があれば `user_book_purchase_links` レコードを作成
+5. `tags` があれば `user_book_tags` レコードを作成
+6. `purchase_links` があれば `user_book_purchase_links` レコードを作成
 
 ## レスポンス
 
