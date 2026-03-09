@@ -31,7 +31,9 @@
   "google_books_id": "xxxxxxxx",
   "title": "リーダブルコード",
   "authors": ["Dustin Boswell", "Trevor Foucher"],
-  "thumbnail_url": "https://..."
+  "thumbnail_url": "https://...",
+  "isbn": "9784873115658",
+  "published_date": "2012-06-23"
 }
 ```
 

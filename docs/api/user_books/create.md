@@ -30,7 +30,7 @@
 | `status` | string | 必須 | `want_to_read` / `reading` / `completed` のいずれか |
 | `content` | string | 任意 | 最大1000文字 |
 | `tags` | array | 任意 | 最大5件。存在するタグ名のみ有効 |
-| `purchase_links` | array | 任意 | URL形式 |
+| `purchase_links` | array | 任意 | URL形式、最大3件 |
 
 ## 処理詳細
 
