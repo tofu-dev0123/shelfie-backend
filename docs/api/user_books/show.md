@@ -31,8 +31,10 @@
 // 200 OK
 {
   "id": 1,
+  "status": "completed",
   "content": "とても良い本でした",
   "likes_count": 5,
+  "tags": ["Go", "Architecture"],
   "created_at": "2026-03-05T00:00:00Z",
   "book": {
     "google_books_id": "xxxxxxxx",

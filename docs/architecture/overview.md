@@ -63,7 +63,7 @@ SNS 的な気軽さで読了記録を投稿・管理でき、エンジニアの�
 │ name     │       │ book_id     │       │ title    │
 │ email    │       │ content     │       │ authors  │
 │ avatar   │       │ created_at  │       │ isbn     │
-│ bio      │       └─────────────┘       │ thumbnail│
+│ bio      │       └─────────────┘       │thumbnail_url│
 └──────────┘                             │ google_  │
                                          │ books_id │
                                          └──────────┘

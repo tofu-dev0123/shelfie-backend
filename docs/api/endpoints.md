@@ -15,6 +15,9 @@
 | POST | `/v1/users` | ユーザー作成 | Clerk JWT |
 | GET | `/v1/users/username/check?value=` | username重複チェック | 不要 |
 | GET | `/v1/users/:username` | ユーザープロフィール取得 | 不要 |
+
+> **実装上の注意:** `/v1/users/username/check` の `username` はリテラルであり、`:username` パラメータではありません。実装時は `:username` ルートより前に定義してください。
+| GET | `/v1/users/:username/skill_map` | タグ別読了数 | 不要 |
 | GET | `/v1/me` | 自分のプロフィール取得 | 必須 |
 | PATCH | `/v1/me` | 自分のプロフィール更新（テキスト情報） | 必須 |
 | PUT | `/v1/me/links` | プロフィールリンク一括更新 | 必須 |
@@ -55,8 +58,23 @@
 | POST | `/v1/me/likes/:username/:google_books_id` | いいね | 必須 |
 | DELETE | `/v1/me/likes/:username/:google_books_id` | いいね取り消し | 必須 |
 
+## タグ
+
+| メソッド | パス | 説明 | 認証 |
+|---|---|---|---|
+| GET | `/v1/tags` | タグ一覧（オートコンプリート用） | 不要 |
+
+## タグフォロー
+
+| メソッド | パス | 説明 | 認証 |
+|---|---|---|---|
+| GET | `/v1/me/tag_follows` | フォロー中タグ一覧 | 必須 |
+| POST | `/v1/me/tag_follows/:tag_name` | タグをフォロー | 必須 |
+| DELETE | `/v1/me/tag_follows/:tag_name` | タグのフォロー解除 | 必須 |
+
 ## フィード
 
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
-| GET | `/v1/feed` | フィード（ログイン時はフォロー中、未ログイン時は全体） | 任意 |
+| GET | `/v1/feed` | フィード（ユーザーフォローベース） | 任意（未認証は全員投稿） |
+| GET | `/v1/feed/tags` | フィード（タグフォローベース） | 必須 |
