@@ -6,7 +6,7 @@ class CreateFollows < ActiveRecord::Migration[8.1]
       t.datetime :created_at, null: false
     end
 
-    add_index :follows, [:follower_id, :followee_id], unique: true
+    add_index :follows, [ :follower_id, :followee_id ], unique: true
     add_index :follows, :follower_id
     add_index :follows, :followee_id
     add_foreign_key :follows, :users, column: :follower_id, on_delete: :restrict

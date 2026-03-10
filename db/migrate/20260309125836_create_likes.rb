@@ -6,7 +6,7 @@ class CreateLikes < ActiveRecord::Migration[8.1]
       t.datetime :created_at, null: false
     end
 
-    add_index :likes, [:user_id, :user_book_id], unique: true
+    add_index :likes, [ :user_id, :user_book_id ], unique: true
     add_index :likes, :user_id
     add_index :likes, :user_book_id
   end

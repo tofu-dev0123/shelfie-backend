@@ -6,7 +6,7 @@ class CreateTagFollows < ActiveRecord::Migration[8.1]
       t.datetime :created_at, null: false
     end
 
-    add_index :tag_follows, [:user_id, :tag_id], unique: true
+    add_index :tag_follows, [ :user_id, :tag_id ], unique: true
     add_index :tag_follows, :user_id
   end
 end

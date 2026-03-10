@@ -10,8 +10,8 @@ class CreateUserBooks < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :user_books, [:user_id, :book_id], unique: true
-    add_index :user_books, [:user_id, :created_at], order: { created_at: :desc }
+    add_index :user_books, [ :user_id, :book_id ], unique: true
+    add_index :user_books, [ :user_id, :created_at ], order: { created_at: :desc }
     add_index :user_books, :book_id
   end
 end
