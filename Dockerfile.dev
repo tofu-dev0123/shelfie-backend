@@ -17,4 +17,8 @@ ENV RAILS_ENV=development \
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
+COPY db-setup-entrypoint.sh /usr/local/bin/db-setup-entrypoint.sh
+RUN chmod +x /usr/local/bin/db-setup-entrypoint.sh
+
+ENTRYPOINT ["db-setup-entrypoint.sh"]
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
