@@ -25,6 +25,12 @@ gem "jwt"
 # Clerk JWT検証
 gem "clerk-sdk-ruby"
 
+group :development do
+  # 型チェック
+  gem "steep"
+  gem "rbs_rails"
+end
+
 group :development, :test do
   gem "debug", platforms: %i[ mri mswin mswin64 mingw x64_mingw ], require: "debug/prelude"
   gem "bundler-audit", require: false
