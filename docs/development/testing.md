@@ -12,6 +12,7 @@
 spec/
 ├── rails_helper.rb        # RailsとRSpecの統合設定
 ├── spec_helper.rb         # RSpec本体の設定
+├── swagger_helper.rb      # rswag設定（Request specで require する）
 ├── factories/             # FactoryBot（テストデータのひな形）
 │   ├── users.rb
 │   ├── books.rb
@@ -125,35 +126,62 @@ end
 
 ## Request spec
 
-ステータスコードとレスポンス形式を確認する。
+**rswag DSL で書く**。テストと Swagger ドキュメントを兼ねるため、通常の RSpec 記法は使わない。
+
+ステータスコードごとに `response` ブロックを書き、`run_test!` で実際にリクエストを投げてテストする。
 
 ```ruby
 # spec/requests/v1/users_spec.rb
-RSpec.describe "POST /v1/users", type: :request do
-  context "正常系" do
-    it "201を返す" do
-      allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" })
-      post "/v1/users", params: valid_params
-      expect(response).to have_http_status(:created)
-    end
-  end
+require "swagger_helper"
 
-  context "バリデーションエラー" do
-    it "422とエラー形式を返す" do
-      post "/v1/users", params: { username: "" }
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(JSON.parse(response.body).dig("error", "code")).to eq("UNPROCESSABLE_ENTITY")
-    end
-  end
+RSpec.describe "Users API" do
+  path "/v1/users" do
+    post "ユーザーを作成する" do
+      tags "Users"
+      consumes "application/json"
+      produces "application/json"
+      security [ Bearer: [] ]
 
-  context "認証エラー" do
-    it "401を返す" do
-      allow(ClerkClient).to receive(:verify).and_raise(ClerkClient::UnauthorizedError)
-      post "/v1/users", params: valid_params
-      expect(response).to have_http_status(:unauthorized)
+      parameter name: :body, in: :body, required: true, schema: {
+        type: :object,
+        properties: {
+          username: { type: :string }
+        },
+        required: [ "username" ]
+      }
+
+      response "201", "作成成功" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { username: "komu" } }
+        before { allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" }) }
+        schema "$ref" => "#/components/schemas/User"
+        run_test!
+      end
+
+      response "422", "バリデーションエラー" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { username: "" } }
+        before { allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" }) }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+
+      response "401", "認証エラー" do
+        let(:Authorization) { "Bearer invalid_token" }
+        let(:body) { { username: "komu" } }
+        before { allow(ClerkClient).to receive(:verify).and_raise(ClerkClient::UnauthorizedError) }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
   end
 end
+```
+
+スペックが通ったら swagger.yaml を生成する。
+
+```bash
+bundle exec rails rswag:specs:swaggerize
 ```
 
 ## 外部APIのモック
