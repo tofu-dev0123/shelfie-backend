@@ -10,11 +10,15 @@
 □ 1. 既存ファイルを確認する（同じ役割のファイルが既にないか）
 □ 2. どのレイヤーに書くか判断する → docs/development/directory.md 参照
 □ 3. spec を書く
+     - Request spec は rswag DSL で書く（テスト兼 Swagger ドキュメント）
+     - Model / Service spec は通常の RSpec で書く
 □ 4. 実装を書く
 □ 5. テスト実行サブエージェントを起動
-□ 6. パス → コードチェックサブエージェントを起動（RuboCop + Steep）
-□ 7. パス → レビューサブエージェントを起動
-□ 8. 指摘なし → 完了 / 指摘あり → 5. に戻る
+□ 6. パス → swagger.yaml を生成する
+     bundle exec rails rswag:specs:swaggerize
+□ 7. コードチェックサブエージェントを起動（RuboCop + Steep）
+□ 8. パス → レビューサブエージェントを起動
+□ 9. 指摘なし → 完了 / 指摘あり → 5. に戻る
 ```
 
 サブエージェントの定義 → `.claude/agents/`
@@ -68,6 +72,7 @@ Rails 標準（ファイル名・クラス名・メソッド名等）は RuboCop
 | Serializer クラス | `{Resource}Serializer` | `UserSerializer` |
 | Query Object クラス | `{Resource}Query` | `FeedQuery` |
 | spec ファイル | ソースのパスをミラー | `spec/services/auth/login_service_spec.rb` |
+| Request spec ファイル | `spec/requests/v1/` 配下 | `spec/requests/v1/users_spec.rb` |
 
 ---
 
