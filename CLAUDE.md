@@ -1,22 +1,14 @@
 # CLAUDE.md
 
-このファイルは、リポジトリ内のコードを操作する際に Claude Code (claude.ai/code) へ提供するガイダンスです。
+Ruby on Rails (API mode) + PostgreSQL の JSON API サーバー。
 
-## プロジェクト概要
+## コマンド
 
-`shelfie-backend` は Shelfie プロジェクトのバックエンドサービスです。現在はリポジトリの初期セットアップ段階であり、ソースコード・ビルドシステム・テストフレームワークはまだ構成されていません。
+```bash
+bundle exec rspec        # テスト
+bundle exec rubocop      # Lint
+bundle exec steep check  # 型チェック
+bin/brakeman --no-pager  # セキュリティ
+```
 
-## リポジトリの状態
-
-- **ブランチ:** `main`（本番）、`develop`、`document/init`
-- **ドキュメント作業中:** `docs/` ディレクトリ（現在は空）
-
-## セットアップに関するメモ
-
-ビルド・テスト・リントのコマンドはまだ存在しません。`package.json` や `tsconfig.json`、テスト設定などが追加された際には、このファイルを以下の内容で更新してください。
-
-- 依存関係のインストール方法
-- 開発サーバーの起動方法
-- 本番向けビルド方法
-- 全テストおよび単一テストの実行方法
-- リント・フォーマットの実行方法
+実装ガイドライン → `docs/development/implementation-guidelines.md`
