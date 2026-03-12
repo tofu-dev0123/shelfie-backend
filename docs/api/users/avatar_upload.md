@@ -25,9 +25,10 @@ avatar: <バイナリファイル>
 ## 処理詳細
 
 1. アクセストークンを検証してログインユーザーを特定
-2. ファイルをS3にアップロード（ActiveStorage経由）
-3. 既存の画像がある場合は上書き
-4. アップロード後のURLを返す
+2. ファイルを S3 にアップロード（aws-sdk-s3 を直接使用）
+3. 既存の画像がある場合は S3 の既存ファイルを上書き
+4. `avatar_key`（S3 のキーパス）を Users テーブルに保存
+5. CloudFront の URL を組み立てて返す
 
 ## レスポンス
 
@@ -36,7 +37,7 @@ avatar: <バイナリファイル>
 ```json
 // 200 OK
 {
-  "avatar_url": "https://your-bucket.s3.amazonaws.com/..."
+  "avatar_url": "https://d1234abcd.cloudfront.net/profile-images/user_123.jpg"
 }
 ```
 
