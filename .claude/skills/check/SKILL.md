@@ -1,7 +1,7 @@
 ---
+name: check
 description: RuboCop（lint）と Steep（型チェック）を実行する
-argument-hint: [file_path]
-allowed-tools: Bash
+tools: [Bash]
 ---
 
 lint チェックと型チェックを実行してください。
