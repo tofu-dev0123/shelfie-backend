@@ -1,0 +1,1 @@
+class AccountAlreadyExistsError < StandardError; end

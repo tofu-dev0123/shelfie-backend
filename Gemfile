@@ -23,6 +23,9 @@ gem "rack-cors"
 gem "rswag-api"
 gem "rswag-ui"
 
+# ログ（JSON形式）
+gem "lograge"
+
 # JWT認証
 gem "jwt"
 
