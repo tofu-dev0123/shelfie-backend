@@ -1,0 +1,109 @@
+---
+openapi: 3.0.1
+info:
+  title: Shelfie API V1
+  version: v1
+  description: Shelfie バックエンド API ドキュメント
+servers:
+- url: http://localhost:3000
+  description: 開発環境
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk JWT トークン
+  schemas: {}
+paths:
+  "/v1/users":
+    post:
+      summary: ユーザー登録API
+      tags:
+      - ユーザー系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: ユーザー作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJ...
+                required:
+                - access_token
+        '401':
+          description: Clerk JWT が無効
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '409':
+          description: username 重複
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: USERNAME_TAKEN
+                      message:
+                        type: string
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNPROCESSABLE_ENTITY
+                      message:
+                        type: string
+                      details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                            message:
+                              type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  example: コムさん
+                username:
+                  type: string
+                  example: komusan
+              required:
+              - nickname
+              - username
+        required: true
