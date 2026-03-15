@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "[db-setup] Installing gems..."
+bundle install
+
 echo "[db-setup] Waiting for PostgreSQL to be ready..."
 until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER"; do
   echo "[db-setup] PostgreSQL is not ready yet. Retrying in 1 second..."

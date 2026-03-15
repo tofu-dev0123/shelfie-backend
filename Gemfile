@@ -39,6 +39,8 @@ group :development do
 end
 
 group :development, :test do
+  gem "dotenv-rails"
+
   gem "debug", platforms: %i[ mri mswin mswin64 mingw x64_mingw ], require: "debug/prelude"
   gem "bundler-audit", require: false
   gem "brakeman", require: false
