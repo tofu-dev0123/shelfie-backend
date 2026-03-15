@@ -27,6 +27,7 @@ module Users
         expires_at: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
       )
 
+      Rails.logger.info "ユーザー登録成功: user_id=#{user.id}"
       { access_token: access_token, refresh_token: refresh_token }
     end
   end

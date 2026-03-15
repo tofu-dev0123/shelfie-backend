@@ -1,6 +1,7 @@
 module V1
   class UsersController < BaseController
     def create
+      Rails.logger.debug "UsersController#create に入りました"
       result = Users::CreateService.call(
         clerk_token: clerk_token_from_header,
         nickname: user_params[:nickname],
