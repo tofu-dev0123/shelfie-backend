@@ -20,7 +20,7 @@ class ClerkClient
   end
 
   def self.try_dev_token(token, secret)
-    payload = JWT.decode(token, secret, true, algorithms: ["HS256"]).first
+    payload = JWT.decode(token, secret, true, algorithms: [ "HS256" ]).first
     Rails.logger.info "開発用トークンで認証成功"
     { clerk_user_id: payload["sub"], email: payload["email"] }
   rescue JWT::DecodeError
