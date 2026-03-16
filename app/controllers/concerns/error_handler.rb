@@ -15,7 +15,7 @@ module ErrorHandler
     render json: {
       error: {
         code: ErrorCodes::UNAUTHORIZED,
-        message: "認証に失敗しました"
+        message: I18n.t("messages.errors.unauthorized")
       }
     }, status: :unauthorized
   end
@@ -25,7 +25,7 @@ module ErrorHandler
     render json: {
       error: {
         code: ErrorCodes::ACCOUNT_ALREADY_EXISTS,
-        message: "すでに登録済みのアカウントです"
+        message: I18n.t("messages.errors.account_already_exists")
       }
     }, status: :conflict
   end
@@ -35,7 +35,7 @@ module ErrorHandler
     render json: {
       error: {
         code: ErrorCodes::USERNAME_TAKEN,
-        message: "このユーザー名はすでに使用されています"
+        message: I18n.t("messages.errors.username_taken")
       }
     }, status: :conflict
   end
@@ -49,7 +49,7 @@ module ErrorHandler
     render json: {
       error: {
         code: ErrorCodes::UNPROCESSABLE_ENTITY,
-        message: "入力内容に誤りがあります",
+        message: I18n.t("messages.errors.unprocessable_entity"),
         details: details
       }
     }, status: :unprocessable_entity
