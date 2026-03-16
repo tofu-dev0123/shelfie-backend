@@ -2,6 +2,7 @@ ja:
   messages:
     errors:
       unauthorized: "認証に失敗しました"
+      not_found: "ユーザーが見つかりません"
       account_already_exists: "すでに登録済みのアカウントです"
       username_taken: "このユーザー名はすでに使用されています"
       unprocessable_entity: "入力内容に誤りがあります"

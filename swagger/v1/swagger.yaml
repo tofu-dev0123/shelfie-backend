@@ -16,6 +16,56 @@ components:
       description: Clerk JWT トークン
   schemas: {}
 paths:
+  "/v1/auth/login":
+    post:
+      summary: ログインAPI
+      tags:
+      - 認証系
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJ...
+                required:
+                - access_token
+        '401':
+          description: Clerk JWT が無効
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '404':
+          description: ユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
   "/v1/users":
     post:
       summary: ユーザー登録API

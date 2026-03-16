@@ -8,6 +8,9 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   namespace :v1 do
+    namespace :auth do
+      post "login", to: "sessions#login"
+    end
     resources :users, only: [ :create ]
   end
 end

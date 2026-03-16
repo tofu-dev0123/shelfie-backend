@@ -26,9 +26,5 @@ module V1
     def user_params
       params.permit(:nickname, :username)
     end
-
-    def clerk_token_from_header
-      request.headers["Authorization"]&.delete_prefix("Bearer ")
-    end
   end
 end

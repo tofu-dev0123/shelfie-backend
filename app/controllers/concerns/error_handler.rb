@@ -3,6 +3,7 @@ module ErrorHandler
 
   included do
     rescue_from ClerkClient::UnauthorizedError, with: :render_unauthorized
+    rescue_from UserNotFoundError, with: :render_not_found
     rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
     rescue_from UsernameTakenError, with: :render_username_taken
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
@@ -18,6 +19,16 @@ module ErrorHandler
         message: I18n.t("messages.errors.unauthorized")
       }
     }, status: :unauthorized
+  end
+
+  def render_not_found
+    Rails.logger.warn "リソースが見つかりません: UserNotFoundError"
+    render json: {
+      error: {
+        code: ErrorCodes::NOT_FOUND,
+        message: I18n.t("messages.errors.not_found")
+      }
+    }, status: :not_found
   end
 
   def render_account_already_exists
