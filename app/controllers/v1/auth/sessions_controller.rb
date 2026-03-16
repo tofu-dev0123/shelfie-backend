@@ -7,6 +7,7 @@ module V1
           clerk_token: clerk_token_from_header
         )
 
+        # httponly: JSからアクセス不可にしてXSS対策、secure: HTTPS限定、same_site: laxでCSRF対策しつつ通常のリンク遷移は許容
         response.set_cookie(
           :refresh_token,
           value: result[:refresh_token],

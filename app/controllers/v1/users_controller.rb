@@ -8,6 +8,7 @@ module V1
         username: user_params[:username]
       )
 
+      # httponly: JSからアクセス不可にしてXSS対策、secure: HTTPS限定、same_site: laxでCSRF対策しつつ通常のリンク遷移は許容
       response.set_cookie(
         :refresh_token,
         value: result[:refresh_token],
