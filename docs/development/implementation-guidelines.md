@@ -76,6 +76,17 @@ Rails 標準（ファイル名・クラス名・メソッド名等）は RuboCop
 
 ---
 
+## ログ規約
+
+詳細 → [docs/development/logging.md](./logging.md)
+
+**実装箇所：**
+- Controller のアクション先頭に `debug` ログを入れる
+- Service の正常終了時に `info` ログを入れる
+- ErrorHandler のエラーハンドラに `warn` / `error` ログを入れる
+
+---
+
 ## テスト規約
 
 詳細 → [docs/development/testing.md](./testing.md)

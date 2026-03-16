@@ -4,7 +4,10 @@ module Auth
       clerk_payload = ClerkClient.verify(clerk_token)
 
       user = User.find_by(clerk_user_id: clerk_payload[:clerk_user_id])
-      raise UserNotFoundError unless user
+      unless user
+        Rails.logger.warn "ログイン失敗: ユーザーが見つかりません clerk_user_id=#{clerk_payload[:clerk_user_id]}"
+        raise UserNotFoundError
+      end
 
       access_token  = TokenIssuer.issue_access_token(user)
       refresh_token = TokenIssuer.issue_refresh_token(user)

@@ -2,6 +2,7 @@ module V1
   module Auth
     class SessionsController < V1::BaseController
       def login
+        Rails.logger.debug "SessionsController#login に入りました"
         result = ::Auth::LoginService.call(
           clerk_token: clerk_token_from_header
         )
