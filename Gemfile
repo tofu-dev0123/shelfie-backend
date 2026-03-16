@@ -23,6 +23,9 @@ gem "rack-cors"
 gem "rswag-api"
 gem "rswag-ui"
 
+# ログ（JSON形式）
+gem "lograge"
+
 # JWT認証
 gem "jwt"
 
@@ -36,6 +39,8 @@ group :development do
 end
 
 group :development, :test do
+  gem "dotenv-rails"
+
   gem "debug", platforms: %i[ mri mswin mswin64 mingw x64_mingw ], require: "debug/prelude"
   gem "bundler-audit", require: false
   gem "brakeman", require: false

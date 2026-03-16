@@ -1,0 +1,68 @@
+module ErrorHandler
+  extend ActiveSupport::Concern
+
+  included do
+    rescue_from ClerkClient::UnauthorizedError, with: :render_unauthorized
+    rescue_from UserNotFoundError, with: :render_not_found
+    rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
+    rescue_from UsernameTakenError, with: :render_username_taken
+    rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
+  end
+
+  private
+
+  def render_unauthorized
+    Rails.logger.warn "認証失敗: Clerk JWT が無効"
+    render json: {
+      error: {
+        code: ErrorCodes::UNAUTHORIZED,
+        message: I18n.t("messages.errors.unauthorized")
+      }
+    }, status: :unauthorized
+  end
+
+  def render_not_found
+    Rails.logger.warn "リソースが見つかりません: UserNotFoundError"
+    render json: {
+      error: {
+        code: ErrorCodes::NOT_FOUND,
+        message: I18n.t("messages.errors.not_found")
+      }
+    }, status: :not_found
+  end
+
+  def render_account_already_exists
+    Rails.logger.warn "登録済みアカウント: clerk_user_id が重複"
+    render json: {
+      error: {
+        code: ErrorCodes::ACCOUNT_ALREADY_EXISTS,
+        message: I18n.t("messages.errors.account_already_exists")
+      }
+    }, status: :conflict
+  end
+
+  def render_username_taken
+    Rails.logger.warn "username 重複"
+    render json: {
+      error: {
+        code: ErrorCodes::USERNAME_TAKEN,
+        message: I18n.t("messages.errors.username_taken")
+      }
+    }, status: :conflict
+  end
+
+  def render_unprocessable_entity(e)
+    Rails.logger.error "RecordInvalid: #{e.message}"
+    details = e.record.errors.map do |error|
+      { field: error.attribute, message: error.full_message }
+    end
+
+    render json: {
+      error: {
+        code: ErrorCodes::UNPROCESSABLE_ENTITY,
+        message: I18n.t("messages.errors.unprocessable_entity"),
+        details: details
+      }
+    }, status: :unprocessable_entity
+  end
+end
