@@ -31,7 +31,7 @@ Clerk JWT を検証し、バックエンド独自のアクセストークンと�
 ```
 
 ```
-Set-Cookie: refresh_token=eyJ...; HttpOnly; Secure; SameSite=Strict
+Set-Cookie: refresh_token=eyJ...; HttpOnly; Secure; SameSite=Lax; Domain=shelfie.com
 ```
 
 ### エラー

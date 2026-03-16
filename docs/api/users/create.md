@@ -46,7 +46,7 @@ Clerk JWT を検証し、nickname・username を受け取って User レコー�
 ```
 
 ```
-Set-Cookie: refresh_token=eyJ...; HttpOnly; Secure; SameSite=Strict; Domain=shelfie.com
+Set-Cookie: refresh_token=eyJ...; HttpOnly; Secure; SameSite=Lax; Domain=shelfie.com
 ```
 
 ### エラー
