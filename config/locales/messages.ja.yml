@@ -1,0 +1,7 @@
+ja:
+  messages:
+    errors:
+      unauthorized: "認証に失敗しました"
+      account_already_exists: "すでに登録済みのアカウントです"
+      username_taken: "このユーザー名はすでに使用されています"
+      unprocessable_entity: "入力内容に誤りがあります"
