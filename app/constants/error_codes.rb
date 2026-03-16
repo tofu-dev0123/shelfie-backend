@@ -1,3 +1,4 @@
+# APIレスポンスの error.code フィールドで返す文字列定数
 module ErrorCodes
   UNAUTHORIZED            = "UNAUTHORIZED"
   NOT_FOUND               = "NOT_FOUND"
