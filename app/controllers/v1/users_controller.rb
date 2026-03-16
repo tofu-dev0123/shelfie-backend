@@ -13,7 +13,7 @@ module V1
         value: result[:refresh_token],
         httponly: true,
         secure: true,
-        same_site: :strict,
+        same_site: :lax,
         domain: Rails.application.config.cookie_domain,
         expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
       )
@@ -25,10 +25,6 @@ module V1
 
     def user_params
       params.permit(:nickname, :username)
-    end
-
-    def clerk_token_from_header
-      request.headers["Authorization"]&.delete_prefix("Bearer ")
     end
   end
 end
