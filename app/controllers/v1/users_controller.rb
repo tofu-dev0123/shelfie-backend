@@ -13,7 +13,7 @@ module V1
         value: result[:refresh_token],
         httponly: true,
         secure: true,
-        same_site: :strict,
+        same_site: :lax,
         domain: Rails.application.config.cookie_domain,
         expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
       )
