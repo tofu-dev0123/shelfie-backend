@@ -84,6 +84,39 @@ paths:
                     example: すでにログアウト済みです。
                 required:
                 - message
+  "/v1/auth/refresh":
+    post:
+      summary: アクセストークン再発行API
+      tags:
+      - 認証系
+      responses:
+        '200':
+          description: 再発行成功（リフレッシュトークンのローテーションあり）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJ...
+                required:
+                - access_token
+        '401':
+          description: リフレッシュトークンが期限切れ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
   "/v1/users":
     post:
       summary: ユーザー登録API

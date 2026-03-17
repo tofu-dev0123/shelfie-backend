@@ -2,7 +2,7 @@ module ErrorHandler
   extend ActiveSupport::Concern
 
   included do
-    rescue_from ClerkClient::UnauthorizedError, with: :render_unauthorized
+    rescue_from ClerkClient::UnauthorizedError, InvalidRefreshTokenError, with: :render_unauthorized
     rescue_from UserNotFoundError, with: :render_not_found
     rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
     rescue_from UsernameTakenError, with: :render_username_taken
@@ -11,8 +11,8 @@ module ErrorHandler
 
   private
 
-  def render_unauthorized
-    Rails.logger.warn "認証失敗: Clerk JWT が無効"
+  def render_unauthorized(e)
+    Rails.logger.warn "認証失敗: #{e.class}"
     render json: {
       error: {
         code: ErrorCodes::UNAUTHORIZED,

@@ -24,6 +24,25 @@ module V1
         render json: { access_token: result[:access_token] }, status: :ok
       end
 
+      def refresh
+        Rails.logger.debug "SessionsController#refresh に入りました"
+        result = ::Auth::RefreshService.call(refresh_token: cookies[:refresh_token])
+
+        if result[:new_refresh_token]
+          response.set_cookie(
+            :refresh_token,
+            value: result[:new_refresh_token],
+            httponly: true,
+            secure: true,
+            same_site: :lax,
+            domain: Rails.application.config.cookie_domain,
+            expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
+          )
+        end
+
+        render json: { access_token: result[:access_token] }, status: :ok
+      end
+
       def logout
         Rails.logger.debug "SessionsController#logout に入りました"
         result = ::Auth::LogoutService.call(refresh_token: cookies[:refresh_token])
