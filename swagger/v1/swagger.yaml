@@ -66,6 +66,24 @@ paths:
                         example: NOT_FOUND
                       message:
                         type: string
+  "/v1/auth/logout":
+    delete:
+      summary: ログアウトAPI
+      tags:
+      - 認証系
+      responses:
+        '200':
+          description: すでにログアウト済み（DBにレコードなし）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: すでにログアウト済みです。
+                required:
+                - message
   "/v1/users":
     post:
       summary: ユーザー登録API

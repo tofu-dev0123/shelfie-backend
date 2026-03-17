@@ -6,3 +6,7 @@ ja:
       account_already_exists: "すでに登録済みのアカウントです"
       username_taken: "このユーザー名はすでに使用されています"
       unprocessable_entity: "入力内容に誤りがあります"
+    auth:
+      logout:
+        logged_out: "ログアウトしました。"
+        already_logged_out: "すでにログアウト済みです。"
