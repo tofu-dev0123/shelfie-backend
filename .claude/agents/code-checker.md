@@ -16,19 +16,19 @@ model: inherit
 ### Step 1: RuboCop
 
 ```bash
-bundle exec rubocop {implementation_file_path} --autocorrect
+docker compose exec web bundle exec rubocop {implementation_file_path} --autocorrect
 ```
 
 自動修正後、再度実行して残存する違反がないか確認する。
 
 ```bash
-bundle exec rubocop {implementation_file_path}
+docker compose exec web bundle exec rubocop {implementation_file_path}
 ```
 
 ### Step 2: Steep
 
 ```bash
-bundle exec steep check
+docker compose exec web bundle exec steep check
 ```
 
 ## ルール

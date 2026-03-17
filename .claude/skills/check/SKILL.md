@@ -16,20 +16,20 @@ lint チェックと型チェックを実行してください。
 
 引数あり:
 ```bash
-bundle exec rubocop $ARGUMENTS --autocorrect
-bundle exec rubocop $ARGUMENTS
+docker compose exec web bundle exec rubocop $ARGUMENTS --autocorrect
+docker compose exec web bundle exec rubocop $ARGUMENTS
 ```
 
 引数なし:
 ```bash
-bundle exec rubocop --autocorrect
-bundle exec rubocop
+docker compose exec web bundle exec rubocop --autocorrect
+docker compose exec web bundle exec rubocop
 ```
 
 ### Step 2: Steep（型チェック）
 
 ```bash
-bundle exec steep check
+docker compose exec web bundle exec steep check
 ```
 
 ## 出力形式
