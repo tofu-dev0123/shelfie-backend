@@ -13,6 +13,7 @@ Rails.application.routes.draw do
       post "refresh", to: "sessions#refresh"
       delete "logout", to: "sessions#logout"
     end
+    get "users/username/check", to: "users#check_username"
     resources :users, only: [ :create ]
   end
 end

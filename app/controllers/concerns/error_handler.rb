@@ -7,6 +7,8 @@ module ErrorHandler
     rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
     rescue_from UsernameTakenError, with: :render_username_taken
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
+    rescue_from BadRequestError, with: :render_bad_request
+    rescue_from ValidationError, with: :render_validation_error
   end
 
   private
@@ -49,6 +51,26 @@ module ErrorHandler
         message: I18n.t("messages.errors.username_taken")
       }
     }, status: :conflict
+  end
+
+  def render_bad_request(e)
+    Rails.logger.warn "不正なリクエスト: #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::BAD_REQUEST,
+        message: I18n.t("messages.errors.bad_request")
+      }
+    }, status: :bad_request
+  end
+
+  def render_validation_error(e)
+    Rails.logger.warn "バリデーションエラー: #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::VALIDATION_ERROR,
+        message: I18n.t("messages.errors.validation_error")
+      }
+    }, status: :unprocessable_entity
   end
 
   def render_unprocessable_entity(e)
