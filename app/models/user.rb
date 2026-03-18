@@ -1,6 +1,10 @@
 require "uri"
 
 class User < ApplicationRecord
+  USERNAME_REGEX = /\A[a-z0-9_]+\z/
+  USERNAME_MIN_LENGTH = 3
+  USERNAME_MAX_LENGTH = 40
+
   has_many :refresh_tokens, dependent: :destroy
 
   # バリデーションの一意性チェック前に正規化することで、大文字小文字を区別しない一意性を保証する
@@ -17,12 +21,17 @@ class User < ApplicationRecord
     presence: true,
     uniqueness: true,
     # 英数字とアンダースコアのみ許可（URLセーフかつSNS的な標準に準拠）
-    format: { with: /\A[a-zA-Z0-9_]+\z/ },
-    length: { minimum: 4, maximum: 40 }
+    format: { with: USERNAME_REGEX },
+    length: { minimum: USERNAME_MIN_LENGTH, maximum: USERNAME_MAX_LENGTH }
+  validate :no_consecutive_underscores
 
   private
 
   def normalize_username
     username&.downcase!
+  end
+
+  def no_consecutive_underscores
+    errors.add(:username, :consecutive_underscores) if username&.include?("__")
   end
 end

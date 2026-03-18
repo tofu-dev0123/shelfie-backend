@@ -147,4 +147,76 @@ RSpec.describe "ユーザー系", type: :request do
       end
     end
   end
+
+  path "/v1/users/username/check" do
+    get "ユーザーネーム重複チェックAPI" do
+      tags "ユーザー系"
+      produces "application/json"
+
+      parameter name: :value, in: :query, type: :string, required: true,
+        description: "チェックする username（3〜40文字、小文字英数字と _ のみ、連続する _ は不可）"
+
+      response "200", "使用可能" do
+        let(:value) { "available_user" }
+
+        schema type: :object,
+          properties: {
+            available: { type: :boolean, example: true }
+          },
+          required: [ "available" ]
+
+        run_test!
+      end
+
+      response "200", "重複あり（使用不可）" do
+        let(:value) { "komusan" }
+
+        before { create(:user, username: "komusan") }
+
+        schema type: :object,
+          properties: {
+            available: { type: :boolean, example: false }
+          },
+          required: [ "available" ]
+
+        run_test!
+      end
+
+      response "400", "value パラメータがない" do
+        let(:value) { nil }
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code: { type: :string, example: "BAD_REQUEST" },
+                message: { type: :string }
+              },
+              required: [ "code", "message" ]
+            }
+          }
+
+        run_test!
+      end
+
+      response "422", "形式不正" do
+        let(:value) { "INVALID__name" }
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code: { type: :string, example: "VALIDATION_ERROR" },
+                message: { type: :string }
+              },
+              required: [ "code", "message" ]
+            }
+          }
+
+        run_test!
+      end
+    end
+  end
 end

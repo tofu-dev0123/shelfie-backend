@@ -6,6 +6,8 @@ ja:
       account_already_exists: "すでに登録済みのアカウントです"
       username_taken: "このユーザー名はすでに使用されています"
       unprocessable_entity: "入力内容に誤りがあります"
+      bad_request: "リクエストが不正です"
+      validation_error: "入力値が不正です"
     auth:
       logout:
         logged_out: "ログアウトしました。"

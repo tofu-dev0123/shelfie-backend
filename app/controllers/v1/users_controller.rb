@@ -1,5 +1,11 @@
 module V1
   class UsersController < BaseController
+    def check_username
+      Rails.logger.debug "UsersController#check_username に入りました"
+      result = Users::CheckUsernameService.call(value: params[:value])
+      render json: result, status: :ok
+    end
+
     def create
       Rails.logger.debug "UsersController#create に入りました"
       result = Users::CreateService.call(
