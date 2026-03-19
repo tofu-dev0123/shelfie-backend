@@ -20,16 +20,14 @@
 
 | パラメータ | 型 | 必須 | デフォルト | 説明 |
 |---|---|---|---|---|
-| `status` | string | 任意 | なし（全件） | `want_to_read` / `reading` / `completed` でフィルタ |
 | `cursor` | string | 任意 | なし | 前回レスポンスの `next_cursor` |
 | `limit` | integer | 任意 | 20 | 最大取得件数（上限50） |
 
 ## 処理詳細
 
 1. `username` で User レコードを検索
-2. `status` クエリパラメータがあればフィルタリング
-3. そのユーザーの `user_books` を `created_at DESC` + `id DESC` でカーソルページネーションして取得
-4. 書籍情報・投稿内容・タグを合わせて返す
+2. そのユーザーの `user_books`（読了済み）を `created_at DESC` + `id DESC` でカーソルページネーションして取得
+3. 書籍情報・投稿内容・タグを合わせて返す
 
 ## レスポンス
 
@@ -41,7 +39,6 @@
   "items": [
     {
       "id": 1,
-      "status": "completed",
       "content": "とても良い本でした",
       "tags": ["Go", "Architecture"],
       "created_at": "2026-03-05T00:00:00Z",

@@ -15,7 +15,6 @@
 ```json
 {
   "google_books_id": "xxxxxxxx",
-  "status": "completed",
   "content": "とても良い本でした",
   "tags": ["Go", "Architecture"],
   "purchase_links": [
@@ -27,7 +26,6 @@
 | フィールド | 型 | 必須 | バリデーション |
 |---|---|---|---|
 | `google_books_id` | string | 必須 | |
-| `status` | string | 必須 | `want_to_read` / `reading` / `completed` のいずれか |
 | `content` | string | 任意 | 最大1000文字 |
 | `tags` | array | 任意 | 最大5件。存在するタグ名のみ有効 |
 | `purchase_links` | array | 任意 | URL形式、最大3件 |
