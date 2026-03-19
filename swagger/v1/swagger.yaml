@@ -269,3 +269,97 @@ paths:
                     required:
                     - code
                     - message
+  "/v1/users/{username}":
+    get:
+      summary: ユーザープロフィール取得API
+      tags:
+      - ユーザー系
+      security:
+      - Bearer: []
+      - {}
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 取得するユーザーの username
+        schema:
+          type: string
+      responses:
+        '200':
+          description: プロフィール取得成功（自分自身・is_following が false）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: komusan
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example:
+                  followers_count:
+                    type: integer
+                    example: 0
+                  following_count:
+                    type: integer
+                    example: 0
+                  books_count:
+                    type: integer
+                    example: 0
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                  is_following:
+                    type: boolean
+                    example: false
+                required:
+                - username
+                - nickname
+                - bio
+                - avatar_url
+                - followers_count
+                - following_count
+                - books_count
+                - links
+                - is_following
+        '404':
+          description: ユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンが不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string

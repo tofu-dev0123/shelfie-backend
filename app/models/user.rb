@@ -6,6 +6,10 @@ class User < ApplicationRecord
   USERNAME_MAX_LENGTH = 40
 
   has_many :refresh_tokens, dependent: :destroy
+  has_many :user_links
+  has_many :user_books
+  has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
+  has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
 
   # バリデーションの一意性チェック前に正規化することで、大文字小文字を区別しない一意性を保証する
   before_validation :normalize_username
