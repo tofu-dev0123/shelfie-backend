@@ -14,8 +14,21 @@ module V1
       payload[:user_id] = current_user&.id
     end
 
+    # トークンがある場合のみ認証する。トークンがない場合は current_user = nil のまま通過
+    # トークンが不正・期限切れの場合は ClerkClient::UnauthorizedError を raise → 401
+    def authenticate_user_if_token_present
+      token = clerk_token_from_header
+      return unless token
+
+      payload = TokenIssuer.decode(token)
+      raise ClerkClient::UnauthorizedError unless payload
+
+      @current_user = User.find_by(id: payload["user_id"])
+      raise ClerkClient::UnauthorizedError unless @current_user
+    end
+
     def current_user
-      nil
+      @current_user
     end
   end
 end

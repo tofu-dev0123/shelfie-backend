@@ -14,6 +14,6 @@ Rails.application.routes.draw do
       delete "logout", to: "sessions#logout"
     end
     get "users/username/check", to: "users#check_username"
-    resources :users, only: [ :create ]
+    resources :users, only: [ :create, :show ], param: :username
   end
 end
