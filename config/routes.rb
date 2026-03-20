@@ -13,6 +13,9 @@ Rails.application.routes.draw do
       post "refresh", to: "sessions#refresh"
       delete "logout", to: "sessions#logout"
     end
+    namespace :me do
+      get "/", to: "profiles#show"
+    end
     get "users/username/check", to: "users#check_username"
     resources :users, only: [ :create, :show ], param: :username
   end
