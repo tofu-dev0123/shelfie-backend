@@ -50,7 +50,8 @@
 | code | ステータス | 場面 |
 |---|---|---|
 | `UNAUTHORIZED` | 401 | アクセストークンが無効・期限切れ |
-| `VALIDATION_ERROR` | 422 | バリデーション違反・全フィールド未送信 |
+| `BAD_REQUEST` | 400 | 全フィールド未送信 |
+| `UNPROCESSABLE_ENTITY` | 422 | バリデーション違反 |
 
 #### バリデーションエラーのレスポンス例
 
@@ -58,11 +59,11 @@
 // 422 Unprocessable Entity
 {
   "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "不正なリクエストです。",
+    "code": "UNPROCESSABLE_ENTITY",
+    "message": "入力内容に誤りがあります",
     "details": [
-      { "field": "nickname", "message": "50文字以内で入力してください" },
-      { "field": "bio", "message": "200文字以内で入力してください" }
+      { "field": "nickname", "message": "ニックネームは50文字以内で入力してください" },
+      { "field": "bio", "message": "自己紹介は200文字以内で入力してください" }
     ]
   }
 }
