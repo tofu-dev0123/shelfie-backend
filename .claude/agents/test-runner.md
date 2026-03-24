@@ -9,7 +9,7 @@ model: inherit
 
 ## 手順
 
-1. `bundle exec rspec {spec_file_path}` を実行する
+1. `docker compose exec web bundle exec rspec {spec_file_path}` を実行する
 2. パス → 完了（結果を報告して終了）
 3. 失敗 → エラーを分析し、実装ファイルまたは spec ファイルを修正して再実行
 4. 最大 3 回まで繰り返す

@@ -1,3 +1,4 @@
+# APIレスポンスの error.code フィールドで返す文字列定数
 module ErrorCodes
   UNAUTHORIZED            = "UNAUTHORIZED"
   NOT_FOUND               = "NOT_FOUND"
@@ -5,4 +6,5 @@ module ErrorCodes
   BAD_REQUEST             = "BAD_REQUEST"
   ACCOUNT_ALREADY_EXISTS  = "ACCOUNT_ALREADY_EXISTS"
   USERNAME_TAKEN          = "USERNAME_TAKEN"
+  VALIDATION_ERROR        = "VALIDATION_ERROR"
 end

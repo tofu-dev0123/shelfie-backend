@@ -2,22 +2,35 @@ module ErrorHandler
   extend ActiveSupport::Concern
 
   included do
-    rescue_from ClerkClient::UnauthorizedError, with: :render_unauthorized
+    rescue_from ClerkClient::UnauthorizedError, InvalidRefreshTokenError, with: :render_unauthorized
+    rescue_from UserNotFoundError, with: :render_not_found
     rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
     rescue_from UsernameTakenError, with: :render_username_taken
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
+    rescue_from BadRequestError, with: :render_bad_request
+    rescue_from ValidationError, with: :render_validation_error
   end
 
   private
 
-  def render_unauthorized
-    Rails.logger.warn "認証失敗: Clerk JWT が無効"
+  def render_unauthorized(e)
+    Rails.logger.warn "認証失敗: #{e.class}"
     render json: {
       error: {
         code: ErrorCodes::UNAUTHORIZED,
-        message: "認証に失敗しました"
+        message: I18n.t("messages.errors.unauthorized")
       }
     }, status: :unauthorized
+  end
+
+  def render_not_found
+    Rails.logger.warn "リソースが見つかりません: UserNotFoundError"
+    render json: {
+      error: {
+        code: ErrorCodes::NOT_FOUND,
+        message: I18n.t("messages.errors.not_found")
+      }
+    }, status: :not_found
   end
 
   def render_account_already_exists
@@ -25,7 +38,7 @@ module ErrorHandler
     render json: {
       error: {
         code: ErrorCodes::ACCOUNT_ALREADY_EXISTS,
-        message: "すでに登録済みのアカウントです"
+        message: I18n.t("messages.errors.account_already_exists")
       }
     }, status: :conflict
   end
@@ -35,9 +48,29 @@ module ErrorHandler
     render json: {
       error: {
         code: ErrorCodes::USERNAME_TAKEN,
-        message: "このユーザー名はすでに使用されています"
+        message: I18n.t("messages.errors.username_taken")
       }
     }, status: :conflict
+  end
+
+  def render_bad_request(e)
+    Rails.logger.warn "不正なリクエスト: #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::BAD_REQUEST,
+        message: I18n.t("messages.errors.bad_request")
+      }
+    }, status: :bad_request
+  end
+
+  def render_validation_error(e)
+    Rails.logger.warn "バリデーションエラー: #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::VALIDATION_ERROR,
+        message: I18n.t("messages.errors.validation_error")
+      }
+    }, status: :unprocessable_entity
   end
 
   def render_unprocessable_entity(e)
@@ -49,7 +82,7 @@ module ErrorHandler
     render json: {
       error: {
         code: ErrorCodes::UNPROCESSABLE_ENTITY,
-        message: "入力内容に誤りがあります",
+        message: I18n.t("messages.errors.unprocessable_entity"),
         details: details
       }
     }, status: :unprocessable_entity

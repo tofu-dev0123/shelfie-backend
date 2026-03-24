@@ -8,6 +8,16 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   namespace :v1 do
-    resources :users, only: [ :create ]
+    namespace :auth do
+      post "login", to: "sessions#login"
+      post "refresh", to: "sessions#refresh"
+      delete "logout", to: "sessions#logout"
+    end
+    namespace :me do
+      get   "/", to: "profiles#show"
+      patch "/", to: "profiles#update"
+    end
+    get "users/username/check", to: "users#check_username"
+    resources :users, only: [ :create, :show ], param: :username
   end
 end

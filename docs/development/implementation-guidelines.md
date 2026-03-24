@@ -52,7 +52,7 @@
 - Controller にビジネスロジックを書く
 - Controller から直接 Model を参照する（必ず Service を経由する）
 - Service が Service を呼ぶ
-- Service にバリデーションロジックを書く
+- Service に Model のバリデーションルールを重複して書く（`save!` / `update!` に任せる）
 - Serializer に gem を使う（Blueprinter 等）
 - 認証に Devise を使う
 - マジックナンバー・文字列リテラルの直書き（`app/constants/` を使う）
@@ -76,6 +76,34 @@ Rails 標準（ファイル名・クラス名・メソッド名等）は RuboCop
 
 ---
 
+## ログ規約
+
+詳細 → [docs/development/logging.md](./logging.md)
+
+**実装箇所：**
+- Controller のアクション先頭に `debug` ログを入れる
+- Service の正常終了時に `info` ログを入れる
+- ErrorHandler のエラーハンドラに `warn` / `error` ログを入れる
+
+---
+
 ## テスト規約
 
 詳細 → [docs/development/testing.md](./testing.md)
+
+---
+
+## コメント規約
+
+コードで表現できない **why（なぜそう書くか）** を日本語で記載する。
+what（何をしているか）はコードで読めるため書かない。
+
+**書く場所：**
+- Service・Constants に積極的に書く
+- Controller にコメントが増えてきたらビジネスロジックが漏れているサイン
+
+**書くタイミング（以下に該当したら書く）：**
+- 仕様・要件に基づく制約がある
+- 直感に反する実装をしている
+- 定数の意味・単位・由来が自明でない
+- 意図的な例外処理をしている

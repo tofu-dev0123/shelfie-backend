@@ -1,0 +1,1 @@
+class UserNotFoundError < StandardError; end
