@@ -188,6 +188,100 @@ paths:
                         example: UNAUTHORIZED
                       message:
                         type: string
+    patch:
+      summary: プロフィール更新API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: プロフィール更新成功（一部フィールド）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                required:
+                - nickname
+                - bio
+        '400':
+          description: 全フィールド未送信
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: BAD_REQUEST
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNPROCESSABLE_ENTITY
+                      message:
+                        type: string
+                      details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                              example: nickname
+                            message:
+                              type: string
+                              example: ニックネームは50文字以内で入力してください
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  example: コムさん
+                bio:
+                  type: string
+                  example: エンジニアです
+        required: true
   "/v1/users":
     post:
       summary: ユーザー登録API

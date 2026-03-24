@@ -1,13 +1,9 @@
 require "uri"
 
 class User < ApplicationRecord
-  USERNAME_REGEX = /\A[a-z0-9_]+\z/
-  USERNAME_MIN_LENGTH = 3
-  USERNAME_MAX_LENGTH = 40
-
   has_many :refresh_tokens, dependent: :destroy
-  has_many :user_links
-  has_many :user_books
+  has_many :user_links, dependent: :destroy
+  has_many :user_books, dependent: :destroy
   has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
   has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
 
@@ -20,13 +16,13 @@ class User < ApplicationRecord
     uniqueness: true,
     # 標準ライブラリのREGEXPを使用することで外部gemなしにメール形式を検証できる
     format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :nickname, presence: true, length: { maximum: 50 }
+  validates :nickname, presence: true, length: { maximum: UserConstants::NICKNAME_MAX_LENGTH }
+  validates :bio, length: { maximum: UserConstants::BIO_MAX_LENGTH }, allow_blank: true
   validates :username,
     presence: true,
     uniqueness: true,
-    # 英数字とアンダースコアのみ許可（URLセーフかつSNS的な標準に準拠）
-    format: { with: USERNAME_REGEX },
-    length: { minimum: USERNAME_MIN_LENGTH, maximum: USERNAME_MAX_LENGTH }
+    format: { with: UserConstants::USERNAME_REGEX },
+    length: { minimum: UserConstants::USERNAME_MIN_LENGTH, maximum: UserConstants::USERNAME_MAX_LENGTH }
   validate :no_consecutive_underscores
 
   private
@@ -36,6 +32,7 @@ class User < ApplicationRecord
   end
 
   def no_consecutive_underscores
+    # username が nil の場合は presence バリデーションが拾うため、ここでは連続アンダースコアのみチェックする
     errors.add(:username, :consecutive_underscores) if username&.include?("__")
   end
 end
