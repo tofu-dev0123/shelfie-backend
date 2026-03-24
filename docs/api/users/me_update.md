@@ -12,13 +12,12 @@
 
 ### ボディ
 
-送信したフィールドのみ更新する。
+送信したフィールドのみ更新する。全フィールド未送信または全フィールドが空の場合はバリデーションエラー。
 
 ```json
 {
   "nickname": "コムさん",
-  "bio": "エンジニアです",
-  "avatar_url": "https://..."
+  "bio": "エンジニアです"
 }
 ```
 
@@ -26,7 +25,6 @@
 |---|---|---|---|
 | `nickname` | string | 任意 | 最大50文字 |
 | `bio` | string | 任意 | 最大200文字 |
-| `avatar_url` | string | 任意 | URL形式 |
 
 ## 処理詳細
 
@@ -43,8 +41,7 @@
 // 200 OK
 {
   "nickname": "コムさん",
-  "bio": "エンジニアです",
-  "avatar_url": "https://..."
+  "bio": "エンジニアです"
 }
 ```
 
@@ -53,4 +50,20 @@
 | code | ステータス | 場面 |
 |---|---|---|
 | `UNAUTHORIZED` | 401 | アクセストークンが無効・期限切れ |
-| `VALIDATION_ERROR` | 422 | バリデーション違反 |
+| `VALIDATION_ERROR` | 422 | バリデーション違反・全フィールド未送信 |
+
+#### バリデーションエラーのレスポンス例
+
+```json
+// 422 Unprocessable Entity
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "不正なリクエストです。",
+    "details": [
+      { "field": "nickname", "message": "50文字以内で入力してください" },
+      { "field": "bio", "message": "200文字以内で入力してください" }
+    ]
+  }
+}
+```
