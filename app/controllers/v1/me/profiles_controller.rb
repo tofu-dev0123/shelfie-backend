@@ -16,7 +16,7 @@ module V1
       private
 
       def profile_params
-        params.permit(:nickname, :bio)
+        params.permit(:nickname, :bio, links: [])
       end
     end
   end

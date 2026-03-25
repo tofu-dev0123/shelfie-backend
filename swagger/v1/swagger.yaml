@@ -197,7 +197,7 @@ paths:
       parameters: []
       responses:
         '200':
-          description: プロフィール更新成功（一部フィールド）
+          description: プロフィール更新成功（links全件削除）
           content:
             application/json:
               schema:
@@ -210,9 +210,15 @@ paths:
                     type: string
                     nullable: true
                     example: エンジニアです
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
                 required:
                 - nickname
                 - bio
+                - links
         '400':
           description: 全フィールド未送信
           content:
@@ -244,7 +250,7 @@ paths:
                       message:
                         type: string
         '422':
-          description: バリデーションエラー
+          description: バリデーションエラー（links不正URL）
           content:
             application/json:
               schema:
@@ -265,10 +271,10 @@ paths:
                           properties:
                             field:
                               type: string
-                              example: nickname
+                              example: links[0]
                             message:
                               type: string
-                              example: ニックネームは50文字以内で入力してください
+                              example: 正しいURL形式で入力してください
       requestBody:
         content:
           application/json:
@@ -281,6 +287,12 @@ paths:
                 bio:
                   type: string
                   example: エンジニアです
+                links:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - https://github.com/komusan
         required: true
   "/v1/users":
     post:

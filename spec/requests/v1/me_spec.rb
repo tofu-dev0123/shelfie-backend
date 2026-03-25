@@ -82,11 +82,24 @@ RSpec.describe "マイページ系", type: :request do
         type: :object,
         properties: {
           nickname: { type: :string, example: "コムさん" },
-          bio:      { type: :string, example: "エンジニアです" }
+          bio:      { type: :string, example: "エンジニアです" },
+          links:    { type: :array, items: { type: :string }, example: [ "https://github.com/komusan" ] }
         }
       }
 
-      response "200", "プロフィール更新成功（全フィールド）" do
+      let(:success_schema) do
+        {
+          type: :object,
+          properties: {
+            nickname: { type: :string, example: "コムさん" },
+            bio:      { type: :string, nullable: true, example: "エンジニアです" },
+            links:    { type: :array, items: { type: :string }, example: [] }
+          },
+          required: %w[nickname bio links]
+        }
+      end
+
+      response "200", "プロフィール更新成功（nickname・bio）" do
         let(:user) { create(:user) }
         let(:Authorization) { "Bearer valid_token" }
         let(:body) { { nickname: "コムさん", bio: "エンジニアです" } }
@@ -98,17 +111,18 @@ RSpec.describe "マイページ系", type: :request do
         schema type: :object,
           properties: {
             nickname: { type: :string, example: "コムさん" },
-            bio:      { type: :string, nullable: true, example: "エンジニアです" }
+            bio:      { type: :string, nullable: true, example: "エンジニアです" },
+            links:    { type: :array, items: { type: :string }, example: [] }
           },
-          required: %w[nickname bio]
+          required: %w[nickname bio links]
 
         run_test!
       end
 
-      response "200", "プロフィール更新成功（一部フィールド）" do
+      response "200", "プロフィール更新成功（links置き換え）" do
         let(:user) { create(:user) }
         let(:Authorization) { "Bearer valid_token" }
-        let(:body) { { nickname: "コムさん" } }
+        let(:body) { { links: [ "https://github.com/komusan", "https://x.com/komusan" ] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
@@ -117,9 +131,31 @@ RSpec.describe "マイページ系", type: :request do
         schema type: :object,
           properties: {
             nickname: { type: :string, example: "コムさん" },
-            bio:      { type: :string, nullable: true, example: "エンジニアです" }
+            bio:      { type: :string, nullable: true, example: "エンジニアです" },
+            links:    { type: :array, items: { type: :string }, example: [ "https://github.com/komusan" ] }
           },
-          required: %w[nickname bio]
+          required: %w[nickname bio links]
+
+        run_test!
+      end
+
+      response "200", "プロフィール更新成功（links全件削除）" do
+        let(:user) { create(:user) }
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { links: [] } }
+
+        before do
+          create(:user_link, user: user)
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            nickname: { type: :string, example: "コムさん" },
+            bio:      { type: :string, nullable: true, example: "エンジニアです" },
+            links:    { type: :array, items: { type: :string }, example: [] }
+          },
+          required: %w[nickname bio links]
 
         run_test!
       end
@@ -187,7 +223,7 @@ RSpec.describe "マイページ系", type: :request do
         run_test!
       end
 
-      response "422", "バリデーションエラー" do
+      response "422", "バリデーションエラー（nickname超過）" do
         let(:user) { create(:user) }
         let(:Authorization) { "Bearer valid_token" }
         let(:body) { { nickname: "あ" * 51 } }
@@ -210,6 +246,72 @@ RSpec.describe "マイページ系", type: :request do
                     properties: {
                       field:   { type: :string, example: "nickname" },
                       message: { type: :string, example: "ニックネームは50文字以内で入力してください" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+        run_test!
+      end
+
+      response "422", "バリデーションエラー（links件数超過）" do
+        let(:user) { create(:user) }
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { links: (1..6).map { |i| "https://example.com/#{i}" } } }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNPROCESSABLE_ENTITY" },
+                message: { type: :string },
+                details: {
+                  type: :array,
+                  items: {
+                    type: :object,
+                    properties: {
+                      field:   { type: :string, example: "links" },
+                      message: { type: :string, example: "リンクは5件以内で入力してください" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+        run_test!
+      end
+
+      response "422", "バリデーションエラー（links不正URL）" do
+        let(:user) { create(:user) }
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { links: [ "not-a-url" ] } }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNPROCESSABLE_ENTITY" },
+                message: { type: :string },
+                details: {
+                  type: :array,
+                  items: {
+                    type: :object,
+                    properties: {
+                      field:   { type: :string, example: "links[0]" },
+                      message: { type: :string, example: "正しいURL形式で入力してください" }
                     }
                   }
                 }
