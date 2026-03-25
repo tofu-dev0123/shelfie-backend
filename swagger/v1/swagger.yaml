@@ -117,6 +117,95 @@ paths:
                         example: UNAUTHORIZED
                       message:
                         type: string
+  "/v1/me/avatar":
+    post:
+      summary: アバター画像アップロードAPI
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: アップロード成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example: https://example.cloudfront.net/avatars/1.jpg
+                required:
+                - avatar_url
+        '400':
+          description: avatar フィールドが未添付
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: BAD_REQUEST
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: ファイルサイズが 5MB 超
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNPROCESSABLE_ENTITY
+                      message:
+                        type: string
+        '500':
+          description: S3 アップロード失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: INTERNAL_SERVER_ERROR
+                      message:
+                        type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: file
+        required: true
+        description: アップロードする画像ファイル（JPEG / PNG / WebP、最大 5MB）
   "/v1/me":
     get:
       summary: マイプロフィール取得API

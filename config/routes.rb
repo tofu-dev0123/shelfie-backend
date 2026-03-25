@@ -14,8 +14,9 @@ Rails.application.routes.draw do
       delete "logout", to: "sessions#logout"
     end
     namespace :me do
-      get   "/", to: "profiles#show"
-      patch "/", to: "profiles#update"
+      get   "/",      to: "profiles#show"
+      patch "/",      to: "profiles#update"
+      post  "avatar", to: "avatars#create"
     end
     get "users/username/check", to: "users#check_username"
     resources :users, only: [ :create, :show ], param: :username
