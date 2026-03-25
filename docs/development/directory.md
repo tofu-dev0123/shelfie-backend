@@ -121,12 +121,13 @@ app/services/
 
 ### lib/clients/
 
-外部APIとの通信処理のみを担う。ビジネスロジックは書かない。
+外部APIおよびクラウドサービスとの通信処理のみを担う。ビジネスロジックは書かない。
 
 ```
 lib/clients/
 ├── clerk_client.rb           # Clerk JWT検証
-└── google_books_client.rb    # Google Books API
+├── google_books_client.rb    # Google Books API
+└── s3_client.rb              # S3 ファイルアップロード
 ```
 
 ### lib/（直下）
@@ -198,4 +199,4 @@ Controller
 | レスポンスJSON組み立て | Serializer |
 | 外部APIとの通信 | Client（`lib/clients/`） |
 | DBや外部APIに依存しない共通ロジック | `lib/` 直下 |
-| ファイルストレージ（S3） | ActiveStorage |
+| ファイルストレージ（S3） | `S3Client`（`lib/clients/s3_client.rb`） |
