@@ -52,7 +52,6 @@ app/controllers/
         ├── base_controller.rb        # before_action :authenticate_user!
         ├── profiles_controller.rb    # GET /v1/me
         │                             # PATCH /v1/me
-        ├── links_controller.rb       # PUT /v1/me/links
         ├── avatars_controller.rb     # POST /v1/me/avatar
         │                             # DELETE /v1/me/avatar
         ├── books_controller.rb       # POST /v1/me/books
