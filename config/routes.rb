@@ -16,8 +16,7 @@ Rails.application.routes.draw do
     namespace :me do
       get   "/",      to: "profiles#show"
       patch "/",      to: "profiles#update"
-      post   "avatar", to: "avatars#create"
-      delete "avatar", to: "avatars#destroy"
+      post  "avatar", to: "avatars#create"
     end
     get "users/username/check", to: "users#check_username"
     resources :users, only: [ :create, :show ], param: :username

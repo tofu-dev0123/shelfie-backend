@@ -10,7 +10,7 @@ module ErrorHandler
     rescue_from BadRequestError, with: :render_bad_request
     rescue_from ValidationError, with: :render_validation_error
     rescue_from AvatarFileError, with: :render_avatar_file_error
-    rescue_from S3UploadError, S3DeleteError, with: :render_internal_server_error
+    rescue_from S3UploadError, with: :render_internal_server_error
   end
 
   private
