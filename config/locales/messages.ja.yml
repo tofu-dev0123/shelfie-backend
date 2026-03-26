@@ -12,6 +12,9 @@ ja:
     avatar:
       invalid_format: "ファイル形式が不正です（JPEG / PNG / WebP のみ）"
       file_too_large: "ファイルサイズが5MBを超えています"
+    me:
+      avatar:
+        deleted: "削除が完了しました"
     auth:
       logout:
         logged_out: "ログアウトしました。"

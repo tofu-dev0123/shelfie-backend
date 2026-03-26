@@ -2,6 +2,12 @@ class S3Client
   BUCKET = ENV.fetch("S3_BUCKET_NAME", nil)
   REGION = ENV.fetch("AWS_REGION", "ap-northeast-1")
 
+  def self.delete(key:)
+    client.delete_object(bucket: BUCKET, key: key)
+  rescue Aws::S3::Errors::ServiceError => e
+    raise S3DeleteError, e.message
+  end
+
   def self.upload(file:, key:)
     client.put_object(
       bucket: BUCKET,
@@ -11,7 +17,6 @@ class S3Client
     )
     key
   rescue Aws::S3::Errors::ServiceError => e
-    Rails.logger.error "S3 アップロード失敗: #{e.class} #{e.message}"
     raise S3UploadError, e.message
   end
 

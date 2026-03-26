@@ -206,6 +206,55 @@ paths:
               type: file
         required: true
         description: アップロードする画像ファイル（JPEG / PNG / WebP、最大 5MB）
+    delete:
+      summary: アバター画像削除API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: 削除成功（アバターなし・冪等）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 削除が完了しました
+                required:
+                - message
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '500':
+          description: S3 削除失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: INTERNAL_SERVER_ERROR
+                      message:
+                        type: string
   "/v1/me":
     get:
       summary: マイプロフィール取得API
