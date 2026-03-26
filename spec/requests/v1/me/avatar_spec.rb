@@ -199,5 +199,107 @@ RSpec.describe "マイページ系", type: :request do
         run_test!
       end
     end
+
+    delete "アバター画像削除API" do
+      tags "マイページ系"
+      produces "application/json"
+      security [ Bearer: [] ]
+
+      response "200", "削除成功（アバターあり）" do
+        let(:user) { create(:user, avatar_key: "avatars/#{create(:user).id}") }
+        let(:Authorization) { "Bearer valid_token" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(S3Client).to receive(:delete).and_return(true)
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "削除が完了しました" }
+          },
+          required: %w[message]
+
+        run_test!
+      end
+
+      response "200", "削除成功（アバターなし・冪等）" do
+        let(:user) { create(:user, avatar_key: nil) }
+        let(:Authorization) { "Bearer valid_token" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "削除が完了しました" }
+          },
+          required: %w[message]
+
+        run_test!
+      end
+
+      response "401", "アクセストークンが無効・期限切れ" do
+        let(:Authorization) { "Bearer invalid_token" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNAUTHORIZED" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+
+      response "401", "アクセストークンなし" do
+        let(:Authorization) { nil }
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNAUTHORIZED" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+
+      response "500", "S3 削除失敗" do
+        let(:user) { create(:user, avatar_key: "avatars/#{create(:user).id}") }
+        let(:Authorization) { "Bearer valid_token" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(S3Client).to receive(:delete).and_raise(S3DeleteError)
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "INTERNAL_SERVER_ERROR" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+    end
   end
 end
