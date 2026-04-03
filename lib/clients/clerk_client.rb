@@ -1,3 +1,5 @@
+require "clerk"
+
 class ClerkClient
   class UnauthorizedError < StandardError; end
 
@@ -8,7 +10,7 @@ class ClerkClient
     end
 
     Rails.logger.info "Clerk API 呼び出し開始"
-    payload = Clerk::Token.decode(token)
+    payload = Clerk::SDK.new.verify_token(token)
     Rails.logger.info "Clerk API 呼び出し成功"
     {
       clerk_user_id: payload["sub"],
