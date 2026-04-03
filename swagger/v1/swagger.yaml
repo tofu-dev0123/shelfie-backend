@@ -117,6 +117,321 @@ paths:
                         example: UNAUTHORIZED
                       message:
                         type: string
+  "/v1/me/avatar":
+    post:
+      summary: アバター画像アップロードAPI
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: アップロード成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example: https://example.cloudfront.net/avatars/1.jpg
+                required:
+                - avatar_url
+        '400':
+          description: avatar フィールドが未添付
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: BAD_REQUEST
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: ファイルサイズが 5MB 超
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNPROCESSABLE_ENTITY
+                      message:
+                        type: string
+        '500':
+          description: S3 アップロード失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: INTERNAL_SERVER_ERROR
+                      message:
+                        type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: file
+        required: true
+        description: アップロードする画像ファイル（JPEG / PNG / WebP、最大 5MB）
+    delete:
+      summary: アバター画像削除API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: 削除成功（アバターなし・冪等）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 削除が完了しました
+                required:
+                - message
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '500':
+          description: S3 削除失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: INTERNAL_SERVER_ERROR
+                      message:
+                        type: string
+  "/v1/me":
+    get:
+      summary: マイプロフィール取得API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: プロフィール取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  username:
+                    type: string
+                    example: komusan
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example:
+                  followers_count:
+                    type: integer
+                    example: 0
+                  following_count:
+                    type: integer
+                    example: 0
+                  books_count:
+                    type: integer
+                    example: 0
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                required:
+                - id
+                - username
+                - nickname
+                - bio
+                - avatar_url
+                - followers_count
+                - following_count
+                - books_count
+                - links
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+    patch:
+      summary: プロフィール更新API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: プロフィール更新成功（links全件削除）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                required:
+                - nickname
+                - bio
+                - links
+        '400':
+          description: 全フィールド未送信
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: BAD_REQUEST
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: バリデーションエラー（links不正URL）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNPROCESSABLE_ENTITY
+                      message:
+                        type: string
+                      details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                              example: links[0]
+                            message:
+                              type: string
+                              example: 正しいURL形式で入力してください
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  example: コムさん
+                bio:
+                  type: string
+                  example: エンジニアです
+                links:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - https://github.com/komusan
+        required: true
   "/v1/users":
     post:
       summary: ユーザー登録API
@@ -269,3 +584,97 @@ paths:
                     required:
                     - code
                     - message
+  "/v1/users/{username}":
+    get:
+      summary: ユーザープロフィール取得API
+      tags:
+      - ユーザー系
+      security:
+      - Bearer: []
+      - {}
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 取得するユーザーの username
+        schema:
+          type: string
+      responses:
+        '200':
+          description: プロフィール取得成功（自分自身・is_following が false）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: komusan
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example:
+                  followers_count:
+                    type: integer
+                    example: 0
+                  following_count:
+                    type: integer
+                    example: 0
+                  books_count:
+                    type: integer
+                    example: 0
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                  is_following:
+                    type: boolean
+                    example: false
+                required:
+                - username
+                - nickname
+                - bio
+                - avatar_url
+                - followers_count
+                - following_count
+                - books_count
+                - links
+                - is_following
+        '404':
+          description: ユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンが不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string

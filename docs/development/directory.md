@@ -52,7 +52,6 @@ app/controllers/
         ├── base_controller.rb        # before_action :authenticate_user!
         ├── profiles_controller.rb    # GET /v1/me
         │                             # PATCH /v1/me
-        ├── links_controller.rb       # PUT /v1/me/links
         ├── avatars_controller.rb     # POST /v1/me/avatar
         │                             # DELETE /v1/me/avatar
         ├── books_controller.rb       # POST /v1/me/books
@@ -91,7 +90,8 @@ app/models/
 
 ```
 app/serializers/
-├── user_serializer.rb
+├── user_serializer.rb          # ユーザープロフィール全体（GET /v1/me, GET /v1/users/:username）
+├── user_profile_serializer.rb  # プロフィール更新レスポンス（PATCH /v1/me）
 ├── book_serializer.rb
 └── user_book_serializer.rb
 ```
@@ -105,24 +105,29 @@ Serviceの内部ではClient・Model・Query Object・`lib/` のユーティリ�
 ```
 app/services/
 ├── auth/
-│   ├── login_service.rb     # Clerk検証 → JWT発行 → refresh_token保存
-│   ├── refresh_service.rb   # refresh_token検証 → アクセストークン再発行
-│   └── logout_service.rb    # refresh_token削除
+│   ├── login_service.rb          # Clerk検証 → JWT発行 → refresh_token保存
+│   ├── refresh_service.rb        # refresh_token検証 → アクセストークン再発行
+│   └── logout_service.rb         # refresh_token削除
 ├── users/
-│   └── create_service.rb    # Clerk検証 → User作成 → JWT発行
+│   ├── create_service.rb         # Clerk検証 → User作成 → JWT発行
+│   ├── show_service.rb           # ユーザープロフィール取得
+│   ├── check_username_service.rb # username重複チェック
+│   ├── me_show_service.rb        # 自分のプロフィール取得
+│   └── me_update_service.rb      # 自分のプロフィール更新
 └── user_books/
-    ├── create_service.rb    # Google Books取得 → books upsert → user_book作成
-    └── update_service.rb    # user_book更新 + purchase_links全置換
+    ├── create_service.rb         # Google Books取得 → books upsert → user_book作成
+    └── update_service.rb         # user_book更新 + purchase_links全置換
 ```
 
 ### lib/clients/
 
-外部APIとの通信処理のみを担う。ビジネスロジックは書かない。
+外部APIおよびクラウドサービスとの通信処理のみを担う。ビジネスロジックは書かない。
 
 ```
 lib/clients/
 ├── clerk_client.rb           # Clerk JWT検証
-└── google_books_client.rb    # Google Books API
+├── google_books_client.rb    # Google Books API
+└── s3_client.rb              # S3 ファイルアップロード
 ```
 
 ### lib/（直下）
@@ -194,4 +199,4 @@ Controller
 | レスポンスJSON組み立て | Serializer |
 | 外部APIとの通信 | Client（`lib/clients/`） |
 | DBや外部APIに依存しない共通ロジック | `lib/` 直下 |
-| ファイルストレージ（S3） | ActiveStorage |
+| ファイルストレージ（S3） | `S3Client`（`lib/clients/s3_client.rb`） |

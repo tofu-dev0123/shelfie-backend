@@ -8,6 +8,13 @@ ja:
       unprocessable_entity: "入力内容に誤りがあります"
       bad_request: "必須パラメータが不足しています"
       validation_error: "ユーザー名の形式が正しくありません"
+      internal_server_error: "サーバーエラーが発生しました"
+    avatar:
+      invalid_format: "ファイル形式が不正です（JPEG / PNG / WebP のみ）"
+      file_too_large: "ファイルサイズが5MBを超えています"
+    me:
+      avatar:
+        deleted: "削除が完了しました"
     auth:
       logout:
         logged_out: "ログアウトしました。"

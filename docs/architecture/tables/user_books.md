@@ -3,7 +3,7 @@
 ## 概要
 
 ユーザーの本棚投稿を管理するテーブル。
-書籍の読書ステータスと要約・感想を投稿する単位であり、Shelfie のコアエンティティです。
+読了した書籍の要約・感想を投稿する単位であり、Shelfie のコアエンティティです。
 1ユーザーにつき同じ書籍は1件のみ登録可能。
 
 ## カラム定義
@@ -13,7 +13,6 @@
 | id | bigint | NO | PK | |
 | user_id | bigint | NO | FK → users | |
 | book_id | bigint | NO | FK → books | |
-| status | enum | NO | | 読書ステータス（`want_to_read` / `reading` / `completed`）|
 | content | text | YES | | 投稿本文（要約・感想など用途は自由）最大1000文字 |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
@@ -31,7 +30,6 @@
 
 - `content` は NULL 許容のため、本文なしで書籍のみ登録することも可能です
 - 文字数制限（最大1000文字）はアプリケーション層のバリデーションで制御します
-- `status` の表示ルール：`want_to_read` はフィードに表示しない。プロフィールページでは積読リストとして表示する
 - タグは `user_book_tags` 経由で紐付く。1投稿につき最大5件の制限はアプリケーション層で制御します
 
 ## リレーション
@@ -41,5 +39,4 @@
 | users | N:1 | 投稿したユーザー |
 | books | N:1 | 対象書籍 |
 | user_book_purchase_links | 1:N | 購入リンク |
-| likes | 1:N | いいね |
 | user_book_tags | 1:N | タグ紐付け |

@@ -52,7 +52,7 @@
 - Controller にビジネスロジックを書く
 - Controller から直接 Model を参照する（必ず Service を経由する）
 - Service が Service を呼ぶ
-- Service にバリデーションロジックを書く
+- Service に Model のバリデーションルールを重複して書く（`save!` / `update!` に任せる）
 - Serializer に gem を使う（Blueprinter 等）
 - 認証に Devise を使う
 - マジックナンバー・文字列リテラルの直書き（`app/constants/` を使う）

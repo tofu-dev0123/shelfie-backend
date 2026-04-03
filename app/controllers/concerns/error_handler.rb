@@ -9,6 +9,8 @@ module ErrorHandler
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
     rescue_from BadRequestError, with: :render_bad_request
     rescue_from ValidationError, with: :render_validation_error
+    rescue_from AvatarFileError, with: :render_avatar_file_error
+    rescue_from S3UploadError, S3DeleteError, with: :render_internal_server_error
   end
 
   private
@@ -73,8 +75,28 @@ module ErrorHandler
     }, status: :unprocessable_entity
   end
 
+  def render_avatar_file_error(e)
+    Rails.logger.warn "アバターファイルエラー: #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::UNPROCESSABLE_ENTITY,
+        message: I18n.t("messages.errors.unprocessable_entity")
+      }
+    }, status: :unprocessable_entity
+  end
+
+  def render_internal_server_error(e)
+    Rails.logger.error "内部サーバーエラー: #{e.class} #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::INTERNAL_SERVER_ERROR,
+        message: I18n.t("messages.errors.internal_server_error")
+      }
+    }, status: :internal_server_error
+  end
+
   def render_unprocessable_entity(e)
-    Rails.logger.error "RecordInvalid: #{e.message}"
+    Rails.logger.warn "RecordInvalid: #{e.message}"
     details = e.record.errors.map do |error|
       { field: error.attribute, message: error.full_message }
     end

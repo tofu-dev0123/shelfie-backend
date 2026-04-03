@@ -29,6 +29,9 @@ gem "lograge"
 # JWT認証
 gem "jwt"
 
+# S3 アップロード
+gem "aws-sdk-s3"
+
 # Clerk JWT検証
 gem "clerk-sdk-ruby"
 
