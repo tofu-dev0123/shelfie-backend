@@ -10,7 +10,7 @@ module Books
 
       start_index = Cursor.decode(cursor)
 
-      result = GoogleBooksClient.call(q: q, start_index: start_index)
+      result = GoogleBooksClient.call(q: "intitle:#{q}", start_index: start_index)
       items = parse_items(result[:items] || [])
       has_next = items.size >= EXPECTED_PAGE_SIZE
       next_cursor = has_next ? Cursor.encode(start_index + items.size) : nil

@@ -8,6 +8,7 @@ class GoogleBooksClient
       q: q,
       startIndex: start_index,
       maxResults: MAX_RESULTS,
+      printType: "books",
       key: ENV.fetch("GOOGLE_BOOKS_API_KEY")
     }
     uri.query = URI.encode_www_form(params)
