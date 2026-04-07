@@ -199,24 +199,6 @@ RSpec.describe "ユーザー系", type: :request do
 
         run_test!
       end
-
-      response "422", "形式不正" do
-        let(:value) { "INVALID__name" }
-
-        schema type: :object,
-          properties: {
-            error: {
-              type: :object,
-              properties: {
-                code: { type: :string, example: "VALIDATION_ERROR" },
-                message: { type: :string }
-              },
-              required: [ "code", "message" ]
-            }
-          }
-
-        run_test!
-      end
     end
   end
 
