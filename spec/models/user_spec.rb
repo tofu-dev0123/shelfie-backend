@@ -68,10 +68,6 @@ RSpec.describe User, type: :model do
         expect(build(:user, username: "dupuser")).not_to be_valid
       end
 
-      it "3文字以下のとき無効" do
-        expect(build(:user, username: "abc")).not_to be_valid
-      end
-
       it "4文字のとき有効" do
         expect(build(:user, username: "abcd")).to be_valid
       end

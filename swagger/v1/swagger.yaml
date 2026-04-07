@@ -5,7 +5,7 @@ info:
   version: v1
   description: Shelfie バックエンド API ドキュメント
 servers:
-- url: http://localhost:3000
+- url: http://localhost:8080
   description: 開発環境
 components:
   securitySchemes:
@@ -117,6 +117,131 @@ paths:
                         example: UNAUTHORIZED
                       message:
                         type: string
+  "/v1/books/search":
+    get:
+      summary: 書籍検索API
+      tags:
+      - 書籍系
+      security:
+      - Bearer: []
+      parameters:
+      - name: q
+        in: query
+        required: true
+        description: 検索キーワード（空白トリム後1文字以上・100文字以内）
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor（省略時は先頭から）
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 検索結果 0件
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        google_books_id:
+                          type: string
+                          example: abc123
+                        title:
+                          type: string
+                          example: リーダブルコード
+                        authors:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                          - Dustin Boswell
+                        thumbnail_url:
+                          type: string
+                          nullable: true
+                          example: https://...
+                      required:
+                      - google_books_id
+                      - title
+                      - authors
+                      - thumbnail_url
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+        '401':
+          description: アクセストークンが無効
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '422':
+          description: cursor のデコード失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '503':
+          description: Google Books API エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: EXTERNAL_API_ERROR
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
   "/v1/me/avatar":
     post:
       summary: アバター画像アップロードAPI
