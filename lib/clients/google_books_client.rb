@@ -4,11 +4,13 @@ class GoogleBooksClient
 
   def self.call(q:, start_index: 0)
     uri = URI(BASE_URL)
-    uri.query = URI.encode_www_form(
+    params = {
       q: q,
       startIndex: start_index,
-      maxResults: MAX_RESULTS
-    )
+      maxResults: MAX_RESULTS,
+      key: ENV.fetch("GOOGLE_BOOKS_API_KEY")
+    }
+    uri.query = URI.encode_www_form(params)
 
     response = Net::HTTP.get_response(uri)
     raise ExternalApiError, "Google Books API error: #{response.code}" unless response.is_a?(Net::HTTPSuccess)
