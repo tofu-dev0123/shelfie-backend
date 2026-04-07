@@ -27,6 +27,7 @@ shelfie-backend/
 
 - `v1/me/` 配下はすべて `V1::Me::BaseController` を継承し、全アクションで認証必須となる
 - それ以外は認証不要（`/v1/feed` のみオプション認証を個別に適用）
+- 例外: `GET /v1/books/search` は Google Books API のリクエスト制限対策のため、`v1/` 直下ながら認証必須（`before_action :authenticate_user!` を個別に適用）
 
 ```
 app/controllers/

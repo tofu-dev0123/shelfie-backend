@@ -11,6 +11,7 @@ module ErrorHandler
     rescue_from ValidationError, with: :render_validation_error
     rescue_from AvatarFileError, with: :render_avatar_file_error
     rescue_from S3UploadError, S3DeleteError, with: :render_internal_server_error
+    rescue_from ExternalApiError, with: :render_external_api_error
   end
 
   private
@@ -83,6 +84,16 @@ module ErrorHandler
         message: I18n.t("messages.errors.unprocessable_entity")
       }
     }, status: :unprocessable_entity
+  end
+
+  def render_external_api_error(e)
+    Rails.logger.error "外部APIエラー: #{e.class} #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::EXTERNAL_API_ERROR,
+        message: I18n.t("messages.errors.external_api_error")
+      }
+    }, status: :service_unavailable
   end
 
   def render_internal_server_error(e)

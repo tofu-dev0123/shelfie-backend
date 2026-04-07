@@ -19,6 +19,7 @@ Rails.application.routes.draw do
       post   "avatar", to: "avatars#create"
       delete "avatar", to: "avatars#destroy"
     end
+    get "books/search", to: "books#search"
     get "users/username/check", to: "users#check_username"
     resources :users, only: [ :create, :show ], param: :username
   end
