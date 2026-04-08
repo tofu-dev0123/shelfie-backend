@@ -20,6 +20,7 @@ Rails.application.routes.draw do
       delete "avatar", to: "avatars#destroy"
     end
     get "books/search", to: "books#search"
+    get "books/:google_books_id/users", to: "books#users"
     get "users/username/check", to: "users#check_username"
     resources :users, only: [ :create, :show ], param: :username
   end

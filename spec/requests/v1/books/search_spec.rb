@@ -219,4 +219,105 @@ RSpec.describe "書籍系", type: :request do
       end
     end
   end
+
+  path "/v1/books/{google_books_id}/users" do
+    get "既読書籍ユーザー一覧取得API" do
+      tags "書籍系"
+      produces "application/json"
+
+      parameter name: :google_books_id, in: :path, type: :string, required: true,
+        description: "Google Books API の書籍ID"
+      parameter name: :cursor, in: :query, type: :string, required: false,
+        description: "前回レスポンスの next_cursor（省略時は先頭から）"
+      parameter name: :limit, in: :query, type: :integer, required: false,
+        description: "最大取得件数。上限は50で、超えた場合は50にクランプされる（デフォルト20）"
+
+      response "200", "ユーザー一覧取得成功" do
+        let(:book) { create(:book) }
+        let(:google_books_id) { book.google_books_id }
+        let(:user) { create(:user, username: "komusan", nickname: "コムさん") }
+
+        before { create(:user_book, user: user, book: book) }
+
+        schema type: :object,
+          properties: {
+            items: {
+              type: :array,
+              items: {
+                type: :object,
+                properties: {
+                  username:   { type: :string, example: "komusan" },
+                  nickname:   { type: :string, example: "コムさん" },
+                  avatar_url: { type: :string, nullable: true, example: nil }
+                },
+                required: %w[username nickname avatar_url]
+              }
+            },
+            pagination: {
+              type: :object,
+              properties: {
+                next_cursor: { type: :string, nullable: true, example: nil },
+                has_next:    { type: :boolean, example: false }
+              },
+              required: %w[next_cursor has_next]
+            }
+          },
+          required: %w[items pagination]
+
+        run_test!
+      end
+
+      response "200", "書籍がDBに未登録（ユーザー0件）" do
+        let(:google_books_id) { "nonexistent_book_id" }
+
+        schema type: :object,
+          properties: {
+            items:      { type: :array, items: {}, example: [] },
+            pagination: {
+              type: :object,
+              properties: {
+                next_cursor: { type: :string, nullable: true, example: nil },
+                has_next:    { type: :boolean, example: false }
+              },
+              required: %w[next_cursor has_next]
+            }
+          },
+          required: %w[items pagination]
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["items"]).to eq([])
+          expect(data["pagination"]["has_next"]).to eq(false)
+        end
+      end
+
+      response "200", "limit が50超のときクランプされる" do
+        let(:book) { create(:book) }
+        let(:google_books_id) { book.google_books_id }
+        let(:limit) { 100 }
+
+        before { 51.times { create(:user_book, book: book) } }
+
+        schema type: :object,
+          properties: {
+            items:      { type: :array, items: {} },
+            pagination: {
+              type: :object,
+              properties: {
+                next_cursor: { type: :string, nullable: true },
+                has_next:    { type: :boolean }
+              },
+              required: %w[next_cursor has_next]
+            }
+          },
+          required: %w[items pagination]
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["items"].size).to eq(50)
+          expect(data["pagination"]["has_next"]).to eq(true)
+        end
+      end
+    end
+  end
 end
