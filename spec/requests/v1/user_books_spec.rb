@@ -151,4 +151,120 @@ RSpec.describe "本棚系", type: :request do
       end
     end
   end
+
+  path "/v1/users/{username}/books/{google_books_id}" do
+    get "本棚投稿詳細取得API" do
+      tags "本棚系"
+      produces "application/json"
+
+      parameter name: :username, in: :path, type: :string, required: true,
+        description: "投稿したユーザーの username"
+      parameter name: :google_books_id, in: :path, type: :string, required: true,
+        description: "Google Books API の書籍ID"
+
+      response "200", "投稿詳細取得成功" do
+        let(:user) { create(:user, username: "komusan") }
+        let(:book) { create(:book) }
+        let(:user_book) { create(:user_book, user: user, book: book, content: "とても良い本でした") }
+        let(:tag) { create(:tag, name: "Go") }
+        let(:username) { user.username }
+        let(:google_books_id) { book.google_books_id }
+
+        before do
+          create(:user_book_tag, user_book: user_book, tag: tag)
+          create(:user_book_purchase_link, user_book: user_book, url: "https://www.amazon.co.jp/dp/xxxxxxxx")
+        end
+
+        schema type: :object,
+          properties: {
+            id:         { type: :integer, example: 1 },
+            content:    { type: :string, nullable: true, example: "とても良い本でした" },
+            tags:       { type: :array, items: { type: :string }, example: [ "Go" ] },
+            created_at: { type: :string, example: "2026-03-05T00:00:00Z" },
+            updated_at: { type: :string, example: "2026-03-06T00:00:00Z" },
+            book: {
+              type: :object,
+              properties: {
+                google_books_id: { type: :string, example: "xxxxxxxx" },
+                title:           { type: :string, example: "リーダブルコード" },
+                authors:         { type: :array, items: { type: :string }, example: [ "著者名" ] },
+                thumbnail_url:   { type: :string, nullable: true, example: nil }
+              },
+              required: %w[google_books_id title authors thumbnail_url]
+            },
+            user: {
+              type: :object,
+              properties: {
+                username:   { type: :string, example: "komusan" },
+                nickname:   { type: :string, example: "コムさん" },
+                avatar_url: { type: :string, nullable: true, example: nil }
+              },
+              required: %w[username nickname avatar_url]
+            },
+            purchase_links: { type: :array, items: { type: :string }, example: [ "https://www.amazon.co.jp/dp/xxxxxxxx" ] }
+          },
+          required: %w[id content tags created_at updated_at book user purchase_links]
+
+        run_test!
+      end
+
+      response "200", "購入リンクなし" do
+        let(:user) { create(:user) }
+        let(:book) { create(:book) }
+        let!(:user_book) { create(:user_book, user: user, book: book) }
+        let(:username) { user.username }
+        let(:google_books_id) { book.google_books_id }
+
+        schema type: :object,
+          properties: {
+            purchase_links: { type: :array, items: { type: :string }, example: [] }
+          },
+          required: %w[purchase_links]
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["purchase_links"]).to eq([])
+        end
+      end
+
+      response "404", "ユーザーが存在しない" do
+        let(:username) { "nonexistent_user" }
+        let(:google_books_id) { "xxxxxxxx" }
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "NOT_FOUND" },
+                message: { type: :string }
+              },
+              required: %w[code message]
+            }
+          }
+
+        run_test!
+      end
+
+      response "404", "投稿が存在しない" do
+        let(:user) { create(:user) }
+        let(:username) { user.username }
+        let(:google_books_id) { "nonexistent_book_id" }
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "NOT_FOUND" },
+                message: { type: :string }
+              },
+              required: %w[code message]
+            }
+          }
+
+        run_test!
+      end
+    end
+  end
 end

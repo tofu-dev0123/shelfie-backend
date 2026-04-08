@@ -761,6 +761,117 @@ paths:
                     required:
                     - code
                     - message
+  "/v1/users/{username}/books/{google_books_id}":
+    get:
+      summary: 本棚投稿詳細取得API
+      tags:
+      - 本棚系
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 投稿したユーザーの username
+        schema:
+          type: string
+      - name: google_books_id
+        in: path
+        required: true
+        description: Google Books API の書籍ID
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 購入リンクなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  content:
+                    type: string
+                    nullable: true
+                    example: とても良い本でした
+                  tags:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - Go
+                  created_at:
+                    type: string
+                    example: '2026-03-05T00:00:00Z'
+                  updated_at:
+                    type: string
+                    example: '2026-03-06T00:00:00Z'
+                  book:
+                    type: object
+                    properties:
+                      google_books_id:
+                        type: string
+                        example: xxxxxxxx
+                      title:
+                        type: string
+                        example: リーダブルコード
+                      authors:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                        - 著者名
+                      thumbnail_url:
+                        type: string
+                        nullable: true
+                        example:
+                    required:
+                    - google_books_id
+                    - title
+                    - authors
+                    - thumbnail_url
+                  user:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                        example: komusan
+                      nickname:
+                        type: string
+                        example: コムさん
+                      avatar_url:
+                        type: string
+                        nullable: true
+                        example:
+                    required:
+                    - username
+                    - nickname
+                    - avatar_url
+                  purchase_links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                required:
+                - purchase_links
+        '404':
+          description: 投稿が存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
   "/v1/users":
     post:
       summary: ユーザー登録API
