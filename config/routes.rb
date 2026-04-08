@@ -22,6 +22,8 @@ Rails.application.routes.draw do
     get "books/search", to: "books#search"
     get "books/:google_books_id/users", to: "books#users"
     get "users/username/check", to: "users#check_username"
-    resources :users, only: [ :create, :show ], param: :username
+    resources :users, only: [ :create, :show ], param: :username do
+      resources :books, only: [ :index ], controller: "user_books"
+    end
   end
 end

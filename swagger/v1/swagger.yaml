@@ -625,6 +625,142 @@ paths:
                   example:
                   - https://github.com/komusan
         required: true
+  "/v1/users/{username}/books":
+    get:
+      summary: 本棚一覧取得API
+      tags:
+      - 本棚系
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 取得するユーザーの username
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor。不正な値の場合は 422 を返す
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 最大取得件数。上限は50で、超えた場合は50にクランプされる（デフォルト20）
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: cursor 指定でページネーション
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        content:
+                          type: string
+                          nullable: true
+                          example: とても良い本でした
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                          - Go
+                        created_at:
+                          type: string
+                          example: '2026-03-05T00:00:00Z'
+                        book:
+                          type: object
+                          properties:
+                            google_books_id:
+                              type: string
+                              example: xxxxxxxx
+                            title:
+                              type: string
+                              example: リーダブルコード
+                            authors:
+                              type: array
+                              items:
+                                type: string
+                              example:
+                              - 著者名
+                            thumbnail_url:
+                              type: string
+                              nullable: true
+                              example:
+                          required:
+                          - google_books_id
+                          - title
+                          - authors
+                          - thumbnail_url
+                      required:
+                      - id
+                      - content
+                      - tags
+                      - created_at
+                      - book
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+        '404':
+          description: ユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '422':
+          description: 不正なカーソル値
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
   "/v1/users":
     post:
       summary: ユーザー登録API
