@@ -20,14 +20,14 @@
 
 | パラメータ | 型 | 必須 | デフォルト | 説明 |
 |---|---|---|---|---|
-| `cursor` | string | 任意 | なし | 前回レスポンスの `next_cursor` |
-| `limit` | integer | 任意 | 20 | 最大取得件数（上限50） |
+| `cursor` | string | 任意 | なし | 前回レスポンスの `next_cursor`。不正な値の場合は 422 を返す |
+| `limit` | integer | 任意 | 20 | 最大取得件数（上限50）。`0` 以下はデフォルト値（20）、`50` 超はクランプ |
 
 ## 処理詳細
 
 1. `username` で User レコードを検索
-2. そのユーザーの `user_books` を `created_at DESC` + `id DESC` でカーソルページネーションして取得
-3. 書籍情報・投稿内容を合わせて返す
+2. そのユーザーの `user_books`（読了済み）を `created_at DESC` + `id DESC` でカーソルページネーションして取得
+3. 書籍情報・投稿内容・タグを合わせて返す
 
 ## レスポンス
 
@@ -40,6 +40,7 @@
     {
       "id": 1,
       "content": "とても良い本でした",
+      "tags": ["Go", "Architecture"],
       "created_at": "2026-03-05T00:00:00Z",
       "book": {
         "google_books_id": "xxxxxxxx",
@@ -61,3 +62,4 @@
 | code | ステータス | 場面 |
 |---|---|---|
 | `NOT_FOUND` | 404 | ユーザーが存在しない |
+| `VALIDATION_ERROR` | 422 | 不正なカーソル値（デコード失敗・id が整数でない） |

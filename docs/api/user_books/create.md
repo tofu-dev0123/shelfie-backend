@@ -16,6 +16,7 @@
 {
   "google_books_id": "xxxxxxxx",
   "content": "とても良い本でした",
+  "tags": ["Go", "Architecture"],
   "purchase_links": [
     "https://www.amazon.co.jp/..."
   ]
@@ -26,7 +27,8 @@
 |---|---|---|---|
 | `google_books_id` | string | 必須 | |
 | `content` | string | 任意 | 最大1000文字 |
-| `purchase_links` | array | 任意 | URL形式 |
+| `tags` | array | 任意 | 最大5件。存在するタグ名のみ有効 |
+| `purchase_links` | array | 任意 | URL形式、最大3件 |
 
 ## 処理詳細
 
@@ -34,7 +36,8 @@
 2. `google_books_id` で Books テーブルを検索し、未登録なら Google Books API から取得して登録
 3. 既に同じ書籍を登録済みでないか確認
 4. `user_books` レコードを作成
-5. `purchase_links` があれば `user_book_purchase_links` レコードを作成
+5. `tags` があれば `user_book_tags` レコードを作成
+6. `purchase_links` があれば `user_book_purchase_links` レコードを作成
 
 ## レスポンス
 

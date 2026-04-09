@@ -2,7 +2,18 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  if [ -n "$DB_HOST" ]; then
+    echo "[docker-entrypoint] Waiting for PostgreSQL to be ready..."
+    until pg_isready -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_USER"; do
+      echo "[docker-entrypoint] PostgreSQL is not ready yet. Retrying in 1 second..."
+      sleep 1
+    done
+    echo "[docker-entrypoint] PostgreSQL is ready."
+  fi
+
+  echo "[docker-entrypoint] Running database prepare..."
   ./bin/rails db:prepare
+  echo "[docker-entrypoint] Database prepare completed."
 fi
 
 exec "${@}"

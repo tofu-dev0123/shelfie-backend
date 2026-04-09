@@ -20,6 +20,7 @@
 |---|---|---|
 | PRIMARY KEY | id | |
 | UNIQUE | (follower_id, followee_id) | 重複フォロー防止 |
+| CHECK | follower_id != followee_id | 自己フォロー防止 |
 | INDEX | follower_id | 自分がフォローしているユーザー一覧取得 |
 | INDEX | followee_id | 自分のフォロワー一覧取得 |
 
@@ -32,7 +33,7 @@
 
 ## 備考
 
-- 自分自身へのフォローはアプリケーション層のバリデーションで防止します
+- 自己フォロー（`follower_id = followee_id`）はアプリケーション層に加え、DB の CHECK 制約（`CHECK (follower_id != followee_id)`）でも防止しています
 - フィードの取得クエリ例:
 
 ```sql

@@ -10,11 +10,11 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 | カラム名 | 型 | NULL | 制約 | 説明 |
 |---|---|---|---|---|
 | id | bigint | NO | PK | |
-| clerk_user_id | string | NO | UNIQUE | Clerk のユーザー ID（JWT の `sub` クレーム） |
-| email | string | NO | UNIQUE | Google アカウントのメールアドレス |
-| nickname | string | NO | | アプリ上の表示名（初回ログイン時に設定必須）|
-| username | string | NO | UNIQUE | @ ハンドル（初回ログイン時に設定必須）|
-| avatar_url | string | YES | | プロフィールアイコン画像 URL（NULL の場合はデフォルト画像を表示）|
+| clerk_user_id | string(50) | NO | UNIQUE | Clerk のユーザー ID（JWT の `sub` クレーム）。Clerk の形式は `user_` + 24文字英数字で計29文字程度のため、余裕を持たせて50文字に設定 |
+| email | string(254) | NO | UNIQUE | Google アカウントのメールアドレス |
+| nickname | string(30) | NO | | アプリ上の表示名（初回ログイン時に設定必須）|
+| username | string(40) | NO | UNIQUE | @ ハンドル（初回ログイン時に設定必須）|
+| avatar_key | string | YES | | S3 のキーパス（例: `profile-images/user_123.jpg`）。NULL の場合はデフォルト画像を表示 |
 | bio | text | YES | | 自己紹介文 |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
@@ -26,8 +26,7 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 | PRIMARY KEY | id | |
 | UNIQUE | clerk_user_id | ログイン時のユーザー特定 |
 | UNIQUE | email | メールアドレスの一意性保証 |
-| UNIQUE | username | ユーザー名の一意性保証 |
-| INDEX | username | ユーザー検索 |
+| UNIQUE | username | ユーザー名の一意性保証（PostgreSQL では UNIQUE 制約により検索用インデックスが自動生成されるため、別途 INDEX は不要）|
 
 ## リレーション
 
@@ -42,5 +41,6 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 ## 備考
 
 - 初回ログイン時は Clerk JWT の `name` クレーム（Google アカウントの表示名）を `nickname` の入力欄にプリフィルして表示しますが、DB には保存しません
-- `avatar_url` が NULL の場合、アプリケーション側でデフォルト画像を表示します
-- ユーザーが独自のアイコン画像をアップロードする場合は画像ストレージ（Active Storage + S3 等）が必要です
+- `avatar_key` が NULL の場合、アプリケーション側でデフォルト画像を表示します
+- アバター画像は S3 に保存し、CloudFront 経由で配信する。DB には S3 のキーパスのみ保存し、URL はレスポンス時に動的に組み立てる（詳細: [ストレージ構成](../storage.md)）
+- `bio` の最大文字数（500文字）はアプリケーション層のバリデーションで制御します

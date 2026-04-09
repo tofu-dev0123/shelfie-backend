@@ -38,7 +38,7 @@ jobs:
           bundler-cache: true
 
       - name: Prepare RuboCop cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           DEPENDENCIES_HASH: ${{ hashFiles('.ruby-version', '**/.rubocop.yml', '**/.rubocop_todo.yml', 'Gemfile.lock') }}
         with:
@@ -49,4 +49,30 @@ jobs:
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
+
+  type_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Cache gem RBS collection
+        uses: actions/cache@v5
+        with:
+          path: .gem_rbs_collection
+          key: rbs-collection-${{ runner.os }}-${{ hashFiles('rbs_collection.yaml', 'Gemfile.lock') }}
+          restore-keys: |
+            rbs-collection-${{ runner.os }}-
+
+      - name: Install RBS collection
+        run: bundle exec rbs collection install
+
+      - name: Run type check
+        run: bundle exec steep check
 
