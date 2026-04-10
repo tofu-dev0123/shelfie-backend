@@ -20,7 +20,7 @@ avatar: <バイナリファイル>
 
 | フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| `avatar` | file | 必須 | アップロードする画像ファイル |
+| `avatar` | file | 必須 | アップロードする画像ファイル（JPEG / PNG / WebP、最大 5MB） |
 
 ## 処理詳細
 
@@ -46,4 +46,7 @@ avatar: <バイナリファイル>
 | code | ステータス | 場面 |
 |---|---|---|
 | `UNAUTHORIZED` | 401 | アクセストークンが無効・期限切れ |
-| `UNPROCESSABLE_ENTITY` | 422 | ファイルが不正（形式・サイズなど） |
+| `BAD_REQUEST` | 400 | `avatar` フィールドが未添付 |
+| `UNPROCESSABLE_ENTITY` | 422 | ファイル形式が不正（JPEG / PNG / WebP 以外） |
+| `UNPROCESSABLE_ENTITY` | 422 | ファイルサイズが 5MB 超 |
+| `INTERNAL_SERVER_ERROR` | 500 | S3 アップロード失敗 |

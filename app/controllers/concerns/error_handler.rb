@@ -3,12 +3,15 @@ module ErrorHandler
 
   included do
     rescue_from ClerkClient::UnauthorizedError, InvalidRefreshTokenError, with: :render_unauthorized
-    rescue_from UserNotFoundError, with: :render_not_found
+    rescue_from UserNotFoundError, RecordNotFoundError, with: :render_not_found
     rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
     rescue_from UsernameTakenError, with: :render_username_taken
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
     rescue_from BadRequestError, with: :render_bad_request
     rescue_from ValidationError, with: :render_validation_error
+    rescue_from AvatarFileError, with: :render_avatar_file_error
+    rescue_from S3UploadError, S3DeleteError, with: :render_internal_server_error
+    rescue_from ExternalApiError, with: :render_external_api_error
   end
 
   private
@@ -23,8 +26,8 @@ module ErrorHandler
     }, status: :unauthorized
   end
 
-  def render_not_found
-    Rails.logger.warn "リソースが見つかりません: UserNotFoundError"
+  def render_not_found(e)
+    Rails.logger.warn "リソースが見つかりません: #{e.class}"
     render json: {
       error: {
         code: ErrorCodes::NOT_FOUND,
@@ -73,8 +76,38 @@ module ErrorHandler
     }, status: :unprocessable_entity
   end
 
+  def render_avatar_file_error(e)
+    Rails.logger.warn "アバターファイルエラー: #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::UNPROCESSABLE_ENTITY,
+        message: I18n.t("messages.errors.unprocessable_entity")
+      }
+    }, status: :unprocessable_entity
+  end
+
+  def render_external_api_error(e)
+    Rails.logger.error "外部APIエラー: #{e.class} #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::EXTERNAL_API_ERROR,
+        message: I18n.t("messages.errors.external_api_error")
+      }
+    }, status: :service_unavailable
+  end
+
+  def render_internal_server_error(e)
+    Rails.logger.error "内部サーバーエラー: #{e.class} #{e.message}"
+    render json: {
+      error: {
+        code: ErrorCodes::INTERNAL_SERVER_ERROR,
+        message: I18n.t("messages.errors.internal_server_error")
+      }
+    }, status: :internal_server_error
+  end
+
   def render_unprocessable_entity(e)
-    Rails.logger.error "RecordInvalid: #{e.message}"
+    Rails.logger.warn "RecordInvalid: #{e.message}"
     details = e.record.errors.map do |error|
       { field: error.attribute, message: error.full_message }
     end

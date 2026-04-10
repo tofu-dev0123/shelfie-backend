@@ -21,7 +21,7 @@
 
 1. `username` → `user_id`、`google_books_id` → `book_id` を取得
 2. `user_books` から該当レコードを検索
-3. 書籍情報・投稿者情報・投稿内容・いいね数・購入リンクを返す
+3. 書籍情報・投稿者情報・投稿内容・購入リンクを返す
 
 ## レスポンス
 
@@ -31,11 +31,10 @@
 // 200 OK
 {
   "id": 1,
-  "status": "completed",
   "content": "とても良い本でした",
-  "likes_count": 5,
   "tags": ["Go", "Architecture"],
   "created_at": "2026-03-05T00:00:00Z",
+  "updated_at": "2026-03-06T00:00:00Z",
   "book": {
     "google_books_id": "xxxxxxxx",
     "title": "リーダブルコード",
@@ -51,6 +50,7 @@
     "https://www.amazon.co.jp/..."
   ]
 }
+// purchase_links が空の場合は [] を返す
 ```
 
 ### エラー

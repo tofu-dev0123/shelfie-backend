@@ -14,9 +14,16 @@ Rails.application.routes.draw do
       delete "logout", to: "sessions#logout"
     end
     namespace :me do
-      get "/", to: "profiles#show"
+      get   "/",      to: "profiles#show"
+      patch "/",      to: "profiles#update"
+      post   "avatar", to: "avatars#create"
+      delete "avatar", to: "avatars#destroy"
     end
+    get "books/search", to: "books#search"
+    get "books/:google_books_id/users", to: "books#users"
     get "users/username/check", to: "users#check_username"
-    resources :users, only: [ :create, :show ], param: :username
+    resources :users, only: [ :create, :show ], param: :username do
+      resources :books, only: [ :index, :show ], controller: "user_books", param: :google_books_id
+    end
   end
 end

@@ -1,0 +1,1 @@
+class AvatarFileError < StandardError; end
