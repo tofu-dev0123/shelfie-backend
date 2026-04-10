@@ -13,8 +13,7 @@ module Users
         followers_count: followers_count,
         following_count: following_count,
         books_count:     books_count,
-        links:           links,
-        is_me:           true
+        links:           links
       }
     end
   end

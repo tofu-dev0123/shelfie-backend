@@ -494,9 +494,6 @@ paths:
                     items:
                       type: string
                     example: []
-                  is_me:
-                    type: boolean
-                    example: true
                 required:
                 - id
                 - username
@@ -507,7 +504,6 @@ paths:
                 - following_count
                 - books_count
                 - links
-                - is_me
         '401':
           description: アクセストークンなし
           content:
@@ -1027,7 +1023,7 @@ paths:
           type: string
       responses:
         '200':
-          description: プロフィール取得成功（自分自身・is_following が false・is_me が true）
+          description: プロフィール取得成功（認証済み時・他ユーザー）
           content:
             application/json:
               schema:
@@ -1061,12 +1057,6 @@ paths:
                     items:
                       type: string
                     example: []
-                  is_following:
-                    type: boolean
-                    example: false
-                  is_me:
-                    type: boolean
-                    example: true
                 required:
                 - username
                 - nickname
@@ -1076,8 +1066,6 @@ paths:
                 - following_count
                 - books_count
                 - links
-                - is_following
-                - is_me
         '404':
           description: ユーザーが存在しない
           content:

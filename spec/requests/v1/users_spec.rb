@@ -250,35 +250,11 @@ RSpec.describe "ユーザー系", type: :request do
             followers_count: { type: :integer },
             following_count: { type: :integer },
             books_count:     { type: :integer },
-            links:           { type: :array, items: { type: :string } },
-            is_following:    { type: :boolean, example: false },
-            is_me:           { type: :boolean, example: false }
+            links:           { type: :array, items: { type: :string } }
           },
-          required: %w[username nickname bio avatar_url followers_count following_count books_count links is_following is_me]
+          required: %w[username nickname bio avatar_url followers_count following_count books_count links]
 
         run_test!
-      end
-
-      response "200", "プロフィール取得成功（自分自身・is_following が false・is_me が true）" do
-        let(:current_user)  { create(:user) }
-        let(:username)      { current_user.username }
-        let(:Authorization) { "Bearer valid_token" }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => current_user.id })
-        end
-
-        schema type: :object,
-          properties: {
-            is_following: { type: :boolean, example: false },
-            is_me:        { type: :boolean, example: true }
-          }
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["is_following"]).to eq(false)
-          expect(data["is_me"]).to eq(true)
-        end
       end
 
       response "404", "ユーザーが存在しない" do
