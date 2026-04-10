@@ -1023,7 +1023,7 @@ paths:
           type: string
       responses:
         '200':
-          description: プロフィール取得成功（自分自身・is_following が false）
+          description: プロフィール取得成功（認証済み時・他ユーザー）
           content:
             application/json:
               schema:
@@ -1057,9 +1057,6 @@ paths:
                     items:
                       type: string
                     example: []
-                  is_following:
-                    type: boolean
-                    example: false
                 required:
                 - username
                 - nickname
@@ -1069,7 +1066,6 @@ paths:
                 - following_count
                 - books_count
                 - links
-                - is_following
         '404':
           description: ユーザーが存在しない
           content:
