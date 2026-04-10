@@ -251,14 +251,15 @@ RSpec.describe "ユーザー系", type: :request do
             following_count: { type: :integer },
             books_count:     { type: :integer },
             links:           { type: :array, items: { type: :string } },
-            is_following:    { type: :boolean, example: false }
+            is_following:    { type: :boolean, example: false },
+            is_me:           { type: :boolean, example: false }
           },
-          required: %w[username nickname bio avatar_url followers_count following_count books_count links is_following]
+          required: %w[username nickname bio avatar_url followers_count following_count books_count links is_following is_me]
 
         run_test!
       end
 
-      response "200", "プロフィール取得成功（自分自身・is_following が false）" do
+      response "200", "プロフィール取得成功（自分自身・is_following が false・is_me が true）" do
         let(:current_user)  { create(:user) }
         let(:username)      { current_user.username }
         let(:Authorization) { "Bearer valid_token" }
@@ -269,12 +270,14 @@ RSpec.describe "ユーザー系", type: :request do
 
         schema type: :object,
           properties: {
-            is_following: { type: :boolean, example: false }
+            is_following: { type: :boolean, example: false },
+            is_me:        { type: :boolean, example: true }
           }
 
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data["is_following"]).to eq(false)
+          expect(data["is_me"]).to eq(true)
         end
       end
 
