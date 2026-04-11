@@ -3,7 +3,7 @@ module ErrorHandler
 
   included do
     rescue_from ClerkClient::UnauthorizedError, InvalidRefreshTokenError, with: :render_unauthorized
-    rescue_from UserNotFoundError, with: :render_not_found
+    rescue_from UserNotFoundError, RecordNotFoundError, with: :render_not_found
     rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
     rescue_from UsernameTakenError, with: :render_username_taken
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
@@ -26,8 +26,8 @@ module ErrorHandler
     }, status: :unauthorized
   end
 
-  def render_not_found
-    Rails.logger.warn "リソースが見つかりません: UserNotFoundError"
+  def render_not_found(e)
+    Rails.logger.warn "リソースが見つかりません: #{e.class}"
     render json: {
       error: {
         code: ErrorCodes::NOT_FOUND,

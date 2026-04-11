@@ -1,11 +1,10 @@
 class UserSerializer
-  def initialize(user:, followers_count:, following_count:, books_count:, links:, is_following: nil, include_id: false)
+  def initialize(user:, followers_count:, following_count:, books_count:, links:, include_id: false, **_ignored)
     @user            = user
     @followers_count = followers_count
     @following_count = following_count
     @books_count     = books_count
     @links           = links
-    @is_following    = is_following
     @include_id      = include_id
   end
 
@@ -22,10 +21,6 @@ class UserSerializer
       books_count:     @books_count,
       links:           @links
     )
-
-    # 認証済みの場合のみ is_following を含める
-    json[:is_following] = @is_following unless @is_following.nil?
-
     json
   end
 

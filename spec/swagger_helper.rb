@@ -25,7 +25,7 @@ RSpec.configure do |config|
       },
       servers: [
         {
-          url: "http://localhost:3000",
+          url: "http://localhost:8080",
           description: "開発環境"
         }
       ],

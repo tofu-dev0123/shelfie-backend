@@ -38,7 +38,6 @@ app/controllers/
     │                                  # POST /v1/users
     │                                  # GET /v1/users/username/check
     ├── books_controller.rb            # GET /v1/books/search
-    │                                  # GET /v1/books/:google_books_id
     │                                  # GET /v1/books/:google_books_id/users
     ├── user_books_controller.rb       # GET /v1/users/:username/books
     │                                  # GET /v1/users/:username/books/:google_books_id
