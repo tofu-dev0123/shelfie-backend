@@ -1,6 +1,6 @@
 class GoogleBooksClient
   BASE_URL = "https://www.googleapis.com/books/v1/volumes"
-  MAX_RESULTS = 10
+  MAX_RESULTS = 20
 
   def self.call(q:, start_index: 0)
     uri = URI(BASE_URL)
