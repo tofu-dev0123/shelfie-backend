@@ -1,25 +1,25 @@
 require "rails_helper"
 
 RSpec.describe Books::SearchService do
-  let(:google_books_response) do
+  let(:rakuten_books_response) do
     {
-      totalItems: 100,
-      items: Array.new(10) do |i|
+      count: 100,
+      page: 1,
+      pageCount: 5,
+      Items: Array.new(20) do |i|
         {
-          id: "id#{i}",
-          volumeInfo: {
-            title: "本#{i}",
-            authors: [ "著者#{i}" ],
-            imageLinks: { thumbnail: "https://example.com/#{i}.jpg" }
-          }
+          isbn: "978000000#{i.to_s.rjust(4, '0')}",
+          title: "本#{i}",
+          author: "著者#{i}",
+          largeImageUrl: "https://example.com/#{i}.jpg"
         }
       end
     }
   end
 
   before do
-    stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
-      .to_return(status: 200, body: google_books_response.to_json, headers: { "Content-Type" => "application/json" })
+    stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+      .to_return(status: 200, body: rakuten_books_response.to_json, headers: { "Content-Type" => "application/json" })
   end
 
   describe ".call" do
@@ -27,26 +27,26 @@ RSpec.describe Books::SearchService do
       it "検索結果を返す" do
         result = described_class.call(q: "Rails")
 
-        expect(result[:items].size).to eq(10)
+        expect(result[:items].size).to eq(20)
         expect(result[:items].first).to include(
-          google_books_id: "id0",
+          isbn: "9780000000000",
           title: "本0",
           authors: [ "著者0" ],
           thumbnail_url: "https://example.com/0.jpg"
         )
       end
 
-      it "取得件数が10件のとき has_next: true" do
+      it "pageCount より page が小さいとき has_next: true" do
         result = described_class.call(q: "Rails")
         expect(result[:pagination][:has_next]).to eq(true)
         expect(result[:pagination][:next_cursor]).not_to be_nil
       end
 
-      it "取得件数が10件未満のとき has_next: false" do
-        stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
+      it "最終ページのとき has_next: false" do
+        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(
             status: 200,
-            body: { totalItems: 3, items: google_books_response[:items].first(3) }.to_json,
+            body: { count: 3, page: 1, pageCount: 1, Items: rakuten_books_response[:Items].first(3) }.to_json,
             headers: { "Content-Type" => "application/json" }
           )
 
@@ -56,8 +56,8 @@ RSpec.describe Books::SearchService do
       end
 
       it "検索結果 0件のとき items: [] で has_next: false" do
-        stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
-          .to_return(status: 200, body: { totalItems: 0 }.to_json, headers: { "Content-Type" => "application/json" })
+        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+          .to_return(status: 200, body: { count: 0, page: 1, pageCount: 0, Items: [] }.to_json, headers: { "Content-Type" => "application/json" })
 
         result = described_class.call(q: "存在しない書籍")
         expect(result[:items]).to eq([])
@@ -65,17 +65,17 @@ RSpec.describe Books::SearchService do
       end
 
       it "cursor を渡すと次ページを取得する" do
-        cursor = Base64.strict_encode64({ startIndex: 10 }.to_json)
+        cursor = Base64.strict_encode64({ page: 2 }.to_json)
         described_class.call(q: "Rails", cursor: cursor)
 
-        expect(WebMock).to have_requested(:get, /googleapis.com/).with(query: hash_including("startIndex" => "10"))
+        expect(WebMock).to have_requested(:get, /app\.rakuten\.co\.jp/).with(query: hash_including("page" => "2"))
       end
 
       it "著者不明の書籍は authors: []" do
-        stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
+        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(
             status: 200,
-            body: { totalItems: 1, items: [ { id: "x", volumeInfo: { title: "無名の本" } } ] }.to_json,
+            body: { count: 1, page: 1, pageCount: 1, Items: [ { isbn: "9784000000001", title: "無名の本" } ] }.to_json,
             headers: { "Content-Type" => "application/json" }
           )
 
@@ -84,15 +84,27 @@ RSpec.describe Books::SearchService do
       end
 
       it "サムネイルなしの書籍は thumbnail_url: nil" do
-        stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
+        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(
             status: 200,
-            body: { totalItems: 1, items: [ { id: "x", volumeInfo: { title: "サムネなし本", authors: [ "著者" ] } } ] }.to_json,
+            body: { count: 1, page: 1, pageCount: 1, Items: [ { isbn: "9784000000001", title: "サムネなし本", author: "著者" } ] }.to_json,
             headers: { "Content-Type" => "application/json" }
           )
 
         result = described_class.call(q: "Rails")
         expect(result[:items].first[:thumbnail_url]).to be_nil
+      end
+
+      it "複数著者は ／ で分割して配列にする" do
+        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+          .to_return(
+            status: 200,
+            body: { count: 1, page: 1, pageCount: 1, Items: [ { isbn: "9784000000001", title: "共著本", author: "著者A／著者B" } ] }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        result = described_class.call(q: "Rails")
+        expect(result[:items].first[:authors]).to eq([ "著者A", "著者B" ])
       end
     end
 
@@ -124,15 +136,15 @@ RSpec.describe Books::SearchService do
         expect { described_class.call(q: "Rails", cursor: cursor) }.to raise_error(ValidationError)
       end
 
-      it "startIndex が整数でないとき ValidationError を raise する" do
-        cursor = Base64.strict_encode64({ startIndex: "ten" }.to_json)
+      it "page が整数でないとき ValidationError を raise する" do
+        cursor = Base64.strict_encode64({ page: "two" }.to_json)
         expect { described_class.call(q: "Rails", cursor: cursor) }.to raise_error(ValidationError)
       end
     end
 
     context "異常系: 外部API エラー" do
-      it "Google Books API がエラーを返したとき ExternalApiError を raise する" do
-        stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
+      it "楽天 Books API がエラーを返したとき ExternalApiError を raise する" do
+        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(status: 500)
 
         expect { described_class.call(q: "Rails") }.to raise_error(ExternalApiError)

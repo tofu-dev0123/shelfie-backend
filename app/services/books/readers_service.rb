@@ -3,12 +3,12 @@ module Books
     MAX_LIMIT = 50
     DEFAULT_LIMIT = 20
 
-    def self.call(google_books_id:, cursor: nil, limit: nil)
+    def self.call(isbn:, cursor: nil, limit: nil)
       limit = clamp_limit(limit.to_i)
       after_id = decode_cursor(cursor)
 
       users = Queries::BookReadersQuery.call(
-        google_books_id: google_books_id,
+        isbn: isbn,
         after_id: after_id,
         limit: limit
       )
