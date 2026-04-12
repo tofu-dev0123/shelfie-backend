@@ -1,6 +1,7 @@
 module Users
   class ShowService
     def self.call(username:, current_user: nil)
+      # TODO: current_user を使って is_following フラグ等をレスポンスに含める
       user = User.find_by(username: username)
       raise UserNotFoundError unless user
 
