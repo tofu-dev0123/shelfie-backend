@@ -1,14 +1,13 @@
 class RakutenBooksClient
-  BASE_URL = "https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404"
-  HITS     = 20
-  GENRE_ID = "001020"  # コンピュータ・テクノロジー
+  BASE_URL = "https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404"
+  HITS = 20
 
   def self.call(q:, page: 1)
     uri = URI(BASE_URL)
     params = {
       applicationId: ENV.fetch("RAKUTEN_APP_ID", nil),
-      keyword:       q,
-      booksGenreId:  GENRE_ID,
+      accessKey:     ENV.fetch("RAKUTEN_ACCESS_KEY", nil),
+      title:         q,
       hits:          HITS,
       page:          page,
       formatVersion: 2
