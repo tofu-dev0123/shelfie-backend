@@ -1,4 +1,4 @@
-# GET /v1/users/:username/books/:google_books_id
+# GET /v1/users/:username/books/:isbn
 
 ## 概要
 
@@ -15,11 +15,11 @@
 | パラメータ | 型 | 説明 |
 |---|---|---|
 | `:username` | string | 投稿したユーザーの username |
-| `:google_books_id` | string | Google Books API の書籍ID |
+| `:isbn` | string | ISBNコード |
 
 ## 処理詳細
 
-1. `username` → `user_id`、`google_books_id` → `book_id` を取得
+1. `username` → `user_id`、`isbn` → `book_id` を取得
 2. `user_books` から該当レコードを検索
 3. 書籍情報・投稿者情報・投稿内容・購入リンクを返す
 
@@ -36,7 +36,7 @@
   "created_at": "2026-03-05T00:00:00Z",
   "updated_at": "2026-03-06T00:00:00Z",
   "book": {
-    "google_books_id": "xxxxxxxx",
+    "isbn": "9784873116068",
     "title": "リーダブルコード",
     "authors": ["Dustin Boswell", "Trevor Foucher"],
     "thumbnail_url": "https://..."

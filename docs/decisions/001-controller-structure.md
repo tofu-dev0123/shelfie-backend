@@ -17,8 +17,8 @@ Rails API のコントローラー設計において、1つのリソースに対
 ```
 GET    /v1/users/:username/books     # 認証不要
 POST   /v1/me/books                  # 認証必須
-PATCH  /v1/me/books/:google_books_id # 認証必須
-DELETE /v1/me/books/:google_books_id # 認証必須
+PATCH  /v1/me/books/:isbn # 認証必須
+DELETE /v1/me/books/:isbn # 認証必須
 ```
 
 この場合、コントローラーをどのように分割・配置するかを決定する必要があった。

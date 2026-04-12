@@ -71,7 +71,7 @@
 | `GET /v1/users/:username/books` | `created_at` + `id` |
 | `GET /v1/users/:username/followers` | `id` |
 | `GET /v1/users/:username/following` | `id` |
-| `GET /v1/books/:google_books_id/users`（読んだユーザー） | `id` |
+| `GET /v1/books/:isbn/users`（読んだユーザー） | `id` |
 
 > `created_at` のみをカーソルにすると同一時刻レコードで重複・抜けが発生するため、`id` を組み合わせて一意性を保証します。
 

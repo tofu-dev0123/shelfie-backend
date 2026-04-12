@@ -28,12 +28,12 @@
 
 ### 外部APIはモックする
 
-ClerkとGoogle BooksのAPIは実際に叩かない。テストの安定性を保つためにスタブで偽レスポンスを返す。
+Clerkと楽天書籍APIは実際に叩かない。テストの安定性を保つためにスタブで偽レスポンスを返す。
 
 | 外部API | モック方法 |
 |---|---|
 | Clerk | `allow(ClerkClient).to receive(:verify).and_return(...)` |
-| Google Books | `stub_request` でHTTPレベルでモック |
+| 楽天書籍API | `stub_request` でHTTPレベルでモック |
 
 ### テストデータはFactoryBotで管理する
 

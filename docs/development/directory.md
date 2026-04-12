@@ -27,7 +27,7 @@ shelfie-backend/
 
 - `v1/me/` 配下はすべて `V1::Me::BaseController` を継承し、全アクションで認証必須となる
 - それ以外は認証不要（`/v1/feed` のみオプション認証を個別に適用）
-- 例外: `GET /v1/books/search` は Google Books API のリクエスト制限対策のため、`v1/` 直下ながら認証必須（`before_action :authenticate_user!` を個別に適用）
+- 例外: `GET /v1/books/search` は楽天書籍APIのリクエスト制限対策のため、`v1/` 直下ながら認証必須（`before_action :authenticate_user!` を個別に適用）
 
 ```
 app/controllers/
@@ -38,9 +38,9 @@ app/controllers/
     │                                  # POST /v1/users
     │                                  # GET /v1/users/username/check
     ├── books_controller.rb            # GET /v1/books/search
-    │                                  # GET /v1/books/:google_books_id/users
+    │                                  # GET /v1/books/:isbn/users
     ├── user_books_controller.rb       # GET /v1/users/:username/books
-    │                                  # GET /v1/users/:username/books/:google_books_id
+    │                                  # GET /v1/users/:username/books/:isbn
     ├── follows_controller.rb          # GET /v1/users/:username/followers
     │                                  # GET /v1/users/:username/following
     ├── feed_controller.rb             # GET /v1/feed
@@ -55,12 +55,12 @@ app/controllers/
         ├── avatars_controller.rb     # POST /v1/me/avatar
         │                             # DELETE /v1/me/avatar
         ├── books_controller.rb       # POST /v1/me/books
-        │                             # PATCH /v1/me/books/:google_books_id
-        │                             # DELETE /v1/me/books/:google_books_id
+        │                             # PATCH /v1/me/books/:isbn
+        │                             # DELETE /v1/me/books/:isbn
         ├── follows_controller.rb     # POST /v1/me/follows/:username
         │                             # DELETE /v1/me/follows/:username
-        └── likes_controller.rb       # POST /v1/me/likes/:username/:google_books_id
-                                      # DELETE /v1/me/likes/:username/:google_books_id
+        └── likes_controller.rb       # POST /v1/me/likes/:username/:isbn
+                                      # DELETE /v1/me/likes/:username/:isbn
 ```
 
 ### app/models/
@@ -115,7 +115,7 @@ app/services/
 │   ├── me_show_service.rb        # 自分のプロフィール取得
 │   └── me_update_service.rb      # 自分のプロフィール更新
 └── user_books/
-    ├── create_service.rb         # Google Books取得 → books upsert → user_book作成
+    ├── create_service.rb         # 楽天書籍API取得 → books upsert → user_book作成
     └── update_service.rb         # user_book更新 + purchase_links全置換
 ```
 
@@ -126,7 +126,7 @@ app/services/
 ```
 lib/clients/
 ├── clerk_client.rb           # Clerk JWT検証
-├── google_books_client.rb    # Google Books API
+├── rakuten_books_client.rb   # 楽天書籍API
 └── s3_client.rb              # S3 ファイルアップロード
 ```
 

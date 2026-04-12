@@ -1,4 +1,4 @@
-# DELETE /v1/me/books/:google_books_id
+# DELETE /v1/me/books/:isbn
 
 ## 概要
 
@@ -14,12 +14,12 @@
 
 | パラメータ | 型 | 説明 |
 |---|---|---|
-| `:google_books_id` | string | Google Books API の書籍ID |
+| `:isbn` | string | ISBNコード |
 
 ## 処理詳細
 
 1. アクセストークンを検証してログインユーザーを特定
-2. `google_books_id` → `book_id` を取得し、ログインユーザーの `user_books` レコードを検索
+2. `isbn` → `book_id` を取得し、ログインユーザーの `user_books` レコードを検索
 3. `user_books` レコードを削除（関連する `user_book_purchase_links` / `likes` も CASCADE削除）
 
 ## レスポンス

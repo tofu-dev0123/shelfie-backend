@@ -38,17 +38,17 @@
 | メソッド | パス | オペレーション名 | 説明 | 認証 |
 |---|---|---|---|---|
 | GET | `/v1/books/search?q=` | 書籍検索API | 書籍検索 | 必須 |
-| GET | `/v1/books/:google_books_id/users` | 既読書籍ユーザー一覧取得API | その書籍を読んだユーザー一覧 | 不要 |
+| GET | `/v1/books/:isbn/users` | 既読書籍ユーザー一覧取得API | その書籍を読んだユーザー一覧 | 不要 |
 
 ## 本棚系
 
 | メソッド | パス | オペレーション名 | 説明 | 認証 |
 |---|---|---|---|---|
 | GET | `/v1/users/:username/books` | 本棚一覧取得API | ユーザーの本棚一覧 | 不要 |
-| GET | `/v1/users/:username/books/:google_books_id` | 本棚投稿詳細取得API | 投稿詳細 | 不要 |
+| GET | `/v1/users/:username/books/:isbn` | 本棚投稿詳細取得API | 投稿詳細 | 不要 |
 | POST | `/v1/me/books` | 本棚追加API | 本棚に追加 | 必須 |
-| PATCH | `/v1/me/books/:google_books_id` | 本棚投稿更新API | 投稿内容更新 | 必須 |
-| DELETE | `/v1/me/books/:google_books_id` | 本棚投稿削除API | 投稿削除 | 必須 |
+| PATCH | `/v1/me/books/:isbn` | 本棚投稿更新API | 投稿内容更新 | 必須 |
+| DELETE | `/v1/me/books/:isbn` | 本棚投稿削除API | 投稿削除 | 必須 |
 
 ## フォロー系
 
@@ -64,8 +64,8 @@
 | メソッド | パス | オペレーション名 | 説明 | 認証 |
 |---|---|---|---|---|
 | GET | `/v1/me/want_to_reads` | 読みたいリスト取得API | 自分の読みたいリスト取得 | 必須 |
-| POST | `/v1/me/want_to_reads/:google_books_id` | 読みたい追加API | 読みたいリストに追加 | 必須 |
-| DELETE | `/v1/me/want_to_reads/:google_books_id` | 読みたい削除API | 読みたいリストから削除 | 必須 |
+| POST | `/v1/me/want_to_reads/:isbn` | 読みたい追加API | 読みたいリストに追加 | 必須 |
+| DELETE | `/v1/me/want_to_reads/:isbn` | 読みたい削除API | 読みたいリストから削除 | 必須 |
 
 ## タグ系
 

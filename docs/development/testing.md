@@ -4,7 +4,7 @@
 
 - **spec を先に書く**（TDD：実装前に spec を書く）
 - **`described_class` を使う**（クラス名をハードコードしない）
-- **外部APIは必ずモックする**（Clerk・Google Books を実際に叩かない）
+- **外部APIは必ずモックする**（Clerk・楽天書籍APIを実際に叩かない）
 
 ## 構成
 
@@ -186,14 +186,14 @@ bundle exec rails rswag:specs:swaggerize
 
 ## 外部APIのモック
 
-ClerkとGoogle BooksのAPIは実際に叩かない。
+Clerkと楽天書籍APIは実際に叩かない。
 
 ```ruby
 # Clerk
 allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" })
 allow(ClerkClient).to receive(:verify).and_raise(ClerkClient::UnauthorizedError)
 
-# Google Books（HTTPレベルでモック）
-stub_request(:get, "https://www.googleapis.com/books/v1/volumes/...")
-  .to_return(status: 200, body: { id: "abc123", volumeInfo: { title: "テスト本" } }.to_json)
+# 楽天書籍API（HTTPレベルでモック）
+stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+  .to_return(status: 200, body: { Items: [{ Item: { isbn: "9784873116068", title: "テスト本", author: "著者名" } }] }.to_json)
 ```

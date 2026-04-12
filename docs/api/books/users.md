@@ -1,4 +1,4 @@
-# GET /v1/books/:google_books_id/users
+# GET /v1/books/:isbn/users
 
 ## 概要
 
@@ -14,7 +14,7 @@
 
 | パラメータ | 型 | 説明 |
 |---|---|---|
-| `:google_books_id` | string | Google Books API の書籍ID |
+| `:isbn` | string | ISBNコード |
 
 ### クエリパラメータ
 
@@ -25,8 +25,8 @@
 
 ## 処理詳細
 
-1. `google_books_id` で Books テーブルを検索
-2. `books.google_books_id` → `books.id` → `user_books.user_id` → `users.*` の順でJOINし、1クエリでユーザー一覧を取得
+1. `isbn` で Books テーブルを検索
+2. `books.isbn` → `books.id` → `user_books.user_id` → `users.*` の順でJOINし、1クエリでユーザー一覧を取得
 3. カーソルベースでページネーションして返す
 
 ```sql
@@ -34,7 +34,7 @@ SELECT users.*
 FROM users
 INNER JOIN user_books ON users.id = user_books.user_id
 INNER JOIN books ON books.id = user_books.book_id
-WHERE books.google_books_id = :google_books_id
+WHERE books.isbn = :isbn
 ORDER BY user_books.id
 LIMIT 20;
 ```
