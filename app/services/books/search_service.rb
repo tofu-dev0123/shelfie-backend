@@ -1,11 +1,9 @@
 module Books
   class SearchService
-    MAX_QUERY_LENGTH = 100
-
     def self.call(q:, cursor: nil)
       q = q.to_s.strip
       raise ValidationError, "q is blank" if q.blank?
-      raise ValidationError, "q is too long" if q.length > MAX_QUERY_LENGTH
+      raise ValidationError, "q is too long" if q.length > BookConstants::MAX_QUERY_LENGTH
 
       page   = Cursor.decode(cursor)
       result = RakutenBooksClient.call(q: q, page: page)

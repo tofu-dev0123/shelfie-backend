@@ -39,7 +39,7 @@ RSpec.describe "書籍系", type: :request do
         let(:q) { "Rails" }
 
         before do
-          stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+          stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_return(status: 200, body: rakuten_books_response, headers: { "Content-Type" => "application/json" })
         end
 
@@ -76,7 +76,7 @@ RSpec.describe "書籍系", type: :request do
         let(:q) { "存在しない書籍xyzxyz" }
 
         before do
-          stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+          stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_return(status: 200, body: { count: 0, page: 1, pageCount: 0, Items: [] }.to_json, headers: { "Content-Type" => "application/json" })
         end
 
@@ -199,7 +199,7 @@ RSpec.describe "書籍系", type: :request do
         let(:q) { "Rails" }
 
         before do
-          stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+          stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_return(status: 500)
         end
 

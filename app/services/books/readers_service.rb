@@ -1,8 +1,5 @@
 module Books
   class ReadersService
-    MAX_LIMIT = 50
-    DEFAULT_LIMIT = 20
-
     def self.call(isbn:, cursor: nil, limit: nil)
       limit = clamp_limit(limit.to_i)
       after_id = decode_cursor(cursor)
@@ -27,9 +24,9 @@ module Books
     end
 
     def self.clamp_limit(limit)
-      return DEFAULT_LIMIT if limit <= 0
+      return UserBookConstants::DEFAULT_LIMIT if limit <= 0
 
-      [ limit, MAX_LIMIT ].min
+      [ limit, UserBookConstants::MAX_LIMIT ].min
     end
 
     def self.decode_cursor(cursor)
