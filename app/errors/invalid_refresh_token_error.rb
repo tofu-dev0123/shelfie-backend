@@ -1,0 +1,1 @@
+class InvalidRefreshTokenError < StandardError; end

@@ -1,5 +1,19 @@
 module V1
   class UsersController < BaseController
+    before_action :authenticate_user_if_token_present, only: [ :show ]
+
+    def show
+      Rails.logger.debug "UsersController#show に入りました"
+      result = Users::ShowService.call(username: params[:username], current_user: current_user)
+      render json: UserSerializer.new(**result.except(:user), user: result[:user]).as_json, status: :ok
+    end
+
+    def check_username
+      Rails.logger.debug "UsersController#check_username に入りました"
+      result = Users::CheckUsernameService.call(value: params[:value])
+      render json: result, status: :ok
+    end
+
     def create
       Rails.logger.debug "UsersController#create に入りました"
       result = Users::CreateService.call(

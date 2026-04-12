@@ -10,8 +10,21 @@ Rails.application.routes.draw do
   namespace :v1 do
     namespace :auth do
       post "login", to: "sessions#login"
+      post "refresh", to: "sessions#refresh"
       delete "logout", to: "sessions#logout"
     end
-    resources :users, only: [ :create ]
+    namespace :me do
+      get   "/",      to: "profiles#show"
+      patch "/",      to: "profiles#update"
+      post   "avatar", to: "avatars#create"
+      delete "avatar", to: "avatars#destroy"
+      post   "books",  to: "books#create"
+    end
+    get "books/search", to: "books#search"
+    get "books/:isbn/users", to: "books#users"
+    get "users/username/check", to: "users#check_username"
+    resources :users, only: [ :create, :show ], param: :username do
+      resources :books, only: [ :index, :show ], controller: "user_books", param: :isbn
+    end
   end
 end

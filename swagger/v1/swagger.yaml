@@ -5,7 +5,7 @@ info:
   version: v1
   description: Shelfie バックエンド API ドキュメント
 servers:
-- url: http://localhost:3000
+- url: http://localhost:8080
   description: 開発環境
 components:
   securitySchemes:
@@ -84,6 +84,794 @@ paths:
                     example: すでにログアウト済みです。
                 required:
                 - message
+  "/v1/auth/refresh":
+    post:
+      summary: アクセストークン再発行API
+      tags:
+      - 認証系
+      responses:
+        '200':
+          description: 再発行成功（リフレッシュトークンのローテーションあり）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJ...
+                required:
+                - access_token
+        '401':
+          description: リフレッシュトークンが期限切れ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+  "/v1/books/search":
+    get:
+      summary: 書籍検索API
+      tags:
+      - 書籍系
+      security:
+      - Bearer: []
+      parameters:
+      - name: q
+        in: query
+        required: true
+        description: 検索キーワード（空白トリム後1文字以上・100文字以内）
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor（省略時は先頭から）
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 検索結果 0件
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        isbn:
+                          type: string
+                          example: '9784873118079'
+                        title:
+                          type: string
+                          example: リーダブルコード
+                        authors:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                          - Dustin Boswell
+                        thumbnail_url:
+                          type: string
+                          nullable: true
+                          example: https://...
+                      required:
+                      - isbn
+                      - title
+                      - authors
+                      - thumbnail_url
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+        '401':
+          description: アクセストークンが無効
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '422':
+          description: cursor のデコード失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '503':
+          description: 楽天 Books API エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: EXTERNAL_API_ERROR
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+  "/v1/books/{isbn}/users":
+    get:
+      summary: 既読書籍ユーザー一覧取得API
+      tags:
+      - 書籍系
+      parameters:
+      - name: isbn
+        in: path
+        required: true
+        description: 書籍の ISBN-13
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor（省略時は先頭から）
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 最大取得件数。上限は50で、超えた場合は50にクランプされる（デフォルト20）
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: limit が50超のときクランプされる
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        username:
+                          type: string
+                          example: komusan
+                        nickname:
+                          type: string
+                          example: コムさん
+                        avatar_url:
+                          type: string
+                          nullable: true
+                          example:
+                      required:
+                      - username
+                      - nickname
+                      - avatar_url
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+  "/v1/me/avatar":
+    post:
+      summary: アバター画像アップロードAPI
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: アップロード成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example: https://example.cloudfront.net/avatars/1.jpg
+                required:
+                - avatar_url
+        '400':
+          description: avatar フィールドが未添付
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: BAD_REQUEST
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: ファイルサイズが 5MB 超
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNPROCESSABLE_ENTITY
+                      message:
+                        type: string
+        '500':
+          description: S3 アップロード失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: INTERNAL_SERVER_ERROR
+                      message:
+                        type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: file
+        required: true
+        description: アップロードする画像ファイル（JPEG / PNG / WebP、最大 5MB）
+    delete:
+      summary: アバター画像削除API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: 削除成功（アバターなし・冪等）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 削除が完了しました
+                required:
+                - message
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '500':
+          description: S3 削除失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: INTERNAL_SERVER_ERROR
+                      message:
+                        type: string
+  "/v1/me":
+    get:
+      summary: マイプロフィール取得API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      responses:
+        '200':
+          description: プロフィール取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  username:
+                    type: string
+                    example: komusan
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example:
+                  followers_count:
+                    type: integer
+                    example: 0
+                  following_count:
+                    type: integer
+                    example: 0
+                  books_count:
+                    type: integer
+                    example: 0
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                required:
+                - id
+                - username
+                - nickname
+                - bio
+                - avatar_url
+                - followers_count
+                - following_count
+                - books_count
+                - links
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+    patch:
+      summary: プロフィール更新API
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: プロフィール更新成功（links全件削除）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                required:
+                - nickname
+                - bio
+                - links
+        '400':
+          description: 全フィールド未送信
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: BAD_REQUEST
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: バリデーションエラー（links不正URL）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNPROCESSABLE_ENTITY
+                      message:
+                        type: string
+                      details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                              example: links[0]
+                            message:
+                              type: string
+                              example: 正しいURL形式で入力してください
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  example: コムさん
+                bio:
+                  type: string
+                  example: エンジニアです
+                links:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - https://github.com/komusan
+        required: true
+  "/v1/users/{username}/books":
+    get:
+      summary: 本棚一覧取得API
+      tags:
+      - 本棚系
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 取得するユーザーの username
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor。不正な値の場合は 422 を返す
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 最大取得件数。上限は50で、超えた場合は50にクランプされる（デフォルト20）
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: cursor 指定でページネーション
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        content:
+                          type: string
+                          nullable: true
+                          example: とても良い本でした
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                          - Go
+                        created_at:
+                          type: string
+                          example: '2026-03-05T00:00:00Z'
+                        book:
+                          type: object
+                          properties:
+                            isbn:
+                              type: string
+                              example: '9784873118079'
+                            title:
+                              type: string
+                              example: リーダブルコード
+                            authors:
+                              type: array
+                              items:
+                                type: string
+                              example:
+                              - 著者名
+                            thumbnail_url:
+                              type: string
+                              nullable: true
+                              example:
+                          required:
+                          - isbn
+                          - title
+                          - authors
+                          - thumbnail_url
+                      required:
+                      - id
+                      - content
+                      - tags
+                      - created_at
+                      - book
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+        '404':
+          description: ユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '422':
+          description: 不正なカーソル値
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+  "/v1/users/{username}/books/{isbn}":
+    get:
+      summary: 本棚投稿詳細取得API
+      tags:
+      - 本棚系
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 投稿したユーザーの username
+        schema:
+          type: string
+      - name: isbn
+        in: path
+        required: true
+        description: 書籍の ISBN-13
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 購入リンクなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  content:
+                    type: string
+                    nullable: true
+                    example: とても良い本でした
+                  tags:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - Go
+                  created_at:
+                    type: string
+                    example: '2026-03-05T00:00:00Z'
+                  updated_at:
+                    type: string
+                    example: '2026-03-06T00:00:00Z'
+                  book:
+                    type: object
+                    properties:
+                      isbn:
+                        type: string
+                        example: '9784873118079'
+                      title:
+                        type: string
+                        example: リーダブルコード
+                      authors:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                        - 著者名
+                      thumbnail_url:
+                        type: string
+                        nullable: true
+                        example:
+                    required:
+                    - isbn
+                    - title
+                    - authors
+                    - thumbnail_url
+                  user:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                        example: komusan
+                      nickname:
+                        type: string
+                        example: コムさん
+                      avatar_url:
+                        type: string
+                        nullable: true
+                        example:
+                    required:
+                    - username
+                    - nickname
+                    - avatar_url
+                  purchase_links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                required:
+                - purchase_links
+        '404':
+          description: 投稿が存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
   "/v1/users":
     post:
       summary: ユーザー登録API
@@ -175,3 +963,136 @@ paths:
               - nickname
               - username
         required: true
+  "/v1/users/username/check":
+    get:
+      summary: ユーザーネーム重複チェックAPI
+      tags:
+      - ユーザー系
+      parameters:
+      - name: value
+        in: query
+        required: true
+        description: チェックする username（3〜40文字、小文字英数字と _ のみ、連続する _ は不可）
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 重複あり（使用不可）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+                    example: false
+                required:
+                - available
+        '400':
+          description: value パラメータがない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: BAD_REQUEST
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+  "/v1/users/{username}":
+    get:
+      summary: ユーザープロフィール取得API
+      tags:
+      - ユーザー系
+      security:
+      - Bearer: []
+      - {}
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 取得するユーザーの username
+        schema:
+          type: string
+      responses:
+        '200':
+          description: プロフィール取得成功（認証済み時・他ユーザー）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: komusan
+                  nickname:
+                    type: string
+                    example: コムさん
+                  bio:
+                    type: string
+                    nullable: true
+                    example: エンジニアです
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    example:
+                  followers_count:
+                    type: integer
+                    example: 0
+                  following_count:
+                    type: integer
+                    example: 0
+                  books_count:
+                    type: integer
+                    example: 0
+                  links:
+                    type: array
+                    items:
+                      type: string
+                    example: []
+                required:
+                - username
+                - nickname
+                - bio
+                - avatar_url
+                - followers_count
+                - following_count
+                - books_count
+                - links
+        '404':
+          description: ユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+        '401':
+          description: アクセストークンが不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string

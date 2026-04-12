@@ -29,6 +29,9 @@ gem "lograge"
 # JWT認証
 gem "jwt"
 
+# S3 アップロード
+gem "aws-sdk-s3"
+
 # Clerk JWT検証
 gem "clerk-sdk-ruby"
 
@@ -50,4 +53,5 @@ group :development, :test do
   gem "rspec-rails"
   gem "factory_bot_rails"
   gem "rswag-specs"
+  gem "webmock"
 end

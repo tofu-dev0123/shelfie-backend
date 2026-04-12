@@ -6,6 +6,19 @@ ja:
       account_already_exists: "すでに登録済みのアカウントです"
       username_taken: "このユーザー名はすでに使用されています"
       unprocessable_entity: "入力内容に誤りがあります"
+      bad_request: "必須パラメータが不足しています"
+      validation_error: "ユーザー名の形式が正しくありません"
+      internal_server_error: "サーバーエラーが発生しました"
+      external_api_error: "外部サービスとの通信に失敗しました。しばらく時間をおいて再度お試しください"
+      conflict: "すでに登録済みの書籍です"
+    avatar:
+      invalid_format: "ファイル形式が不正です（JPEG / PNG / WebP のみ）"
+      file_too_large: "ファイルサイズが5MBを超えています"
+    me:
+      books:
+        created: "登録が完了しました"
+      avatar:
+        deleted: "削除が完了しました"
     auth:
       logout:
         logged_out: "ログアウトしました。"

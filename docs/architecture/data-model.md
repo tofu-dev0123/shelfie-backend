@@ -9,31 +9,32 @@
 │ id           │       │ id               │───────│ id                       │
 │ user_id      │  N:1  │ user_id          │       │ user_book_id             │
 │ url          │       │ book_id          │       │ url                      │
-└──────┬───────┘       │ status           │       └──────────────────────────┘
-       │               │ content          │
-       │               └──┬─────┬──────┬──┘
-       │ N:1              │ N:1 │ 1:N  │ 1:N
-┌──────▼───────┐          │  ┌──▼────┐ └───────────────┐
-│    users     │──────────┘  │ likes │  user_book_tags │
-├──────────────┤             ├───────┤ ├────────────────┤
-│ id           │  1:N        │ id    │ │ id             │
-│ clerk_user_id│◄────────────│user_id│ │ user_book_id   │  N:1  ┌──────┐
-│ email        │             │user_  │ │ tag_id         │───────│ tags │
-│ nickname     │             │book_id│ └────────────────┘       ├──────┤
-│ username     │             └───────┘                          │ id   │
-│ avatar_url   │                                                 │ name │
-│ bio          │  follows          tag_follows                   └──────┘
-└──────┬───────┘  ┌──────────────┐ ┌─────────────┐
-       │          │ follower_id  │ │ user_id     │──► users
-       │          │ followee_id  │ │ tag_id      │──► tags
-       │          └──────────────┘ └─────────────┘
-       │          （→ users）
+└──────┬───────┘       │ content          │       └──────────────────────────┘
+       │               └──┬──────┬────────┘
+       │ N:1              │ N:1  │ 1:N
+┌──────▼───────┐          │  ┌───▼────────────┐
+│    users     │──────────┘  │ user_book_tags │
+├──────────────┤             ├────────────────┤
+│ id           │             │ id             │
+│ clerk_user_id│             │ user_book_id   │  N:1  ┌──────┐
+│ email        │             │ tag_id         │───────│ tags │
+│ nickname     │             └────────────────┘       ├──────┤
+│ username     │                                       │ id   │
+│ avatar_url   │  want_to_reads    tag_follows         │ name │
+│ bio          │  ┌─────────────┐ ┌─────────────┐     └──────┘
+└──────┬───────┘  │ user_id     │ │ user_id     │──► users
+       │   1:N ◄──│ book_id     │ │ tag_id      │──► tags
+       │          └─────────────┘ └─────────────┘
+       │          follows
+       │          ┌──────────────┐
+       │          │ follower_id  │──► users
+       │          │ followee_id  │──► users
+       │          └──────────────┘
        └── 1:N ──►┌──────────────┐
                   │    books     │
                   ├──────────────┤
                   │ id           │
-                  │ google_      │
-                  │ books_id     │
+                  │ isbn         │
                   │ title        │
                   │ authors[]    │
                   └──────────────┘
@@ -47,14 +48,14 @@
 |---|---|
 | [users](./tables/users.md) | ユーザー情報 |
 | [user_links](./tables/user_links.md) | プロフィールリンク（最大5件）|
-| [books](./tables/books.md) | 書籍データ（Google Books API キャッシュ）|
+| [books](./tables/books.md) | 書籍データ（楽天書籍API キャッシュ）|
 | [user_books](./tables/user_books.md) | 本棚投稿 |
 | [user_book_purchase_links](./tables/user_book_purchase_links.md) | 購入リンク |
 | [tags](./tables/tags.md) | 技術タグマスタ |
 | [user_book_tags](./tables/user_book_tags.md) | 本棚投稿へのタグ付け |
 | [tag_follows](./tables/tag_follows.md) | タグフォロー |
 | [follows](./tables/follows.md) | フォロー関係 |
-| [likes](./tables/likes.md) | いいね |
+| [want_to_reads](./tables/want_to_reads.md) | 読みたいリスト |
 | [refresh_tokens](./tables/refresh_tokens.md) | リフレッシュトークン管理 |
 
 ---
@@ -65,10 +66,10 @@
 |---|---|---|
 | users | UNIQUE (clerk_user_id) | Clerk アカウントの重複防止 |
 | users | UNIQUE (username) | ユーザー名の一意性 |
-| books | UNIQUE (google_books_id) | 同一書籍の重複登録防止 |
+| books | UNIQUE (isbn) | 同一書籍の重複登録防止 |
 | user_books | UNIQUE (user_id, book_id) | 同じ本を複数回投稿不可 |
 | follows | UNIQUE (follower_id, followee_id) | 重複フォロー防止 |
-| likes | UNIQUE (user_id, user_book_id) | 同じ投稿への重複いいね防止 |
+| want_to_reads | UNIQUE (user_id, book_id) | 同じ書籍の重複登録防止 |
 | tags | UNIQUE (name) | タグ名の一意性 |
 | user_book_tags | UNIQUE (user_book_id, tag_id) | 同一投稿への重複タグ付与防止 |
 | tag_follows | UNIQUE (user_id, tag_id) | 重複タグフォロー防止 |
@@ -79,7 +80,7 @@
 
 ### Books テーブルはキャッシュとして機能する
 
-書籍データは Google Books API から取得しますが、初回登録時に Books テーブルに保存します。
+書籍データは楽天書籍APIから取得しますが、初回登録時に Books テーブルに保存します。
 これにより「この本を読んだユーザー一覧」などの集計クエリを DB 内で完結させます。
 
 ```sql
@@ -114,7 +115,7 @@ ORDER BY user_books.created_at DESC;
 ユーザー削除時はアプリケーション層でトランザクション内の順次削除を行います。削除順序は以下の通りです（FK 制約の依存関係に従う）。
 
 ```
-likes
+want_to_reads
   → follows
   → tag_follows
     → refresh_tokens
@@ -141,8 +142,8 @@ likes
 | user_book_purchase_links | user_book_id | user_books | RESTRICT |
 | follows | follower_id | users | RESTRICT |
 | follows | followee_id | users | RESTRICT |
-| likes | user_id | users | RESTRICT |
-| likes | user_book_id | user_books | RESTRICT |
+| want_to_reads | user_id | users | RESTRICT |
+| want_to_reads | book_id | books | RESTRICT |
 | refresh_tokens | user_id | users | RESTRICT |
 | user_book_tags | user_book_id | user_books | RESTRICT |
 | user_book_tags | tag_id | tags | RESTRICT |
