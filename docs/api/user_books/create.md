@@ -25,10 +25,10 @@
 
 | フィールド | 型 | 必須 | バリデーション |
 |---|---|---|---|
-| `isbn` | string | 必須 | |
+| `isbn` | string | 必須 | 13文字の数字のみ（ISBN-13） |
 | `content` | string | 任意 | 最大1000文字 |
-| `tags` | array | 任意 | 最大5件。存在するタグ名のみ有効 |
-| `purchase_links` | array | 任意 | URL形式、最大3件 |
+| `tags` | array | 任意 | 最大5件。存在するタグ名のみ有効（それ以外は422） |
+| `purchase_links` | array | 任意 | URL形式・各URL最大1000文字・最大3件 |
 
 ## 処理詳細
 
@@ -58,3 +58,4 @@
 | `NOT_FOUND` | 404 | 楽天書籍APIに書籍が存在しない |
 | `CONFLICT` | 409 | すでに同じ書籍を登録済み |
 | `VALIDATION_ERROR` | 422 | バリデーション違反 |
+| `EXTERNAL_API_ERROR` | 503 | 楽天書籍APIがエラー・タイムアウトを返した |
