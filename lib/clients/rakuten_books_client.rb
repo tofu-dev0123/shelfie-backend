@@ -14,7 +14,12 @@ class RakutenBooksClient
     }
     uri.query = URI.encode_www_form(params)
 
-    response = Net::HTTP.get_response(uri)
+    response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+      request = Net::HTTP::Get.new(uri)
+      request["Origin"]  = ENV.fetch("RAKUTEN_ORIGIN", "https://dev-api.shelfie.jp")
+      request["Referer"] = ENV.fetch("RAKUTEN_ORIGIN", "https://dev-api.shelfie.jp")
+      http.request(request)
+    end
     raise ExternalApiError, "Rakuten Books API error: #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 
     JSON.parse(response.body, symbolize_names: true)
