@@ -150,9 +150,9 @@ paths:
                     items:
                       type: object
                       properties:
-                        google_books_id:
+                        isbn:
                           type: string
-                          example: abc123
+                          example: '9784873118079'
                         title:
                           type: string
                           example: リーダブルコード
@@ -167,7 +167,7 @@ paths:
                           nullable: true
                           example: https://...
                       required:
-                      - google_books_id
+                      - isbn
                       - title
                       - authors
                       - thumbnail_url
@@ -225,7 +225,7 @@ paths:
                     - code
                     - message
         '503':
-          description: Google Books API エラー
+          description: 楽天 Books API エラー
           content:
             application/json:
               schema:
@@ -242,16 +242,16 @@ paths:
                     required:
                     - code
                     - message
-  "/v1/books/{google_books_id}/users":
+  "/v1/books/{isbn}/users":
     get:
       summary: 既読書籍ユーザー一覧取得API
       tags:
       - 書籍系
       parameters:
-      - name: google_books_id
+      - name: isbn
         in: path
         required: true
-        description: Google Books API の書籍ID
+        description: 書籍の ISBN-13
         schema:
           type: string
       - name: cursor
@@ -681,9 +681,9 @@ paths:
                         book:
                           type: object
                           properties:
-                            google_books_id:
+                            isbn:
                               type: string
-                              example: xxxxxxxx
+                              example: '9784873118079'
                             title:
                               type: string
                               example: リーダブルコード
@@ -698,7 +698,7 @@ paths:
                               nullable: true
                               example:
                           required:
-                          - google_books_id
+                          - isbn
                           - title
                           - authors
                           - thumbnail_url
@@ -761,7 +761,7 @@ paths:
                     required:
                     - code
                     - message
-  "/v1/users/{username}/books/{google_books_id}":
+  "/v1/users/{username}/books/{isbn}":
     get:
       summary: 本棚投稿詳細取得API
       tags:
@@ -773,10 +773,10 @@ paths:
         description: 投稿したユーザーの username
         schema:
           type: string
-      - name: google_books_id
+      - name: isbn
         in: path
         required: true
-        description: Google Books API の書籍ID
+        description: 書籍の ISBN-13
         schema:
           type: string
       responses:
@@ -809,9 +809,9 @@ paths:
                   book:
                     type: object
                     properties:
-                      google_books_id:
+                      isbn:
                         type: string
-                        example: xxxxxxxx
+                        example: '9784873118079'
                       title:
                         type: string
                         example: リーダブルコード
@@ -826,7 +826,7 @@ paths:
                         nullable: true
                         example:
                     required:
-                    - google_books_id
+                    - isbn
                     - title
                     - authors
                     - thumbnail_url
