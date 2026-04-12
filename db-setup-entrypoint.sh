@@ -15,5 +15,9 @@ echo "[db-setup] Running database prepare..."
 bundle exec rails db:prepare
 echo "[db-setup] Database prepare completed."
 
+echo "[db-setup] Running seeds..."
+bundle exec rails db:seed
+echo "[db-setup] Seeds completed."
+
 echo "[db-setup] Starting Rails server..."
 exec "$@"

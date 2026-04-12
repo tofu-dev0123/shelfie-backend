@@ -2,7 +2,7 @@
 
 ## 概要
 
-Google Books API を経由して書籍を検索する。
+楽天書籍APIを経由して書籍を検索する。
 
 ## リクエスト
 
@@ -22,7 +22,7 @@ Google Books API を経由して書籍を検索する。
 1. アクセストークンを検証してログインユーザーを特定
 2. `q` のバリデーション（空白トリム後に空・100文字超は 422）
 3. `cursor` をデコードして `start_index` を取得（省略時は 0）。デコード失敗は 422
-4. Google Books API に `q` / `startIndex` / `maxResults=10` を指定してリクエスト
+4. 楽天書籍APIに `q` を指定してリクエスト
 5. 取得件数が `maxResults(10)` 未満なら `has_next: false`、そうでなければ `true`
 6. 結果を整形して返す
 
@@ -35,7 +35,7 @@ Google Books API を経由して書籍を検索する。
 {
   "items": [
     {
-      "google_books_id": "xxxxxxxx",
+      "isbn": "9784873116068",
       "title": "リーダブルコード",
       "authors": ["Dustin Boswell", "Trevor Foucher"], // 著者不明の場合は []
       "thumbnail_url": "https://..."                   // サムネイルなしの場合は null
@@ -56,4 +56,4 @@ Google Books API を経由して書籍を検索する。
 | `UNAUTHORIZED` | 401 | アクセストークンが無効・期限切れ |
 | `VALIDATION_ERROR` | 422 | `q` が空・空白のみ・100文字超 |
 | `VALIDATION_ERROR` | 422 | `cursor` のデコードに失敗 |
-| `EXTERNAL_API_ERROR` | 503 | Google Books API がエラー・タイムアウトを返した |
+| `EXTERNAL_API_ERROR` | 503 | 楽天書籍APIがエラー・タイムアウトを返した |

@@ -11,6 +11,7 @@ module ErrorHandler
     rescue_from ValidationError, with: :render_validation_error
     rescue_from AvatarFileError, with: :render_avatar_file_error
     rescue_from S3UploadError, S3DeleteError, with: :render_internal_server_error
+    rescue_from BookAlreadyRegisteredError, with: :render_conflict
     rescue_from ExternalApiError, with: :render_external_api_error
   end
 
@@ -84,6 +85,16 @@ module ErrorHandler
         message: I18n.t("messages.errors.unprocessable_entity")
       }
     }, status: :unprocessable_entity
+  end
+
+  def render_conflict(e)
+    Rails.logger.warn "競合エラー: #{e.class}"
+    render json: {
+      error: {
+        code: ErrorCodes::CONFLICT,
+        message: I18n.t("messages.errors.conflict")
+      }
+    }, status: :conflict
   end
 
   def render_external_api_error(e)

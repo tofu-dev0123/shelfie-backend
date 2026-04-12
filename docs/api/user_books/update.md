@@ -1,4 +1,4 @@
-# PATCH /v1/me/books/:google_books_id
+# PATCH /v1/me/books/:isbn
 
 ## 概要
 
@@ -14,7 +14,7 @@
 
 | パラメータ | 型 | 説明 |
 |---|---|---|
-| `:google_books_id` | string | Google Books API の書籍ID |
+| `:isbn` | string | ISBNコード |
 
 ### ボディ
 
@@ -37,7 +37,7 @@
 ## 処理詳細
 
 1. アクセストークンを検証してログインユーザーを特定
-2. `google_books_id` → `book_id` を取得し、ログインユーザーの `user_books` レコードを検索
+2. `isbn` → `book_id` を取得し、ログインユーザーの `user_books` レコードを検索
 3. `content` を更新
 4. `tags` は全件置き換えで更新（省略時は変更なし、空配列 `[]` を渡すと全削除）
 5. `purchase_links` は全件置き換えで更新（省略時は変更なし、空配列 `[]` を渡すと全削除）

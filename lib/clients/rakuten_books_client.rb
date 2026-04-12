@@ -3,15 +3,20 @@ class RakutenBooksClient
   HITS = 20
 
   def self.call(q:, page: 1)
+    fetch(title: q, hits: HITS, page: page)
+  end
+
+  def self.find_by_isbn(isbn:)
+    fetch(isbn: isbn)
+  end
+
+  def self.fetch(query_params)
     uri = URI(BASE_URL)
     params = {
       applicationId: ENV.fetch("RAKUTEN_APP_ID", nil),
       accessKey:     ENV.fetch("RAKUTEN_ACCESS_KEY", nil),
-      title:         q,
-      hits:          HITS,
-      page:          page,
       formatVersion: 2
-    }
+    }.merge(query_params)
     uri.query = URI.encode_www_form(params)
 
     response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
@@ -29,4 +34,5 @@ class RakutenBooksClient
     Rails.logger.error "Rakuten Books API 呼び出し失敗: #{e.message}"
     raise ExternalApiError, e.message
   end
+  private_class_method :fetch
 end

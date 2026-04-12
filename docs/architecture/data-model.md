@@ -34,8 +34,7 @@
                   │    books     │
                   ├──────────────┤
                   │ id           │
-                  │ google_      │
-                  │ books_id     │
+                  │ isbn         │
                   │ title        │
                   │ authors[]    │
                   └──────────────┘
@@ -49,7 +48,7 @@
 |---|---|
 | [users](./tables/users.md) | ユーザー情報 |
 | [user_links](./tables/user_links.md) | プロフィールリンク（最大5件）|
-| [books](./tables/books.md) | 書籍データ（Google Books API キャッシュ）|
+| [books](./tables/books.md) | 書籍データ（楽天書籍API キャッシュ）|
 | [user_books](./tables/user_books.md) | 本棚投稿 |
 | [user_book_purchase_links](./tables/user_book_purchase_links.md) | 購入リンク |
 | [tags](./tables/tags.md) | 技術タグマスタ |
@@ -67,7 +66,7 @@
 |---|---|---|
 | users | UNIQUE (clerk_user_id) | Clerk アカウントの重複防止 |
 | users | UNIQUE (username) | ユーザー名の一意性 |
-| books | UNIQUE (google_books_id) | 同一書籍の重複登録防止 |
+| books | UNIQUE (isbn) | 同一書籍の重複登録防止 |
 | user_books | UNIQUE (user_id, book_id) | 同じ本を複数回投稿不可 |
 | follows | UNIQUE (follower_id, followee_id) | 重複フォロー防止 |
 | want_to_reads | UNIQUE (user_id, book_id) | 同じ書籍の重複登録防止 |
@@ -81,7 +80,7 @@
 
 ### Books テーブルはキャッシュとして機能する
 
-書籍データは Google Books API から取得しますが、初回登録時に Books テーブルに保存します。
+書籍データは楽天書籍APIから取得しますが、初回登録時に Books テーブルに保存します。
 これにより「この本を読んだユーザー一覧」などの集計クエリを DB 内で完結させます。
 
 ```sql

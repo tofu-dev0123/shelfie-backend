@@ -32,7 +32,7 @@
 {
   "items": [
     {
-      "google_books_id": "xxxxxxxx",
+      "isbn": "9784873116068",
       "title": "リーダブルコード",
       "authors": ["Dustin Boswell", "Trevor Foucher"],
       "thumbnail_url": "https://..."
