@@ -1,0 +1,1 @@
+class BookAlreadyRegisteredError < StandardError; end

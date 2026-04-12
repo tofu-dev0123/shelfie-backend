@@ -1,4 +1,4 @@
-# GET /v1/books/:google_books_id/users
+# GET /v1/books/:isbn/users
 
 ## 概要
 
@@ -14,19 +14,19 @@
 
 | パラメータ | 型 | 説明 |
 |---|---|---|
-| `:google_books_id` | string | Google Books API の書籍ID |
+| `:isbn` | string | ISBNコード |
 
 ### クエリパラメータ
 
 | パラメータ | 型 | 必須 | デフォルト | 説明 |
 |---|---|---|---|---|
 | `cursor` | string | 任意 | なし | 前回レスポンスの `next_cursor` |
-| `limit` | integer | 任意 | 20 | 最大取得件数（上限50） |
+| `limit` | integer | 任意 | 20 | 最大取得件数。上限は50で、超えた場合は50にクランプされる |
 
 ## 処理詳細
 
-1. `google_books_id` で Books テーブルを検索
-2. `books.google_books_id` → `books.id` → `user_books.user_id` → `users.*` の順でJOINし、1クエリでユーザー一覧を取得
+1. `isbn` で Books テーブルを検索
+2. `books.isbn` → `books.id` → `user_books.user_id` → `users.*` の順でJOINし、1クエリでユーザー一覧を取得
 3. カーソルベースでページネーションして返す
 
 ```sql
@@ -34,7 +34,7 @@ SELECT users.*
 FROM users
 INNER JOIN user_books ON users.id = user_books.user_id
 INNER JOIN books ON books.id = user_books.book_id
-WHERE books.google_books_id = :google_books_id
+WHERE books.isbn = :isbn
 ORDER BY user_books.id
 LIMIT 20;
 ```
@@ -42,6 +42,8 @@ LIMIT 20;
 ## レスポンス
 
 ### 成功
+
+書籍が Books テーブルに存在しない場合、またはユーザーが0件の場合も `items: []` で200を返す。
 
 ```json
 // 200 OK
@@ -59,9 +61,3 @@ LIMIT 20;
   }
 }
 ```
-
-### エラー
-
-| code | ステータス | 場面 |
-|---|---|---|
-| `NOT_FOUND` | 404 | 書籍が Books テーブルに存在しない |

@@ -71,7 +71,7 @@
 | `GET /v1/users/:username/books` | `created_at` + `id` |
 | `GET /v1/users/:username/followers` | `id` |
 | `GET /v1/users/:username/following` | `id` |
-| `GET /v1/books/:google_books_id`（読んだユーザー） | `id` |
+| `GET /v1/books/:isbn/users`（読んだユーザー） | `id` |
 
 > `created_at` のみをカーソルにすると同一時刻レコードで重複・抜けが発生するため、`id` を組み合わせて一意性を保証します。
 
@@ -85,8 +85,10 @@
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "username is already taken",
-    "details": { "field": "username" }
+    "message": "不正なリクエストです。",
+    "details": [
+      { "field": "username", "message": "すでに使用されています" }
+    ]
   }
 }
 ```
@@ -95,7 +97,7 @@
 |---|---|
 | `code` | フロント側でハンドリングするための機械向け識別子 |
 | `message` | デバッグ用の人間向けメッセージ（ユーザーへの直接表示は非推奨） |
-| `details` | 補足情報が必要な場合のみ付与（省略可） |
+| `details` | バリデーションエラー時のフィールド別エラー情報の配列（省略可）。各要素は `field`（フィールド名）と `message`（エラーメッセージ）を持つ |
 
 ### エラーコード一覧
 

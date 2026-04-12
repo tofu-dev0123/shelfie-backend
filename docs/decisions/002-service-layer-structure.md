@@ -65,7 +65,7 @@ app/
 lib/
 ├── clients/
 │   ├── clerk_client.rb
-│   └── google_books_client.rb
+│   └── rakuten_books_client.rb
 ├── token_issuer.rb
 └── cursor.rb
 ```
@@ -95,7 +95,7 @@ Query Objectを `app/models/queries/` に置く理由は、DB操作という性�
 ### Clientにする基準
 
 - 外部APIとの通信処理 → `lib/clients/`
-- このプロジェクトでは Clerk（JWT検証）と Google Books API が該当
+- このプロジェクトでは Clerk（JWT検証）と楽天書籍APIが該当
 
 ### ユーティリティにする基準
 

@@ -1,0 +1,35 @@
+ja:
+  activerecord:
+    attributes:
+      user:
+        clerk_user_id: "Clerk ID"
+        email:         "メールアドレス"
+        username:      "ユーザー名"
+        nickname:      "ニックネーム"
+        bio:           "自己紹介"
+        links:         "リンク"
+    errors:
+      models:
+        user:
+          attributes:
+            clerk_user_id:
+              blank: "は必須です"
+              taken: "はすでに使用されています"
+            email:
+              blank:   "は必須です"
+              taken:   "はすでに使用されています"
+              invalid: "の形式が正しくありません"
+            username:
+              blank:                  "は必須です"
+              taken:                  "はすでに使用されています"
+              invalid:                "は小文字英数字・アンダースコアのみ使用できます"
+              too_short:              "は%{count}文字以上で入力してください"
+              too_long:               "は%{count}文字以内で入力してください"
+              consecutive_underscores: "に連続するアンダースコアは使用できません"
+            nickname:
+              blank:    "は必須です"
+              too_long: "は%{count}文字以内で入力してください"
+            bio:
+              too_long: "は%{count}文字以内で入力してください"
+            links:
+              too_many: "は%{count}件以内で入力してください"

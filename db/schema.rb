@@ -10,24 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_12_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_12_035523) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
-
-  # Custom types defined in this database.
-  # Note that some types may not work with other database engines. Be careful if changing database.
-  create_enum "user_book_status", ["want_to_read", "reading", "completed"]
 
   create_table "books", force: :cascade do |t|
     t.string "authors", limit: 255, default: [], null: false, array: true
     t.datetime "created_at", null: false
-    t.string "google_books_id", limit: 50, null: false
-    t.string "isbn", limit: 17
+    t.string "isbn", limit: 13, null: false
     t.string "published_date", limit: 10
     t.string "thumbnail_url", limit: 2048
     t.string "title", limit: 255, null: false
     t.datetime "updated_at", null: false
-    t.index ["google_books_id"], name: "index_books_on_google_books_id", unique: true
+    t.index ["isbn"], name: "index_books_on_isbn", unique: true
   end
 
   create_table "follows", force: :cascade do |t|
@@ -38,15 +33,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_120000) do
     t.index ["follower_id", "followee_id"], name: "index_follows_on_follower_id_and_followee_id", unique: true
     t.index ["follower_id"], name: "index_follows_on_follower_id"
     t.check_constraint "follower_id <> followee_id", name: "check_follows_no_self"
-  end
-
-  create_table "likes", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "user_book_id", null: false
-    t.bigint "user_id", null: false
-    t.index ["user_book_id"], name: "index_likes_on_user_book_id"
-    t.index ["user_id", "user_book_id"], name: "index_likes_on_user_id_and_user_book_id", unique: true
-    t.index ["user_id"], name: "index_likes_on_user_id"
   end
 
   create_table "refresh_tokens", force: :cascade do |t|
@@ -94,7 +80,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_120000) do
     t.bigint "book_id", null: false
     t.text "content"
     t.datetime "created_at", null: false
-    t.enum "status", null: false, enum_type: "user_book_status"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["book_id"], name: "index_user_books_on_book_id"
@@ -116,7 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_120000) do
     t.string "clerk_user_id", limit: 50, null: false
     t.datetime "created_at", null: false
     t.string "email", limit: 254, null: false
-    t.string "nickname", limit: 30, null: false
+    t.string "nickname", limit: 50, null: false
     t.datetime "updated_at", null: false
     t.string "username", limit: 40, null: false
     t.index ["clerk_user_id"], name: "index_users_on_clerk_user_id", unique: true
@@ -124,10 +109,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_120000) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
+  create_table "want_to_reads", force: :cascade do |t|
+    t.bigint "book_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["book_id"], name: "index_want_to_reads_on_book_id"
+    t.index ["user_id", "book_id"], name: "index_want_to_reads_on_user_id_and_book_id", unique: true
+    t.index ["user_id"], name: "index_want_to_reads_on_user_id"
+  end
+
   add_foreign_key "follows", "users", column: "followee_id", on_delete: :restrict
   add_foreign_key "follows", "users", column: "follower_id", on_delete: :restrict
-  add_foreign_key "likes", "user_books", on_delete: :restrict
-  add_foreign_key "likes", "users", on_delete: :restrict
   add_foreign_key "refresh_tokens", "users", on_delete: :restrict
   add_foreign_key "tag_follows", "tags", on_delete: :restrict
   add_foreign_key "tag_follows", "users", on_delete: :restrict
@@ -137,4 +129,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_12_120000) do
   add_foreign_key "user_books", "books", on_delete: :restrict
   add_foreign_key "user_books", "users", on_delete: :restrict
   add_foreign_key "user_links", "users", on_delete: :restrict
+  add_foreign_key "want_to_reads", "books", on_delete: :restrict
+  add_foreign_key "want_to_reads", "users", on_delete: :restrict
 end

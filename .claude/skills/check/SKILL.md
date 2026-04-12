@@ -1,10 +1,10 @@
 ---
 name: check
-description: RuboCop（lint）と Steep（型チェック）を実行する
-tools: [Bash]
+description: RuboCop（lint）と Steep（型チェック）と実装ガイドラインレビューを実行する
+tools: [Bash, Agent]
 ---
 
-lint チェックと型チェックを実行してください。
+lint チェック・型チェック・実装ガイドラインレビューを実行してください。
 
 ## 対象ファイル
 
@@ -16,21 +16,33 @@ lint チェックと型チェックを実行してください。
 
 引数あり:
 ```bash
-bundle exec rubocop $ARGUMENTS --autocorrect
-bundle exec rubocop $ARGUMENTS
+docker compose exec web bundle exec rubocop $ARGUMENTS --autocorrect
+docker compose exec web bundle exec rubocop $ARGUMENTS
 ```
 
 引数なし:
 ```bash
-bundle exec rubocop --autocorrect
-bundle exec rubocop
+docker compose exec web bundle exec rubocop --autocorrect
+docker compose exec web bundle exec rubocop
 ```
 
 ### Step 2: Steep（型チェック）
 
 ```bash
-bundle exec steep check
+docker compose exec web bundle exec steep check
 ```
+
+### Step 3: 実装ガイドラインレビュー
+
+1. レビュー対象ファイルを特定する
+   - 引数 `$ARGUMENTS` が指定されていればそのファイルを使う
+   - 指定がない場合は以下で変更ファイルを取得する:
+     ```bash
+     git diff --name-only HEAD
+     ```
+   - `app/` 配下の Ruby ファイル（`.rb`）のみを対象とする
+
+2. `reviewer` サブエージェントを起動し、対象ファイルのパスを渡してレビューを依頼する
 
 ## 出力形式
 
@@ -39,6 +51,7 @@ bundle exec steep check
 ✅ チェック完了 - 問題なし
 - RuboCop: パス（自動修正: {n}件）
 - Steep: パス
+- 実装ガイドライン: パス
 
 ### 失敗がある場合
 
@@ -52,3 +65,6 @@ bundle exec steep check
 **Steep:**
 - エラー: {n}件
   - {ファイルパス}:{行番号} - {内容}
+
+**実装ガイドライン:**
+- reviewer サブエージェントの出力をそのまま表示する

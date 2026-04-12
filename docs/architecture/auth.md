@@ -180,6 +180,35 @@ Next.js                              Rails API
 
 ---
 
+## トークン発行の設計
+
+両トークンとも `jwt` gem を使って JWT（HS256）で発行する。
+
+### アクセストークン
+
+```ruby
+payload = { user_id: user.id, exp: 60.minutes.from_now.to_i }
+token = JWT.encode(payload, Rails.application.secret_key_base, "HS256")
+```
+
+### リフレッシュトークン
+
+```ruby
+payload = { user_id: user.id, exp: 30.days.from_now.to_i }
+token = JWT.encode(payload, Rails.application.secret_key_base, "HS256")
+```
+
+発行後、トークンの値を `refresh_tokens` テーブルに保存する。JWT 単体では無効化できないため、DB 管理することで強制ログアウト・デバイス別ログアウトを実現する。
+
+### リフレッシュトークンの検証フロー
+
+1. Cookie からトークンを取得
+2. JWT をデコードして `exp` を確認
+3. DB に該当レコードが存在するか確認（強制ログアウト済みでないか）
+4. 両方OK → 新しいアクセストークンを発行
+
+---
+
 ## 使用 gem
 
 | gem | 用途 |
