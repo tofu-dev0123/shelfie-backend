@@ -448,6 +448,130 @@ paths:
                         example: INTERNAL_SERVER_ERROR
                       message:
                         type: string
+  "/v1/me/books":
+    post:
+      summary: 本棚に書籍を追加する
+      tags:
+      - マイページ系
+      security:
+      - Bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: 登録成功（DBに書籍あり→楽天API不要）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 登録が完了しました
+                required:
+                - message
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '404':
+          description: 楽天書籍APIに書籍が存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+        '409':
+          description: すでに同じ書籍を登録済み
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: CONFLICT
+                      message:
+                        type: string
+        '422':
+          description: 存在しないタグが含まれている
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+        '503':
+          description: 楽天書籍APIがエラーを返した
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: EXTERNAL_API_ERROR
+                      message:
+                        type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isbn:
+                  type: string
+                  example: '9784873116068'
+                content:
+                  type: string
+                  example: とても良い本でした
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - Go
+                  - アーキテクチャ
+                purchase_links:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - https://www.amazon.co.jp/...
+              required:
+              - isbn
+        required: true
   "/v1/me":
     get:
       summary: マイプロフィール取得API
