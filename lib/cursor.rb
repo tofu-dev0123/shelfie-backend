@@ -1,16 +1,16 @@
 class Cursor
-  def self.encode(start_index)
-    Base64.strict_encode64({ startIndex: start_index }.to_json)
+  def self.encode(page)
+    Base64.strict_encode64({ page: page }.to_json)
   end
 
   def self.decode(cursor)
-    return 0 if cursor.blank?
+    return 1 if cursor.blank?
 
     decoded = JSON.parse(Base64.strict_decode64(cursor))
-    start_index = decoded["startIndex"]
-    raise ValidationError, "invalid cursor" unless start_index.is_a?(Integer) && start_index >= 0
+    page = decoded["page"]
+    raise ValidationError, "invalid cursor" unless page.is_a?(Integer) && page >= 1
 
-    start_index
+    page
   rescue ArgumentError, JSON::ParserError
     raise ValidationError, "invalid cursor"
   end

@@ -10,20 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_19_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_12_035523) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "books", force: :cascade do |t|
     t.string "authors", limit: 255, default: [], null: false, array: true
     t.datetime "created_at", null: false
-    t.string "google_books_id", limit: 50, null: false
-    t.string "isbn", limit: 17
+    t.string "isbn", limit: 13, null: false
     t.string "published_date", limit: 10
     t.string "thumbnail_url", limit: 2048
     t.string "title", limit: 255, null: false
     t.datetime "updated_at", null: false
-    t.index ["google_books_id"], name: "index_books_on_google_books_id", unique: true
+    t.index ["isbn"], name: "index_books_on_isbn", unique: true
   end
 
   create_table "follows", force: :cascade do |t|

@@ -14,7 +14,7 @@ module V1
     def users
       Rails.logger.debug "BooksController#users に入りました"
       result = Books::ReadersService.call(
-        google_books_id: params[:google_books_id],
+        isbn: params[:isbn],
         cursor: params[:cursor],
         limit: params[:limit]
       )

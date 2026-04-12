@@ -14,7 +14,7 @@ module V1
       Rails.logger.debug "UserBooksController#show に入りました"
       result = UserBooks::ShowService.call(
         username: params[:user_username],
-        google_books_id: params[:google_books_id]
+        isbn: params[:isbn]
       )
       render json: UserBookShowSerializer.new(result[:user_book], result[:user]).as_json, status: :ok
     end

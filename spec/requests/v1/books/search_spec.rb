@@ -19,17 +19,17 @@ RSpec.describe "書籍系", type: :request do
       parameter name: :cursor, in: :query, type: :string, required: false,
         description: "前回レスポンスの next_cursor（省略時は先頭から）"
 
-      let(:google_books_response) do
+      let(:rakuten_books_response) do
         {
-          totalItems: 100,
-          items: [
+          count: 100,
+          page: 1,
+          pageCount: 5,
+          Items: [
             {
-              id: "abc123",
-              volumeInfo: {
-                title: "リーダブルコード",
-                authors: [ "Dustin Boswell", "Trevor Foucher" ],
-                imageLinks: { thumbnail: "https://example.com/thumbnail.jpg" }
-              }
+              isbn: "9784873118079",
+              title: "リーダブルコード",
+              author: "Dustin Boswell／Trevor Foucher",
+              largeImageUrl: "https://example.com/thumbnail.jpg"
             }
           ]
         }.to_json
@@ -39,8 +39,8 @@ RSpec.describe "書籍系", type: :request do
         let(:q) { "Rails" }
 
         before do
-          stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
-            .to_return(status: 200, body: google_books_response, headers: { "Content-Type" => "application/json" })
+          stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+            .to_return(status: 200, body: rakuten_books_response, headers: { "Content-Type" => "application/json" })
         end
 
         schema type: :object,
@@ -50,18 +50,18 @@ RSpec.describe "書籍系", type: :request do
               items: {
                 type: :object,
                 properties: {
-                  google_books_id: { type: :string, example: "abc123" },
-                  title:           { type: :string, example: "リーダブルコード" },
-                  authors:         { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
-                  thumbnail_url:   { type: :string, nullable: true, example: "https://..." }
+                  isbn:          { type: :string, example: "9784873118079" },
+                  title:         { type: :string, example: "リーダブルコード" },
+                  authors:       { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
+                  thumbnail_url: { type: :string, nullable: true, example: "https://..." }
                 },
-                required: %w[google_books_id title authors thumbnail_url]
+                required: %w[isbn title authors thumbnail_url]
               }
             },
             pagination: {
               type: :object,
               properties: {
-                next_cursor: { type: :string, nullable: true, example: "eyJzdGFydEluZGV4IjoxMH0=" },
+                next_cursor: { type: :string, nullable: true, example: "eyJwYWdlIjoyfQ==" },
                 has_next:    { type: :boolean, example: true }
               },
               required: %w[next_cursor has_next]
@@ -76,8 +76,8 @@ RSpec.describe "書籍系", type: :request do
         let(:q) { "存在しない書籍xyzxyz" }
 
         before do
-          stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
-            .to_return(status: 200, body: { totalItems: 0, items: [] }.to_json, headers: { "Content-Type" => "application/json" })
+          stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+            .to_return(status: 200, body: { count: 0, page: 1, pageCount: 0, Items: [] }.to_json, headers: { "Content-Type" => "application/json" })
         end
 
         schema type: :object,
@@ -195,11 +195,11 @@ RSpec.describe "書籍系", type: :request do
         run_test!
       end
 
-      response "503", "Google Books API エラー" do
+      response "503", "楽天 Books API エラー" do
         let(:q) { "Rails" }
 
         before do
-          stub_request(:get, /googleapis.com\/books\/v1\/volumes/)
+          stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_return(status: 500)
         end
 
@@ -220,13 +220,13 @@ RSpec.describe "書籍系", type: :request do
     end
   end
 
-  path "/v1/books/{google_books_id}/users" do
+  path "/v1/books/{isbn}/users" do
     get "既読書籍ユーザー一覧取得API" do
       tags "書籍系"
       produces "application/json"
 
-      parameter name: :google_books_id, in: :path, type: :string, required: true,
-        description: "Google Books API の書籍ID"
+      parameter name: :isbn, in: :path, type: :string, required: true,
+        description: "書籍の ISBN-13"
       parameter name: :cursor, in: :query, type: :string, required: false,
         description: "前回レスポンスの next_cursor（省略時は先頭から）"
       parameter name: :limit, in: :query, type: :integer, required: false,
@@ -234,7 +234,7 @@ RSpec.describe "書籍系", type: :request do
 
       response "200", "ユーザー一覧取得成功" do
         let(:book) { create(:book) }
-        let(:google_books_id) { book.google_books_id }
+        let(:isbn) { book.isbn }
         let(:user) { create(:user, username: "komusan", nickname: "コムさん") }
 
         before { create(:user_book, user: user, book: book) }
@@ -268,7 +268,7 @@ RSpec.describe "書籍系", type: :request do
       end
 
       response "200", "書籍がDBに未登録（ユーザー0件）" do
-        let(:google_books_id) { "nonexistent_book_id" }
+        let(:isbn) { "9784000000001" }
 
         schema type: :object,
           properties: {
@@ -293,7 +293,7 @@ RSpec.describe "書籍系", type: :request do
 
       response "200", "limit が50超のときクランプされる" do
         let(:book) { create(:book) }
-        let(:google_books_id) { book.google_books_id }
+        let(:isbn) { book.isbn }
         let(:limit) { 100 }
 
         before { 51.times { create(:user_book, book: book) } }

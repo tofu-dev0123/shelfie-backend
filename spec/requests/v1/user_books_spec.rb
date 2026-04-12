@@ -36,12 +36,12 @@ RSpec.describe "本棚系", type: :request do
                   book: {
                     type: :object,
                     properties: {
-                      google_books_id: { type: :string, example: "xxxxxxxx" },
-                      title:           { type: :string, example: "リーダブルコード" },
-                      authors:         { type: :array, items: { type: :string }, example: [ "著者名" ] },
-                      thumbnail_url:   { type: :string, nullable: true, example: nil }
+                      isbn:          { type: :string, example: "9784873118079" },
+                      title:         { type: :string, example: "リーダブルコード" },
+                      authors:       { type: :array, items: { type: :string }, example: [ "著者名" ] },
+                      thumbnail_url: { type: :string, nullable: true, example: nil }
                     },
-                    required: %w[google_books_id title authors thumbnail_url]
+                    required: %w[isbn title authors thumbnail_url]
                   }
                 },
                 required: %w[id content tags created_at book]
@@ -152,15 +152,15 @@ RSpec.describe "本棚系", type: :request do
     end
   end
 
-  path "/v1/users/{username}/books/{google_books_id}" do
+  path "/v1/users/{username}/books/{isbn}" do
     get "本棚投稿詳細取得API" do
       tags "本棚系"
       produces "application/json"
 
       parameter name: :username, in: :path, type: :string, required: true,
         description: "投稿したユーザーの username"
-      parameter name: :google_books_id, in: :path, type: :string, required: true,
-        description: "Google Books API の書籍ID"
+      parameter name: :isbn, in: :path, type: :string, required: true,
+        description: "書籍の ISBN-13"
 
       response "200", "投稿詳細取得成功" do
         let(:user) { create(:user, username: "komusan") }
@@ -168,7 +168,7 @@ RSpec.describe "本棚系", type: :request do
         let(:user_book) { create(:user_book, user: user, book: book, content: "とても良い本でした") }
         let(:tag) { create(:tag, name: "Go") }
         let(:username) { user.username }
-        let(:google_books_id) { book.google_books_id }
+        let(:isbn) { book.isbn }
 
         before do
           create(:user_book_tag, user_book: user_book, tag: tag)
@@ -185,12 +185,12 @@ RSpec.describe "本棚系", type: :request do
             book: {
               type: :object,
               properties: {
-                google_books_id: { type: :string, example: "xxxxxxxx" },
-                title:           { type: :string, example: "リーダブルコード" },
-                authors:         { type: :array, items: { type: :string }, example: [ "著者名" ] },
-                thumbnail_url:   { type: :string, nullable: true, example: nil }
+                isbn:          { type: :string, example: "9784873118079" },
+                title:         { type: :string, example: "リーダブルコード" },
+                authors:       { type: :array, items: { type: :string }, example: [ "著者名" ] },
+                thumbnail_url: { type: :string, nullable: true, example: nil }
               },
-              required: %w[google_books_id title authors thumbnail_url]
+              required: %w[isbn title authors thumbnail_url]
             },
             user: {
               type: :object,
@@ -213,7 +213,7 @@ RSpec.describe "本棚系", type: :request do
         let(:book) { create(:book) }
         let!(:user_book) { create(:user_book, user: user, book: book) }
         let(:username) { user.username }
-        let(:google_books_id) { book.google_books_id }
+        let(:isbn) { book.isbn }
 
         schema type: :object,
           properties: {
@@ -229,7 +229,7 @@ RSpec.describe "本棚系", type: :request do
 
       response "404", "ユーザーが存在しない" do
         let(:username) { "nonexistent_user" }
-        let(:google_books_id) { "xxxxxxxx" }
+        let(:isbn) { "9784000000001" }
 
         schema type: :object,
           properties: {
@@ -249,7 +249,7 @@ RSpec.describe "本棚系", type: :request do
       response "404", "投稿が存在しない" do
         let(:user) { create(:user) }
         let(:username) { user.username }
-        let(:google_books_id) { "nonexistent_book_id" }
+        let(:isbn) { "9784000000001" }
 
         schema type: :object,
           properties: {

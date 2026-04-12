@@ -12,7 +12,7 @@ class UserBookShowSerializer
       created_at: @user_book.created_at.iso8601,
       updated_at: @user_book.updated_at.iso8601,
       book: {
-        google_books_id: @user_book.book.google_books_id,
+        isbn: @user_book.book.isbn,
         title: @user_book.book.title,
         authors: @user_book.book.authors,
         thumbnail_url: @user_book.book.thumbnail_url
