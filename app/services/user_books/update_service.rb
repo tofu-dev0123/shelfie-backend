@@ -15,13 +15,10 @@ module UserBooks
       ActiveRecord::Base.transaction do
         user_book.update!(content: content)
 
-        user_book.user_book_tags.destroy_all
-        if tags.any?
-          tag_records = Tag.where(name: tags)
-          raise ValidationError, "存在しないタグが含まれています" if tag_records.count != tags.uniq.length
+        tag_records = Tag.where(name: tags)
+        raise ValidationError, "存在しないタグが含まれています" if tags.any? && tag_records.count != tags.length
 
-          tag_records.each { |tag| UserBookTag.create!(user_book: user_book, tag: tag) }
-        end
+        user_book.tags = tag_records
 
         user_book.user_book_purchase_links.destroy_all
         purchase_links.each do |url|
