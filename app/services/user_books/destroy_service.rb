@@ -3,6 +3,7 @@ module UserBooks
     def self.call(current_user:, isbn:)
       validate_params!(isbn)
 
+      # book・user_book が存在しない場合も正常終了する（冪等性：削除済みと同じ状態のため）
       book = Book.find_by(isbn: isbn)
       return unless book
 
@@ -15,7 +16,7 @@ module UserBooks
     end
 
     def self.validate_params!(isbn)
-      raise ValidationError, Messages::UserBooks::ISBN_INVALID unless isbn.to_s.match?(/\A\d{13}\z/)
+      raise ValidationError, I18n.t("user_books.errors.isbn_invalid") unless isbn.to_s.match?(/\A\d{13}\z/)
     end
     private_class_method :validate_params!
   end
