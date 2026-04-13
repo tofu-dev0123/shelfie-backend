@@ -12,8 +12,8 @@ module UserBooks
       user_book = UserBook.find_by(user: current_user, book: book)
       raise RecordNotFoundError unless user_book
 
-      tag_records = Tag.where(name: tags)
-      raise ValidationError, "存在しないタグが含まれています" if tags.any? && tag_records.count != tags.length
+      tag_records = Tag.where(name: tags).to_a
+      raise ValidationError, "存在しないタグが含まれています" if tags.any? && tag_records.length != tags.length
 
       ActiveRecord::Base.transaction do
         user_book.update!(content: content)
