@@ -572,6 +572,108 @@ paths:
               required:
               - isbn
         required: true
+  "/v1/me/books/{isbn}":
+    put:
+      summary: 本棚投稿更新API
+      tags:
+      - 本棚系
+      security:
+      - Bearer: []
+      parameters:
+      - name: isbn
+        in: path
+        required: true
+        description: 書籍の ISBN-13
+        schema:
+          type: string
+      responses:
+        '200':
+          description: tags / purchase_links を空配列で全削除
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 更新が完了しました
+                required:
+                - message
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '404':
+          description: 書籍または投稿が存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+        '422':
+          description: purchase_links の URL 形式が不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+                      field:
+                        type: string
+                        example: purchase_links
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  example: 改めて読み直したら更に良かったです
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - Go
+                  - Architecture
+                purchase_links:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - https://www.amazon.co.jp/...
+              required:
+              - content
+              - tags
+              - purchase_links
+        required: true
   "/v1/me":
     get:
       summary: マイプロフィール取得API

@@ -69,12 +69,12 @@ module ErrorHandler
 
   def render_validation_error(e)
     Rails.logger.warn "バリデーションエラー: #{e.message}"
-    render json: {
-      error: {
-        code: ErrorCodes::VALIDATION_ERROR,
-        message: I18n.t("messages.errors.validation_error")
-      }
-    }, status: :unprocessable_entity
+    error_body = {
+      code: ErrorCodes::VALIDATION_ERROR,
+      message: I18n.t("messages.errors.validation_error")
+    }
+    error_body[:field] = e.field if e.field.present?
+    render json: { error: error_body }, status: :unprocessable_entity
   end
 
   def render_avatar_file_error(e)
