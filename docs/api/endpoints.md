@@ -47,7 +47,7 @@
 | GET | `/v1/users/:username/books` | 本棚一覧取得API | ユーザーの本棚一覧 | 不要 |
 | GET | `/v1/users/:username/books/:isbn` | 本棚投稿詳細取得API | 投稿詳細 | 不要 |
 | POST | `/v1/me/books` | 本棚追加API | 本棚に追加 | 必須 |
-| PATCH | `/v1/me/books/:isbn` | 本棚投稿更新API | 投稿内容更新 | 必須 |
+| PUT | `/v1/me/books/:isbn` | 本棚投稿更新API | 投稿内容更新 | 必須 |
 | DELETE | `/v1/me/books/:isbn` | 本棚投稿削除API | 投稿削除 | 必須 |
 
 ## フォロー系
