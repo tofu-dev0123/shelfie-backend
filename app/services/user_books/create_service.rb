@@ -12,7 +12,7 @@ module UserBooks
 
         if tags.any?
           tag_records = Tag.where(name: tags)
-          raise ValidationError, "存在しないタグが含まれています" if tag_records.count != tags.uniq.length
+          raise ValidationError, I18n.t("user_books.errors.invalid_tag_included") if tag_records.count != tags.uniq.length
 
           tag_records.each { |tag| UserBookTag.create!(user_book: user_book, tag: tag) }
         end
@@ -26,14 +26,14 @@ module UserBooks
     end
 
     def self.validate_params!(isbn, content, tags, purchase_links)
-      raise ValidationError, "ISBNは13桁の数字で入力してください" unless isbn.to_s.match?(/\A\d{13}\z/)
-      raise ValidationError, "contentは#{UserBookConstants::MAX_CONTENT_LENGTH}文字以内で入力してください" if content && content.length > UserBookConstants::MAX_CONTENT_LENGTH
-      raise ValidationError, "タグは最大#{UserBookConstants::MAX_TAGS}件まで設定できます" if tags.length > UserBookConstants::MAX_TAGS
-      raise ValidationError, "purchase_linksは最大#{UserBookConstants::MAX_PURCHASE_LINKS}件まで設定できます" if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS
+      raise ValidationError, I18n.t("user_books.errors.isbn_invalid") unless isbn.to_s.match?(/\A\d{13}\z/)
+      raise ValidationError, I18n.t("user_books.errors.content_too_long", count: UserBookConstants::MAX_CONTENT_LENGTH) if content && content.length > UserBookConstants::MAX_CONTENT_LENGTH
+      raise ValidationError, I18n.t("user_books.errors.tags_too_many", count: UserBookConstants::MAX_TAGS) if tags.length > UserBookConstants::MAX_TAGS
+      raise ValidationError, I18n.t("user_books.errors.purchase_links_too_many", count: UserBookConstants::MAX_PURCHASE_LINKS) if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS
 
       purchase_links.each do |url|
-        raise ValidationError, "URLの形式が正しくありません" unless url.match?(/\Ahttps?:\/\/.+/i)
-        raise ValidationError, "URLは#{UserBookConstants::MAX_PURCHASE_LINK_LENGTH}文字以内で入力してください" if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
+        raise ValidationError, I18n.t("user_books.errors.purchase_link_url_invalid") unless url.match?(/\Ahttps?:\/\/.+/i)
+        raise ValidationError, I18n.t("user_books.errors.purchase_link_url_too_long", count: UserBookConstants::MAX_PURCHASE_LINK_LENGTH) if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
       end
     end
     private_class_method :validate_params!
