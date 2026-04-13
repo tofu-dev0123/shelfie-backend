@@ -18,7 +18,8 @@ Rails.application.routes.draw do
       patch "/",      to: "profiles#update"
       post   "avatar", to: "avatars#create"
       delete "avatar", to: "avatars#destroy"
-      post   "books",  to: "books#create"
+      post   "books",       to: "books#create"
+      put    "books/:isbn", to: "books#update"
     end
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"
