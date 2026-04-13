@@ -12,7 +12,7 @@ module UserBooks
 
         if tags.any?
           tag_records = Tag.where(name: tags)
-          raise ValidationError, "存在しないタグが含まれています" if tag_records.count != tags.uniq.length
+          raise ValidationError, Messages::UserBooks::INVALID_TAG_INCLUDED if tag_records.count != tags.uniq.length
 
           tag_records.each { |tag| UserBookTag.create!(user_book: user_book, tag: tag) }
         end
@@ -26,14 +26,14 @@ module UserBooks
     end
 
     def self.validate_params!(isbn, content, tags, purchase_links)
-      raise ValidationError, "ISBNは13桁の数字で入力してください" unless isbn.to_s.match?(/\A\d{13}\z/)
-      raise ValidationError, "contentは#{UserBookConstants::MAX_CONTENT_LENGTH}文字以内で入力してください" if content && content.length > UserBookConstants::MAX_CONTENT_LENGTH
-      raise ValidationError, "タグは最大#{UserBookConstants::MAX_TAGS}件まで設定できます" if tags.length > UserBookConstants::MAX_TAGS
-      raise ValidationError, "purchase_linksは最大#{UserBookConstants::MAX_PURCHASE_LINKS}件まで設定できます" if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS
+      raise ValidationError, Messages::UserBooks::ISBN_INVALID unless isbn.to_s.match?(/\A\d{13}\z/)
+      raise ValidationError, Messages::UserBooks::CONTENT_TOO_LONG if content && content.length > UserBookConstants::MAX_CONTENT_LENGTH
+      raise ValidationError, Messages::UserBooks::TAGS_TOO_MANY if tags.length > UserBookConstants::MAX_TAGS
+      raise ValidationError, Messages::UserBooks::PURCHASE_LINKS_TOO_MANY if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS
 
       purchase_links.each do |url|
-        raise ValidationError, "URLの形式が正しくありません" unless url.match?(/\Ahttps?:\/\/.+/i)
-        raise ValidationError, "URLは#{UserBookConstants::MAX_PURCHASE_LINK_LENGTH}文字以内で入力してください" if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
+        raise ValidationError, Messages::UserBooks::PURCHASE_LINK_URL_INVALID unless url.match?(/\Ahttps?:\/\/.+/i)
+        raise ValidationError, Messages::UserBooks::PURCHASE_LINK_URL_TOO_LONG if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
       end
     end
     private_class_method :validate_params!

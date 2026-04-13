@@ -460,5 +460,131 @@ RSpec.describe "本棚API", type: :request do
         end
       end
     end
+
+    delete "本棚投稿削除API" do
+      tags "本棚系"
+      produces "application/json"
+      security [ Bearer: [] ]
+
+      parameter name: :isbn, in: :path, type: :string, required: true,
+        description: "書籍の ISBN-13"
+
+      let(:user) { create(:user) }
+      let(:book) { create(:book) }
+
+      response "200", "正常削除" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { book.isbn }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          create(:user_book, user: user, book: book)
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "削除が完了しました" }
+          },
+          required: %w[message]
+
+        run_test!
+      end
+
+      response "200", "冪等性：user_books が存在しない" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { book.isbn }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "削除が完了しました" }
+          },
+          required: %w[message]
+
+        run_test!
+      end
+
+      response "200", "冪等性：book 自体が存在しない isbn" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { "9784000000001" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "削除が完了しました" }
+          },
+          required: %w[message]
+
+        run_test!
+      end
+
+      response "401", "アクセストークンが無効・期限切れ" do
+        let(:Authorization) { "Bearer invalid_token" }
+        let(:isbn) { book.isbn }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNAUTHORIZED" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+
+      response "401", "アクセストークンなし" do
+        let(:Authorization) { nil }
+        let(:isbn) { book.isbn }
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNAUTHORIZED" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+
+      response "422", "isbn が13桁の数字でない" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { "invalid" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "VALIDATION_ERROR" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+    end
   end
 end

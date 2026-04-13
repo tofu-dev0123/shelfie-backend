@@ -674,6 +674,62 @@ paths:
               - tags
               - purchase_links
         required: true
+    delete:
+      summary: 本棚投稿削除API
+      tags:
+      - 本棚系
+      security:
+      - Bearer: []
+      parameters:
+      - name: isbn
+        in: path
+        required: true
+        description: 書籍の ISBN-13
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 冪等性：book 自体が存在しない isbn
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 削除が完了しました
+                required:
+                - message
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: isbn が13桁の数字でない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
   "/v1/me":
     get:
       summary: マイプロフィール取得API

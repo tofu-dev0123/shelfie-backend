@@ -18,6 +18,7 @@ ja:
       books:
         created: "登録が完了しました"
         updated: "更新が完了しました"
+        destroyed: "削除が完了しました"
       avatar:
         deleted: "削除が完了しました"
     auth:

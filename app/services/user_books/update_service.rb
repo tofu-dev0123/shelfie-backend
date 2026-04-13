@@ -13,7 +13,7 @@ module UserBooks
       raise RecordNotFoundError unless user_book
 
       tag_records = Tag.where(name: tags).to_a
-      raise ValidationError, "存在しないタグが含まれています" if tags.any? && tag_records.length != tags.length
+      raise ValidationError, Messages::UserBooks::INVALID_TAG_INCLUDED if tags.any? && tag_records.length != tags.length
 
       ActiveRecord::Base.transaction do
         user_book.update!(content: content)
@@ -30,13 +30,13 @@ module UserBooks
     end
 
     def self.validate_params!(content, tags, purchase_links)
-      raise ValidationError, "contentは#{UserBookConstants::MAX_CONTENT_LENGTH}文字以内で入力してください" if content.length > UserBookConstants::MAX_CONTENT_LENGTH
-      raise ValidationError, "タグは最大#{UserBookConstants::MAX_TAGS}件まで設定できます" if tags.length > UserBookConstants::MAX_TAGS
-      raise ValidationError, "purchase_linksは最大#{UserBookConstants::MAX_PURCHASE_LINKS}件まで設定できます" if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS
+      raise ValidationError, Messages::UserBooks::CONTENT_TOO_LONG if content.length > UserBookConstants::MAX_CONTENT_LENGTH
+      raise ValidationError, Messages::UserBooks::TAGS_TOO_MANY if tags.length > UserBookConstants::MAX_TAGS
+      raise ValidationError, Messages::UserBooks::PURCHASE_LINKS_TOO_MANY if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS
 
       purchase_links.each do |url|
-        raise ValidationError.new("URLの形式が正しくありません", field: "purchase_links") unless url.match?(/\Ahttps?:\/\/.+/i)
-        raise ValidationError.new("URLは#{UserBookConstants::MAX_PURCHASE_LINK_LENGTH}文字以内で入力してください", field: "purchase_links") if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
+        raise ValidationError.new(Messages::UserBooks::PURCHASE_LINK_URL_INVALID, field: "purchase_links") unless url.match?(/\Ahttps?:\/\/.+/i)
+        raise ValidationError.new(Messages::UserBooks::PURCHASE_LINK_URL_TOO_LONG, field: "purchase_links") if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
       end
     end
     private_class_method :validate_params!

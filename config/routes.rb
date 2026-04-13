@@ -20,6 +20,7 @@ Rails.application.routes.draw do
       delete "avatar", to: "avatars#destroy"
       post   "books",       to: "books#create"
       put    "books/:isbn", to: "books#update"
+      delete "books/:isbn", to: "books#destroy"
     end
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"

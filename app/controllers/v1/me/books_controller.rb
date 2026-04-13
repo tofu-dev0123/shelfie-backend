@@ -25,6 +25,12 @@ module V1
         render json: { message: I18n.t("messages.me.books.updated") }, status: :ok
       end
 
+      def destroy
+        Rails.logger.debug "V1::Me::BooksController#destroy: user_id=#{current_user.id}"
+        UserBooks::DestroyService.call(current_user: current_user, isbn: params[:isbn])
+        render json: { message: I18n.t("messages.me.books.destroyed") }, status: :ok
+      end
+
       private
 
       def book_params
