@@ -907,6 +907,32 @@ paths:
                   example:
                   - https://github.com/komusan
         required: true
+  "/v1/tags":
+    get:
+      summary: タグ一覧取得API
+      tags:
+      - タグ系
+      responses:
+        '200':
+          description: タグが0件
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Go
+                      required:
+                      - name
+                    example: []
+                required:
+                - tags
   "/v1/users/{username}/books":
     get:
       summary: 本棚一覧取得API

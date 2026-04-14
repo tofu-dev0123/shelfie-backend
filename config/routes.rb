@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       put    "books/:isbn", to: "books#update"
       delete "books/:isbn", to: "books#destroy"
     end
+    get "tags", to: "tags#index"
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"
     get "users/username/check", to: "users#check_username"
