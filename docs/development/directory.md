@@ -193,7 +193,7 @@ Controller
 |---|---|
 | リクエスト受け取り・レスポンス返却 | Controller |
 | 複数モデルをまたぐビジネスロジック・外部API呼び出し | Service |
-| 単一モデル内のCRUD | Controller → Model 直接 |
+| 単一モデル内のCRUD | Service → Model |
 | 複数テーブルをまたぐ複雑なクエリ | Query Object（`app/models/queries/`） |
 | 単一モデル内のクエリ | Model のスコープ |
 | レスポンスJSON組み立て | Serializer |
