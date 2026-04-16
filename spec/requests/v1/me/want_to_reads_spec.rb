@@ -358,5 +358,126 @@ RSpec.describe "読みたい系API", type: :request do
         run_test!
       end
     end
+
+    delete "読みたいリストから書籍を削除する" do
+      tags "読みたい系"
+      produces "application/json"
+      security [ Bearer: [] ]
+
+      parameter name: :isbn, in: :path, type: :string, required: true,
+        description: "ISBN-13形式（13桁の数字のみ）"
+
+      let(:user) { create(:user) }
+
+      response "200", "削除成功（読みたいリストに存在する書籍）" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { "9784873116068" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          book = create(:book, isbn: "9784873116068")
+          create(:want_to_read, user: user, book: book)
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "読みたいリストから削除しました" }
+          },
+          required: %w[message]
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["message"]).to eq("読みたいリストから削除しました")
+        end
+      end
+
+      response "200", "削除成功（読みたいリストに存在しない書籍でも200を返す）" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { "9784873116068" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          create(:book, isbn: "9784873116068")
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "読みたいリストから削除しました" }
+          },
+          required: %w[message]
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["message"]).to eq("読みたいリストから削除しました")
+        end
+      end
+
+      response "200", "削除成功（DBに書籍自体が存在しない場合も200を返す）" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { "9784873116068" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "読みたいリストから削除しました" }
+          },
+          required: %w[message]
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["message"]).to eq("読みたいリストから削除しました")
+        end
+      end
+
+      response "401", "アクセストークンが無効・期限切れ" do
+        let(:Authorization) { "Bearer invalid_token" }
+        let(:isbn) { "9784873116068" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNAUTHORIZED" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data.dig("error", "code")).to eq("UNAUTHORIZED")
+        end
+      end
+
+      response "422", "isbn が13桁の数字でない" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { "invalid_isbn" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "VALIDATION_ERROR" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+    end
   end
 end
