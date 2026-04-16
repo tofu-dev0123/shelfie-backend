@@ -26,7 +26,7 @@ module UserBooks
     end
 
     def self.validate_params!(isbn, content, tags, purchase_links)
-      raise ValidationError, I18n.t("user_books.errors.isbn_invalid") unless isbn.to_s.match?(/\A\d{13}\z/)
+      raise ValidationError, I18n.t("user_books.errors.isbn_invalid") unless isbn.to_s.match?(BookConstants::ISBN_FORMAT)
       raise ValidationError, I18n.t("user_books.errors.content_too_long", count: UserBookConstants::MAX_CONTENT_LENGTH) if content && content.length > UserBookConstants::MAX_CONTENT_LENGTH
       raise ValidationError, I18n.t("user_books.errors.tags_too_many", count: UserBookConstants::MAX_TAGS) if tags.length > UserBookConstants::MAX_TAGS
       raise ValidationError, I18n.t("user_books.errors.purchase_links_too_many", count: UserBookConstants::MAX_PURCHASE_LINKS) if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS

@@ -17,7 +17,7 @@ module WantToReads
     # WantToReads::CreateService にも同じメソッドが存在するが、
     # Service 間の依存を避けるため重複を許容している
     def self.validate_isbn!(isbn)
-      raise ValidationError, I18n.t("want_to_reads.errors.isbn_invalid") unless isbn.to_s.match?(/\A\d{13}\z/)
+      raise ValidationError, I18n.t("want_to_reads.errors.isbn_invalid") unless isbn.to_s.match?(BookConstants::ISBN_FORMAT)
     end
     private_class_method :validate_isbn!
   end

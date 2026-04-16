@@ -5,10 +5,8 @@ module WantToReads
 
       book = Book.find_by(isbn: isbn) || fetch_and_create_book!(isbn)
 
-      begin
-        ActiveRecord::Base.transaction do
-          WantToRead.create!(user: current_user, book: book)
-        end
+      ActiveRecord::Base.transaction do
+        WantToRead.create!(user: current_user, book: book)
       rescue ActiveRecord::RecordNotUnique
         raise WantToReadAlreadyExistsError
       end
@@ -17,7 +15,7 @@ module WantToReads
     end
 
     def self.validate_isbn!(isbn)
-      raise ValidationError, I18n.t("want_to_reads.errors.isbn_invalid") unless isbn.to_s.match?(/\A\d{13}\z/)
+      raise ValidationError, I18n.t("want_to_reads.errors.isbn_invalid") unless isbn.to_s.match?(BookConstants::ISBN_FORMAT)
     end
     private_class_method :validate_isbn!
 
