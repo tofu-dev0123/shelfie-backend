@@ -11,7 +11,7 @@ module ErrorHandler
     rescue_from ValidationError, with: :render_validation_error
     rescue_from AvatarFileError, with: :render_avatar_file_error
     rescue_from S3UploadError, S3DeleteError, with: :render_internal_server_error
-    rescue_from BookAlreadyRegisteredError, with: :render_conflict
+    rescue_from BookAlreadyRegisteredError, WantToReadAlreadyExistsError, with: :render_conflict
     rescue_from ExternalApiError, with: :render_external_api_error
   end
 

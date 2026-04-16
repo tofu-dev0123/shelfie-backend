@@ -1,0 +1,4 @@
+ja:
+  want_to_reads:
+    errors:
+      isbn_invalid: "ISBNは13桁の数字で入力してください"
