@@ -3,14 +3,15 @@ module WantToReads
     def self.call(current_user:, isbn:)
       validate_isbn!(isbn)
 
+      # book・want_to_read が存在しない場合も正常終了する（冪等性：削除済みと同じ状態のため）
       book = Book.find_by(isbn: isbn)
-      if book
-        want_to_read = WantToRead.find_by(user: current_user, book: book)
-        if want_to_read
-          want_to_read.destroy!
-          Rails.logger.info "WantToReads::DestroyService: user_id=#{current_user.id} isbn=#{isbn} 読みたいリストから削除しました"
-        end
-      end
+      return unless book
+
+      want_to_read = WantToRead.find_by(user: current_user, book: book)
+      return unless want_to_read
+
+      want_to_read.destroy!
+      Rails.logger.info "WantToReads::DestroyService: user_id=#{current_user.id} isbn=#{isbn} 読みたいリストから削除しました"
     end
 
     # WantToReads::CreateService にも同じメソッドが存在するが、
