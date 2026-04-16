@@ -829,6 +829,108 @@ paths:
                         example: VALIDATION_ERROR
                       message:
                         type: string
+  "/v1/me/want_to_reads/{isbn}":
+    post:
+      summary: 読みたいリストに書籍を追加する
+      tags:
+      - 読みたい系
+      security:
+      - Bearer: []
+      parameters:
+      - name: isbn
+        in: path
+        required: true
+        description: ISBN-13形式（13桁の数字のみ）
+        schema:
+          type: string
+      responses:
+        '201':
+          description: 追加成功（DBに書籍なし→楽天API取得）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 読みたいリストに追加しました
+                required:
+                - message
+        '401':
+          description: アクセストークンが無効・期限切れ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '404':
+          description: 楽天書籍APIに書籍が存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+        '409':
+          description: 既に読みたいリストに追加済み
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: CONFLICT
+                      message:
+                        type: string
+        '422':
+          description: isbn が13桁の数字でない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+        '503':
+          description: 楽天書籍APIがエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: EXTERNAL_API_ERROR
+                      message:
+                        type: string
   "/v1/me":
     get:
       summary: マイプロフィール取得API

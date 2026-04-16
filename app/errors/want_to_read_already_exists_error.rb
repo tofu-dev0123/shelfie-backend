@@ -1,0 +1,1 @@
+class WantToReadAlreadyExistsError < StandardError; end
