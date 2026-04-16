@@ -730,6 +730,105 @@ paths:
                         example: VALIDATION_ERROR
                       message:
                         type: string
+  "/v1/me/want_to_reads":
+    get:
+      summary: 読みたいリストを取得する
+      tags:
+      - 読みたい系
+      security:
+      - Bearer: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 最大取得件数（デフォルト20・上限50）
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: cursor / limit を指定してページネーション
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        isbn:
+                          type: string
+                          example: '9784873116068'
+                        title:
+                          type: string
+                          example: リーダブルコード
+                        authors:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                          - Dustin Boswell
+                        thumbnail_url:
+                          type: string
+                          nullable: true
+                          example: https://example.com/thumb.jpg
+                      required:
+                      - isbn
+                      - title
+                      - authors
+                      - thumbnail_url
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                      has_next:
+                        type: boolean
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: cursor が無効な値
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
   "/v1/me":
     get:
       summary: マイプロフィール取得API
