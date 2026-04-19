@@ -458,7 +458,7 @@ paths:
       parameters: []
       responses:
         '201':
-          description: 登録成功（DBに書籍あり→楽天API不要）
+          description: 本文中のハッシュタグから Tag を動的に生成する
           content:
             application/json:
               schema:
@@ -515,7 +515,7 @@ paths:
                       message:
                         type: string
         '422':
-          description: 存在しないタグが含まれている
+          description: 本文中のハッシュタグが5件超
           content:
             application/json:
               schema:
@@ -555,14 +555,7 @@ paths:
                   example: '9784873116068'
                 content:
                   type: string
-                  example: とても良い本でした
-                tags:
-                  type: array
-                  items:
-                    type: string
-                  example:
-                  - Go
-                  - アーキテクチャ
+                  example: 'とても良い本でした #Go #アーキテクチャ'
                 purchase_links:
                   type: array
                   items:
@@ -588,7 +581,7 @@ paths:
           type: string
       responses:
         '200':
-          description: tags / purchase_links を空配列で全削除
+          description: ハッシュタグが本文から消えると tag も外れる
           content:
             application/json:
               schema:
@@ -655,14 +648,7 @@ paths:
               properties:
                 content:
                   type: string
-                  example: 改めて読み直したら更に良かったです
-                tags:
-                  type: array
-                  items:
-                    type: string
-                  example:
-                  - Go
-                  - Architecture
+                  example: '改めて読み直したら更に良かったです #Go #アーキテクチャ'
                 purchase_links:
                   type: array
                   items:
@@ -671,7 +657,6 @@ paths:
                   - https://www.amazon.co.jp/...
               required:
               - content
-              - tags
               - purchase_links
         required: true
     delete:
@@ -1166,12 +1151,19 @@ paths:
         required: true
   "/v1/tags":
     get:
-      summary: タグ一覧取得API
+      summary: タグサジェストAPI
       tags:
       - タグ系
+      parameters:
+      - name: q
+        in: query
+        required: true
+        description: 検索クエリ（部分一致・最大50文字）
+        schema:
+          type: string
       responses:
         '200':
-          description: タグが0件
+          description: ヒット0件
           content:
             application/json:
               schema:
@@ -1184,12 +1176,27 @@ paths:
                       properties:
                         name:
                           type: string
-                          example: Go
+                          example: Ruby
                       required:
                       - name
                     example: []
                 required:
                 - tags
+        '422':
+          description: q が50文字超
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
   "/v1/users/{username}/books":
     get:
       summary: 本棚一覧取得API

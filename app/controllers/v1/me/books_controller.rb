@@ -7,7 +7,6 @@ module V1
           current_user: current_user,
           isbn: book_params[:isbn],
           content: book_params[:content],
-          tags: book_params[:tags] || [],
           purchase_links: book_params[:purchase_links] || []
         )
         render json: { message: I18n.t("messages.me.books.created") }, status: :created
@@ -19,7 +18,6 @@ module V1
           current_user: current_user,
           isbn: params[:isbn],
           content: update_params[:content],
-          tags: update_params[:tags],
           purchase_links: update_params[:purchase_links]
         )
         render json: { message: I18n.t("messages.me.books.updated") }, status: :ok
@@ -34,11 +32,11 @@ module V1
       private
 
       def book_params
-        params.permit(:isbn, :content, tags: [], purchase_links: [])
+        params.permit(:isbn, :content, purchase_links: [])
       end
 
       def update_params
-        params.permit(:content, tags: [], purchase_links: [])
+        params.permit(:content, purchase_links: [])
       end
     end
   end
