@@ -2,8 +2,8 @@ require "swagger_helper"
 
 RSpec.describe "本棚API", type: :request do
   path "/v1/me/books" do
-    post "本棚に書籍を追加する" do
-      tags "マイページ系"
+    post "本棚追加API" do
+      tags "本棚系"
       consumes "application/json"
       produces "application/json"
       security [ Bearer: [] ]
@@ -12,8 +12,7 @@ RSpec.describe "本棚API", type: :request do
         type: :object,
         properties: {
           isbn:           { type: :string, example: "9784873116068" },
-          content:        { type: :string, example: "とても良い本でした" },
-          tags:           { type: :array, items: { type: :string }, example: [ "Go", "アーキテクチャ" ] },
+          content:        { type: :string, example: "とても良い本でした #Go #アーキテクチャ" },
           purchase_links: { type: :array, items: { type: :string }, example: [ "https://www.amazon.co.jp/..." ] }
         },
         required: [ "isbn" ]
@@ -33,11 +32,10 @@ RSpec.describe "本棚API", type: :request do
 
       response "201", "登録成功（DBに書籍なし→楽天API取得）" do
         let(:Authorization) { "Bearer valid_token" }
-        let(:body) { { isbn: "9784873116068", content: "良い本", tags: [ "Go" ], purchase_links: [ "https://example.com" ] } }
+        let(:body) { { isbn: "9784873116068", content: "良い本 #Go", purchase_links: [ "https://example.com" ] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
-          create(:tag, name: "Go")
           stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_return(status: 200, body: rakuten_response.to_json, headers: { "Content-Type" => "application/json" })
         end
@@ -48,7 +46,11 @@ RSpec.describe "本棚API", type: :request do
           },
           required: %w[message]
 
-        run_test!
+        run_test! do
+          expect(Tag.find_by(name: "Go")).to be_present
+          user_book = user.user_books.last
+          expect(user_book.tags.pluck(:name)).to eq([ "Go" ])
+        end
       end
 
       response "201", "登録成功（DBに書籍あり→楽天API不要）" do
@@ -67,6 +69,29 @@ RSpec.describe "本棚API", type: :request do
           required: %w[message]
 
         run_test!
+      end
+
+      response "201", "本文中のハッシュタグから Tag を動的に生成する" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { isbn: "9784873116068", content: "#Go #アーキテクチャ 良かった" } }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          create(:book, isbn: "9784873116068")
+          create(:tag, name: "Go")  # 既存タグは再利用される
+        end
+
+        schema type: :object,
+          properties: {
+            message: { type: :string, example: "登録が完了しました" }
+          },
+          required: %w[message]
+
+        run_test! do
+          expect(Tag.where(name: [ "Go", "アーキテクチャ" ]).count).to eq(2)
+          user_book = user.user_books.last
+          expect(user_book.tags.pluck(:name)).to contain_exactly("Go", "アーキテクチャ")
+        end
       end
 
       response "401", "アクセストークンが無効・期限切れ" do
@@ -179,9 +204,9 @@ RSpec.describe "本棚API", type: :request do
         run_test!
       end
 
-      response "422", "存在しないタグが含まれている" do
+      response "422", "本文中のハッシュタグが5件超" do
         let(:Authorization) { "Bearer valid_token" }
-        let(:body) { { isbn: "9784873116068", tags: [ "存在しないタグ" ] } }
+        let(:body) { { isbn: "9784873116068", content: "#a #b #c #d #e #f" } }
         let!(:book) { create(:book, isbn: "9784873116068") }
 
         before do
@@ -200,6 +225,33 @@ RSpec.describe "本棚API", type: :request do
           }
 
         run_test!
+      end
+
+      response "422", "purchase_links の URL 形式が不正" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { isbn: "9784873116068", content: "", purchase_links: [ "not-a-url" ] } }
+        let!(:book) { create(:book, isbn: "9784873116068") }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "VALIDATION_ERROR" },
+                message: { type: :string },
+                field:   { type: :string, example: "purchase_links" }
+              }
+            }
+          }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data.dig("error", "field")).to eq("purchase_links")
+        end
       end
 
       response "503", "楽天書籍APIがエラーを返した" do
@@ -240,26 +292,23 @@ RSpec.describe "本棚API", type: :request do
       parameter name: :body, in: :body, required: true, schema: {
         type: :object,
         properties: {
-          content:        { type: :string, example: "改めて読み直したら更に良かったです" },
-          tags:           { type: :array, items: { type: :string }, example: [ "Go", "Architecture" ] },
+          content:        { type: :string, example: "改めて読み直したら更に良かったです #Go #アーキテクチャ" },
           purchase_links: { type: :array, items: { type: :string }, example: [ "https://www.amazon.co.jp/..." ] }
         },
-        required: %w[content tags purchase_links]
+        required: %w[content purchase_links]
       }
 
       let(:user) { create(:user) }
       let(:book) { create(:book) }
-      let(:tag)  { create(:tag, name: "Go") }
 
-      response "200", "更新成功" do
+      response "200", "更新成功（本文のハッシュタグからタグが置き換わる）" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "改めて読み直したら更に良かったです", tags: [ "Go" ], purchase_links: [ "https://example.com" ] } }
+        let(:body) { { content: "改めて読み直したら更に良かったです #Go", purchase_links: [ "https://example.com" ] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
           create(:user_book, user: user, book: book)
-          tag
         end
 
         schema type: :object,
@@ -268,16 +317,20 @@ RSpec.describe "本棚API", type: :request do
           },
           required: %w[message]
 
-        run_test!
+        run_test! do
+          user_book = UserBook.find_by!(user: user, book: book)
+          expect(user_book.tags.pluck(:name)).to eq([ "Go" ])
+        end
       end
 
-      response "200", "tags / purchase_links を空配列で全削除" do
+      response "200", "ハッシュタグが本文から消えると tag も外れる" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "", tags: [], purchase_links: [] } }
+        let(:body) { { content: "", purchase_links: [] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          tag = create(:tag, name: "Go")
           user_book = create(:user_book, user: user, book: book)
           create(:user_book_tag, user_book: user_book, tag: tag)
           create(:user_book_purchase_link, user_book: user_book, url: "https://example.com")
@@ -289,16 +342,17 @@ RSpec.describe "本棚API", type: :request do
           },
           required: %w[message]
 
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["message"]).to eq("更新が完了しました")
+        run_test! do
+          user_book = UserBook.find_by!(user: user, book: book)
+          expect(user_book.tags).to be_empty
+          expect(user_book.user_book_purchase_links).to be_empty
         end
       end
 
       response "401", "アクセストークンが無効・期限切れ" do
         let(:Authorization) { "Bearer invalid_token" }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "", tags: [], purchase_links: [] } }
+        let(:body) { { content: "", purchase_links: [] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
@@ -321,7 +375,7 @@ RSpec.describe "本棚API", type: :request do
       response "401", "アクセストークンなし" do
         let(:Authorization) { nil }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "", tags: [], purchase_links: [] } }
+        let(:body) { { content: "", purchase_links: [] } }
 
         schema type: :object,
           properties: {
@@ -340,7 +394,7 @@ RSpec.describe "本棚API", type: :request do
       response "404", "書籍または投稿が存在しない" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { "9784000000001" }
-        let(:body) { { content: "", tags: [], purchase_links: [] } }
+        let(:body) { { content: "", purchase_links: [] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
@@ -363,7 +417,7 @@ RSpec.describe "本棚API", type: :request do
       response "422", "content が1000文字超" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "a" * 1001, tags: [], purchase_links: [] } }
+        let(:body) { { content: "a" * 1001, purchase_links: [] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
@@ -384,10 +438,10 @@ RSpec.describe "本棚API", type: :request do
         run_test!
       end
 
-      response "422", "tags が5件超" do
+      response "422", "本文中のハッシュタグが5件超" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "", tags: [ "a", "b", "c", "d", "e", "f" ], purchase_links: [] } }
+        let(:body) { { content: "#a #b #c #d #e #f", purchase_links: [] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
@@ -411,7 +465,7 @@ RSpec.describe "本棚API", type: :request do
       response "422", "purchase_links が3件超" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "", tags: [], purchase_links: [ "https://a.com", "https://b.com", "https://c.com", "https://d.com" ] } }
+        let(:body) { { content: "", purchase_links: [ "https://a.com", "https://b.com", "https://c.com", "https://d.com" ] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
@@ -435,7 +489,7 @@ RSpec.describe "本棚API", type: :request do
       response "422", "purchase_links の URL 形式が不正" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
-        let(:body) { { content: "", tags: [], purchase_links: [ "not-a-url" ] } }
+        let(:body) { { content: "", purchase_links: [ "not-a-url" ] } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
