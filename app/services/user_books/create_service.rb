@@ -12,7 +12,7 @@ module UserBooks
         user_book = UserBook.create!(user: current_user, book: book, content: content)
 
         tag_names.each do |name|
-          tag = find_or_create_tag!(name)
+          tag = Tag.find_or_create_safely!(name)
           UserBookTag.create!(user_book: user_book, tag: tag)
         end
 
@@ -31,20 +31,11 @@ module UserBooks
       raise ValidationError, I18n.t("user_books.errors.purchase_links_too_many", count: UserBookConstants::MAX_PURCHASE_LINKS) if purchase_links.length > UserBookConstants::MAX_PURCHASE_LINKS
 
       purchase_links.each do |url|
-        raise ValidationError, I18n.t("user_books.errors.purchase_link_url_invalid") unless url.match?(/\Ahttps?:\/\/.+/i)
-        raise ValidationError, I18n.t("user_books.errors.purchase_link_url_too_long", count: UserBookConstants::MAX_PURCHASE_LINK_LENGTH) if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
+        raise ValidationError.new(I18n.t("user_books.errors.purchase_link_url_invalid"), field: "purchase_links") unless url.match?(UserBookConstants::PURCHASE_LINK_URL_FORMAT)
+        raise ValidationError.new(I18n.t("user_books.errors.purchase_link_url_too_long", count: UserBookConstants::MAX_PURCHASE_LINK_LENGTH), field: "purchase_links") if url.length > UserBookConstants::MAX_PURCHASE_LINK_LENGTH
       end
     end
     private_class_method :validate_params!
-
-    # 並列リクエストで同名タグを新規作成しようとすると tags.name の unique index で
-    # ActiveRecord::RecordNotUnique が起きるため、衝突時は作成済みレコードを再検索する。
-    def self.find_or_create_tag!(name)
-      Tag.find_or_create_by!(name: name)
-    rescue ActiveRecord::RecordNotUnique
-      Tag.find_by!(name: name)
-    end
-    private_class_method :find_or_create_tag!
 
     def self.fetch_and_create_book!(isbn)
       Rails.logger.info "UserBooks::CreateService: isbn=#{isbn} 楽天書籍APIから取得します"
