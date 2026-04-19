@@ -2,8 +2,8 @@ require "swagger_helper"
 
 RSpec.describe "本棚API", type: :request do
   path "/v1/me/books" do
-    post "本棚に書籍を追加する" do
-      tags "マイページ系"
+    post "本棚追加API" do
+      tags "本棚系"
       consumes "application/json"
       produces "application/json"
       security [ Bearer: [] ]
@@ -225,6 +225,33 @@ RSpec.describe "本棚API", type: :request do
           }
 
         run_test!
+      end
+
+      response "422", "purchase_links の URL 形式が不正" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:body) { { isbn: "9784873116068", content: "", purchase_links: [ "not-a-url" ] } }
+        let!(:book) { create(:book, isbn: "9784873116068") }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "VALIDATION_ERROR" },
+                message: { type: :string },
+                field:   { type: :string, example: "purchase_links" }
+              }
+            }
+          }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data.dig("error", "field")).to eq("purchase_links")
+        end
       end
 
       response "503", "楽天書籍APIがエラーを返した" do

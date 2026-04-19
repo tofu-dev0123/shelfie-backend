@@ -40,7 +40,7 @@
 2. `content` からハッシュタグを抽出
 3. `isbn` → `book_id` を取得し、ログインユーザーの `user_books` レコードを検索
 4. `content` を送信値で上書き
-5. 抽出タグを `find_or_create_by!` で取得・生成し、`user_book_tags` を全件置き換え（タグが抽出されなければ全削除）
+5. 抽出タグを `Tag.find_or_create_safely!` で取得・生成し、`user_book_tags` を全件置き換え（タグが抽出されなければ全削除。並列リクエストで同名タグが同時作成された場合は `RecordNotUnique` を検知して作成済みレコードを再検索する）
 6. `purchase_links` は送信値で全件置き換え（空配列 `[]` で全削除）
 
 ## レスポンス

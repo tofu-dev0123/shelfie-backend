@@ -450,9 +450,9 @@ paths:
                         type: string
   "/v1/me/books":
     post:
-      summary: 本棚に書籍を追加する
+      summary: 本棚追加API
       tags:
-      - マイページ系
+      - 本棚系
       security:
       - Bearer: []
       parameters: []
@@ -515,7 +515,7 @@ paths:
                       message:
                         type: string
         '422':
-          description: 本文中のハッシュタグが5件超
+          description: purchase_links の URL 形式が不正
           content:
             application/json:
               schema:
@@ -529,6 +529,9 @@ paths:
                         example: VALIDATION_ERROR
                       message:
                         type: string
+                      field:
+                        type: string
+                        example: purchase_links
         '503':
           description: 楽天書籍APIがエラーを返した
           content:

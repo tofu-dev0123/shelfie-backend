@@ -45,7 +45,7 @@
 3. `isbn` で Books テーブルを検索し、未登録なら楽天書籍APIから取得して登録
 4. 既に同じ書籍を登録済みでないか確認
 5. `user_books` レコードを作成
-6. 抽出したタグごとに `tags` を `find_or_create_by!` し、`user_book_tags` を作成
+6. 抽出したタグごとに `Tag.find_or_create_safely!` で取得・生成し、`user_book_tags` を作成（並列リクエストで同名タグが同時作成された場合は `RecordNotUnique` を検知して作成済みレコードを再検索する）
 7. `purchase_links` があれば `user_book_purchase_links` レコードを作成
 
 ## レスポンス
@@ -66,5 +66,13 @@
 | `UNAUTHORIZED` | 401 | アクセストークンが無効・期限切れ |
 | `NOT_FOUND` | 404 | 楽天書籍APIに書籍が存在しない |
 | `CONFLICT` | 409 | すでに同じ書籍を登録済み |
-| `VALIDATION_ERROR` | 422 | バリデーション違反（ISBN不正・content超過・ハッシュタグ数超過・purchase_links違反） |
+| `VALIDATION_ERROR` | 422 | バリデーション違反（ISBN不正・content超過・ハッシュタグ数超過・purchase_links違反。`field` に違反フィールド名を含む場合あり） |
 | `EXTERNAL_API_ERROR` | 503 | 楽天書籍APIがエラー・タイムアウトを返した |
+
+```json
+// VALIDATION_ERROR レスポンス例（purchase_links 違反時）
+{
+  "code": "VALIDATION_ERROR",
+  "field": "purchase_links"
+}
+```
