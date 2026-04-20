@@ -2,8 +2,8 @@
 
 ## 概要
 
-技術タグのマスタテーブル。管理側でシードデータとして一括管理し、ユーザーは既存タグから選択する。
-`user_book_tags` を通じて本棚投稿に紐付けられ、スキルマップやフィードのフィルタリングに使用される。
+技術タグのマスタテーブル。本棚投稿の `content` に含まれるハッシュタグから動的に生成される（`Tag.find_or_create_safely!`）。
+`user_book_tags` を通じて本棚投稿に紐付けられ、スキルマップやサジェスト（`GET /v1/tags`）に使用される。
 
 ## カラム定義
 
@@ -26,9 +26,9 @@
 | 関連テーブル | 種別 | 説明 |
 |---|---|---|
 | user_book_tags | 1:N | このタグが付いた本棚投稿 |
-| tag_follows | 1:N | このタグをフォローしているユーザー |
 
 ## 備考
 
-- タグの追加・削除は管理側のみが行う。ユーザーによる自由なタグ作成は不可
-- タグ削除時は `user_book_tags`・`tag_follows` を先に削除する必要がある（ON DELETE RESTRICT）
+- タグは本棚投稿の `content` 中のハッシュタグから自動生成される。ハッシュタグ抽出仕様は `docs/api/user_books/create.md` を参照
+- 同名タグの同時作成は `Tag.find_or_create_safely!` が `RecordNotUnique` を検知して既存レコードに合流させる
+- タグ削除時は `user_book_tags` を先に削除する必要がある（ON DELETE RESTRICT）

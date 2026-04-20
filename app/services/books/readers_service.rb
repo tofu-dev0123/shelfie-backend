@@ -15,7 +15,7 @@ module Books
       next_cursor = has_next ? encode_cursor(users.last.user_book_id) : nil
 
       {
-        items: users.map { |user| BookReaderSerializer.new(user).as_json },
+        items: users.map { |user| UserSummarySerializer.new(user).as_json },
         pagination: {
           next_cursor: next_cursor,
           has_next: has_next

@@ -24,11 +24,15 @@ Rails.application.routes.draw do
       post   "books",       to: "books#create"
       put    "books/:isbn", to: "books#update"
       delete "books/:isbn", to: "books#destroy"
+      post   "follows/:username", to: "follows#create"
+      delete "follows/:username", to: "follows#destroy"
     end
     get "tags", to: "tags#index"
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"
     get "users/username/check", to: "users#check_username"
+    get "users/:username/followers", to: "user_follows#followers"
+    get "users/:username/following", to: "user_follows#following"
     resources :users, only: [ :create, :show ], param: :username do
       resources :books, only: [ :index, :show ], controller: "user_books", param: :isbn
     end

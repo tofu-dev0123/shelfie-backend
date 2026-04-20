@@ -1,12 +1,12 @@
-class BookReaderSerializer
+class UserSummarySerializer
   def initialize(user)
     @user = user
   end
 
   def as_json
     {
-      username: @user.username,
-      nickname: @user.nickname,
+      username:   @user.username,
+      nickname:   @user.nickname,
       avatar_url: avatar_url
     }
   end
