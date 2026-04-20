@@ -4,7 +4,7 @@ module Follows
       limit = clamp_limit(limit.to_i)
       after_id = IdCursor.decode(cursor)
 
-      # ユーザーが存在しない場合も空配列で 200 を返す
+      # フォロー系一覧 API は一覧系 API の仕様統一のため、対象ユーザーが存在しない場合も 404 ではなく空配列で 200 を返す
       target = User.find_by(username: username)
       return empty_result unless target
 
@@ -21,7 +21,7 @@ module Follows
       Rails.logger.info "Follows::FollowersService: username=#{username} のフォロワー一覧を取得しました"
 
       {
-        items: users.map { |u| FollowUserSerializer.new(u).as_json },
+        items: users.map { |u| UserSummarySerializer.new(u).as_json },
         pagination: {
           next_cursor: next_cursor,
           has_next:    has_next

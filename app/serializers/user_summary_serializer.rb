@@ -1,4 +1,4 @@
-class FollowUserSerializer
+class UserSummarySerializer
   def initialize(user)
     @user = user
   end
