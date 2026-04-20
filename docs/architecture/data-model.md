@@ -20,11 +20,11 @@
 │ email        │             │ tag_id         │───────│ tags │
 │ nickname     │             └────────────────┘       ├──────┤
 │ username     │                                       │ id   │
-│ avatar_url   │  want_to_reads    tag_follows         │ name │
-│ bio          │  ┌─────────────┐ ┌─────────────┐     └──────┘
-└──────┬───────┘  │ user_id     │ │ user_id     │──► users
-       │   1:N ◄──│ book_id     │ │ tag_id      │──► tags
-       │          └─────────────┘ └─────────────┘
+│ avatar_url   │  want_to_reads                        │ name │
+│ bio          │  ┌─────────────┐                     └──────┘
+└──────┬───────┘  │ user_id     │──► users
+       │   1:N ◄──│ book_id     │──► books
+       │          └─────────────┘
        │          follows
        │          ┌──────────────┐
        │          │ follower_id  │──► users
@@ -53,7 +53,6 @@
 | [user_book_purchase_links](./tables/user_book_purchase_links.md) | 購入リンク |
 | [tags](./tables/tags.md) | 技術タグマスタ |
 | [user_book_tags](./tables/user_book_tags.md) | 本棚投稿へのタグ付け |
-| [tag_follows](./tables/tag_follows.md) | タグフォロー |
 | [follows](./tables/follows.md) | フォロー関係 |
 | [want_to_reads](./tables/want_to_reads.md) | 読みたいリスト |
 | [refresh_tokens](./tables/refresh_tokens.md) | リフレッシュトークン管理 |
@@ -72,7 +71,6 @@
 | want_to_reads | UNIQUE (user_id, book_id) | 同じ書籍の重複登録防止 |
 | tags | UNIQUE (name) | タグ名の一意性 |
 | user_book_tags | UNIQUE (user_book_id, tag_id) | 同一投稿への重複タグ付与防止 |
-| tag_follows | UNIQUE (user_id, tag_id) | 重複タグフォロー防止 |
 
 ---
 
@@ -117,7 +115,6 @@ ORDER BY user_books.created_at DESC;
 ```
 want_to_reads
   → follows
-  → tag_follows
     → refresh_tokens
       → user_links
         → user_book_purchase_links
@@ -147,8 +144,6 @@ want_to_reads
 | refresh_tokens | user_id | users | RESTRICT |
 | user_book_tags | user_book_id | user_books | RESTRICT |
 | user_book_tags | tag_id | tags | RESTRICT |
-| tag_follows | user_id | users | RESTRICT |
-| tag_follows | tag_id | tags | RESTRICT |
 
 ---
 
