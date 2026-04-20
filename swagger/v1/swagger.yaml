@@ -718,6 +718,149 @@ paths:
                         example: VALIDATION_ERROR
                       message:
                         type: string
+  "/v1/me/follows/{username}":
+    post:
+      summary: フォローAPI
+      tags:
+      - フォロー系
+      security:
+      - Bearer: []
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: フォローするユーザーの username
+        schema:
+          type: string
+      responses:
+        '201':
+          description: フォロー成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: フォローしました
+                required:
+                - message
+        '401':
+          description: アクセストークンなし
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '404':
+          description: ユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+        '409':
+          description: 既にフォロー済み
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: CONFLICT
+                      message:
+                        type: string
+        '422':
+          description: 自分自身をフォローしようとした
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
+    delete:
+      summary: フォロー解除API
+      tags:
+      - フォロー系
+      security:
+      - Bearer: []
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: フォロー解除するユーザーの username
+        schema:
+          type: string
+      responses:
+        '200':
+          description: フォロー解除成功（ユーザーが存在しない場合も200）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: フォローを解除しました
+                required:
+                - message
+        '401':
+          description: アクセストークンが無効・期限切れ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+        '422':
+          description: 自分自身のフォローを解除しようとした
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: VALIDATION_ERROR
+                      message:
+                        type: string
   "/v1/me/want_to_reads":
     get:
       summary: 読みたいリストを取得する
@@ -1447,6 +1590,142 @@ paths:
                     required:
                     - code
                     - message
+  "/v1/users/{username}/followers":
+    get:
+      summary: フォロワー一覧取得API
+      tags:
+      - フォロー系
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 取得するユーザーの username
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor（省略時は先頭から）
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 最大取得件数。上限は50で、超えた場合は50にクランプされる（デフォルト20）
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: cursor を指定してページネーション
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        username:
+                          type: string
+                          example: follower1
+                        nickname:
+                          type: string
+                          example: フォロワー1
+                        avatar_url:
+                          type: string
+                          nullable: true
+                          example:
+                      required:
+                      - username
+                      - nickname
+                      - avatar_url
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+  "/v1/users/{username}/following":
+    get:
+      summary: フォロー中一覧取得API
+      tags:
+      - フォロー系
+      parameters:
+      - name: username
+        in: path
+        required: true
+        description: 取得するユーザーの username
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor（省略時は先頭から）
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 最大取得件数。上限は50で、超えた場合は50にクランプされる（デフォルト20）
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: cursor を指定してページネーション
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        username:
+                          type: string
+                          example: followee1
+                        nickname:
+                          type: string
+                          example: フォロー中1
+                        avatar_url:
+                          type: string
+                          nullable: true
+                          example:
+                      required:
+                      - username
+                      - nickname
+                      - avatar_url
+                    example: []
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
   "/v1/users":
     post:
       summary: ユーザー登録API

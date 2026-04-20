@@ -1,0 +1,1 @@
+class FollowAlreadyExistsError < StandardError; end

@@ -22,6 +22,9 @@ ja:
       want_to_reads:
         created: "読みたいリストに追加しました"
         destroyed: "読みたいリストから削除しました"
+      follows:
+        created: "フォローしました"
+        destroyed: "フォローを解除しました"
       avatar:
         deleted: "削除が完了しました"
     auth:
