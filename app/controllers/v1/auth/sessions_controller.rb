@@ -1,8 +1,7 @@
 module V1
   module Auth
     class SessionsController < V1::BaseController
-      # ActionController::API はデフォルトで Cookie を扱えないため明示的にインクルードする
-      include ActionController::Cookies
+      include RefreshTokenCookie
 
       def login
         Rails.logger.debug "SessionsController#login に入りました"
@@ -10,19 +9,7 @@ module V1
           clerk_token: clerk_token_from_header
         )
 
-        # httponly: JSからアクセス不可にしてXSS対策、secure: HTTPS限定、same_site: laxでCSRF対策しつつ通常のリンク遷移は許容
-        # path: "/" を明示しないと Rack は発行時のリクエストパス（/v1/auth）を Path にセットするため、
-        # 全パスで Cookie を送信させるために明示する
-        response.set_cookie(
-          :refresh_token,
-          value: result[:refresh_token],
-          httponly: true,
-          secure: true,
-          same_site: :lax,
-          domain: Rails.application.config.cookie_domain,
-          path: "/",
-          expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
-        )
+        set_refresh_token_cookie(result[:refresh_token], expires_at: result[:refresh_token_expires_at])
 
         render json: { access_token: result[:access_token] }, status: :ok
       end
@@ -32,16 +19,7 @@ module V1
         result = ::Auth::RefreshService.call(refresh_token: cookies[:refresh_token])
 
         if result[:new_refresh_token]
-          response.set_cookie(
-            :refresh_token,
-            value: result[:new_refresh_token],
-            httponly: true,
-            secure: true,
-            same_site: :lax,
-            domain: Rails.application.config.cookie_domain,
-            path: "/",
-            expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
-          )
+          set_refresh_token_cookie(result[:new_refresh_token], expires_at: result[:new_refresh_token_expires_at])
         end
 
         render json: { access_token: result[:access_token] }, status: :ok
@@ -52,12 +30,7 @@ module V1
         result = ::Auth::LogoutService.call(refresh_token: cookies[:refresh_token])
 
         # DBレコードの有無に関わらず、残存する Cookie を確実に破棄する
-        # path は set 時と同じ値を指定しないとブラウザが削除と判定しない
-        response.delete_cookie(
-          :refresh_token,
-          domain: Rails.application.config.cookie_domain,
-          path: "/"
-        )
+        clear_refresh_token_cookie
 
         if result == :logged_out
           render json: { message: I18n.t("messages.auth.logout.logged_out") }, status: :ok

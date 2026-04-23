@@ -13,16 +13,21 @@ module Auth
 
       access_token  = TokenIssuer.issue_access_token(user)
       refresh_token = TokenIssuer.issue_refresh_token(user)
+      refresh_token_expires_at = TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
 
       # リフレッシュトークンはDBで管理し、失効・ローテーションを可能にする
       RefreshToken.create!(
         user: user,
         token: refresh_token,
-        expires_at: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
+        expires_at: refresh_token_expires_at
       )
 
       Rails.logger.info "ログイン成功: user_id=#{user.id}"
-      { access_token: access_token, refresh_token: refresh_token }
+      {
+        access_token: access_token,
+        refresh_token: refresh_token,
+        refresh_token_expires_at: refresh_token_expires_at
+      }
     end
   end
 end
