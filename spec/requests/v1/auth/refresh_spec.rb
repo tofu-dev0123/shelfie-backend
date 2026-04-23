@@ -43,7 +43,11 @@ RSpec.describe "アクセストークン再発行API", type: :request do
           },
           required: [ "access_token" ]
 
-        run_test!
+        # ローテーションで再発行される Cookie にも Path=/ が付くことを保証する
+        run_test! do |response|
+          expect(response.headers["Set-Cookie"]).to match(/refresh_token=/i)
+          expect(response.headers["Set-Cookie"]).to match(/path=\//i)
+        end
       end
 
       response "401", "Cookie なし" do

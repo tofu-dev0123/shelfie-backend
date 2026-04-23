@@ -1,11 +1,13 @@
 module V1
   class UsersController < BaseController
+    include RefreshTokenCookie
+
     before_action :authenticate_user_if_token_present, only: [ :show ]
 
     def show
       Rails.logger.debug "UsersController#show に入りました"
       result = Users::ShowService.call(username: params[:username], current_user: current_user)
-      render json: UserSerializer.new(**result.except(:user), user: result[:user]).as_json, status: :ok
+      render json: UserSerializer.new(**result).as_json, status: :ok
     end
 
     def check_username
@@ -22,16 +24,7 @@ module V1
         username: user_params[:username]
       )
 
-      # httponly: JSからアクセス不可にしてXSS対策、secure: HTTPS限定、same_site: laxでCSRF対策しつつ通常のリンク遷移は許容
-      response.set_cookie(
-        :refresh_token,
-        value: result[:refresh_token],
-        httponly: true,
-        secure: true,
-        same_site: :lax,
-        domain: Rails.application.config.cookie_domain,
-        expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
-      )
+      set_refresh_token_cookie(result[:refresh_token], expires_at: result[:refresh_token_expires_at])
 
       render json: { access_token: result[:access_token] }, status: :created
     end

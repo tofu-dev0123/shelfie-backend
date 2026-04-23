@@ -12,16 +12,21 @@ module Auth
       if record.expires_at <= AuthConstants::REFRESH_ROTATION_THRESHOLD.from_now
         record.destroy
         new_refresh_token = TokenIssuer.issue_refresh_token(user)
+        new_refresh_token_expires_at = TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
         RefreshToken.create!(
           user: user,
           token: new_refresh_token,
-          expires_at: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
+          expires_at: new_refresh_token_expires_at
         )
         Rails.logger.info "リフレッシュトークンをローテーションしました: user_id=#{user.id}"
-        { access_token: access_token, new_refresh_token: new_refresh_token }
+        {
+          access_token: access_token,
+          new_refresh_token: new_refresh_token,
+          new_refresh_token_expires_at: new_refresh_token_expires_at
+        }
       else
         Rails.logger.info "アクセストークンを再発行しました: user_id=#{user.id}"
-        { access_token: access_token, new_refresh_token: nil }
+        { access_token: access_token, new_refresh_token: nil, new_refresh_token_expires_at: nil }
       end
     end
   end
