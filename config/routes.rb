@@ -27,6 +27,7 @@ Rails.application.routes.draw do
       post   "follows/:username", to: "follows#create"
       delete "follows/:username", to: "follows#destroy"
     end
+    get "feed", to: "feed#index"
     get "tags", to: "tags#index"
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"

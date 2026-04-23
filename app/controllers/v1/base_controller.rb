@@ -30,7 +30,7 @@ module V1
     # トークンが不正・期限切れの場合は ClerkClient::UnauthorizedError を raise → 401
     def authenticate_user_if_token_present
       token = clerk_token_from_header
-      return unless token
+      return if token.blank?
 
       payload = TokenIssuer.decode(token)
       raise ClerkClient::UnauthorizedError unless payload
