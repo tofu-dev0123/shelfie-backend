@@ -25,7 +25,11 @@ RSpec.describe "認証系", type: :request do
           },
           required: [ "access_token" ]
 
-        run_test!
+        # Set-Cookie の Path=/ が明示されていることを保証する（SSR で全パスに Cookie を添付するため）
+        run_test! do |response|
+          expect(response.headers["Set-Cookie"]).to match(/refresh_token=/i)
+          expect(response.headers["Set-Cookie"]).to match(/path=\//i)
+        end
       end
 
       response "401", "Clerk JWT が無効" do

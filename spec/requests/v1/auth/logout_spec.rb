@@ -24,7 +24,12 @@ RSpec.describe "認証系", type: :request do
           },
           required: [ "message" ]
 
-        run_test!
+        # delete_cookie は set 時と同じ Path を指定しないとブラウザが削除と判定しないため、
+        # Path=/ が Set-Cookie ヘッダに含まれていることを保証する
+        run_test! do |response|
+          expect(response.headers["Set-Cookie"]).to match(/refresh_token=/i)
+          expect(response.headers["Set-Cookie"]).to match(/path=\//i)
+        end
       end
 
       response "200", "すでにログアウト済み（Cookie なし）" do

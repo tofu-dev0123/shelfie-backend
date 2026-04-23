@@ -83,4 +83,9 @@ Rails.application.configure do
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # フロントエンド（app.shelfie.com）とバックエンド（api.shelfie.com）で
+  # 同一の refresh_token Cookie を共有するため、親ドメインを環境変数経由で指定する
+  # 例: COOKIE_DOMAIN=.shelfie.com
+  config.cookie_domain = ENV["COOKIE_DOMAIN"]
 end

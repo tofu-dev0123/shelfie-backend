@@ -11,6 +11,8 @@ module V1
         )
 
         # httponly: JSからアクセス不可にしてXSS対策、secure: HTTPS限定、same_site: laxでCSRF対策しつつ通常のリンク遷移は許容
+        # path: "/" を明示しないと Rack は発行時のリクエストパス（/v1/auth）を Path にセットするため、
+        # 全パスで Cookie を送信させるために明示する
         response.set_cookie(
           :refresh_token,
           value: result[:refresh_token],
@@ -18,6 +20,7 @@ module V1
           secure: true,
           same_site: :lax,
           domain: Rails.application.config.cookie_domain,
+          path: "/",
           expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
         )
 
@@ -36,6 +39,7 @@ module V1
             secure: true,
             same_site: :lax,
             domain: Rails.application.config.cookie_domain,
+            path: "/",
             expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
           )
         end
@@ -48,9 +52,11 @@ module V1
         result = ::Auth::LogoutService.call(refresh_token: cookies[:refresh_token])
 
         # DBレコードの有無に関わらず、残存する Cookie を確実に破棄する
+        # path は set 時と同じ値を指定しないとブラウザが削除と判定しない
         response.delete_cookie(
           :refresh_token,
-          domain: Rails.application.config.cookie_domain
+          domain: Rails.application.config.cookie_domain,
+          path: "/"
         )
 
         if result == :logged_out

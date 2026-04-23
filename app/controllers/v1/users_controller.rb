@@ -23,6 +23,8 @@ module V1
       )
 
       # httponly: JSからアクセス不可にしてXSS対策、secure: HTTPS限定、same_site: laxでCSRF対策しつつ通常のリンク遷移は許容
+      # path: "/" を明示しないと Rack は発行時のリクエストパス（/v1/users）を Path にセットするため、
+      # 全パスで Cookie を送信させるために明示する
       response.set_cookie(
         :refresh_token,
         value: result[:refresh_token],
@@ -30,6 +32,7 @@ module V1
         secure: true,
         same_site: :lax,
         domain: Rails.application.config.cookie_domain,
+        path: "/",
         expires: TokenIssuer::REFRESH_TOKEN_EXPIRY.from_now
       )
 

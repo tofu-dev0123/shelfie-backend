@@ -34,7 +34,11 @@ RSpec.describe "ユーザー系", type: :request do
           },
           required: [ "access_token" ]
 
-        run_test!
+        # サインアップ直後の SSR リダイレクトで Cookie を読めるよう Path=/ が付くことを保証する
+        run_test! do |response|
+          expect(response.headers["Set-Cookie"]).to match(/refresh_token=/i)
+          expect(response.headers["Set-Cookie"]).to match(/path=\//i)
+        end
       end
 
       response "401", "Clerk JWT が無効" do
