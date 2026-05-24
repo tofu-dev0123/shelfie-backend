@@ -166,11 +166,14 @@ paths:
                           type: string
                           nullable: true
                           example: https://...
+                        is_in_my_want_to_read:
+                          type: boolean
+                          nullable: true
+                          example: true
+                          description: ログイン中ユーザーが読みたいリストに登録しているか。検索は認証必須のため未ログイン (null)
+                            は通常発生しない
                       required:
-                      - isbn
-                      - title
-                      - authors
-                      - thumbnail_url
+                      - is_in_my_want_to_read
                     example: []
                   pagination:
                     type: object
@@ -326,7 +329,7 @@ paths:
           type: string
       responses:
         '200':
-          description: 書籍取得成功
+          description: 読みたいリストに登録済みなら is_in_my_want_to_read=true
           content:
             application/json:
               schema:
@@ -349,11 +352,13 @@ paths:
                     type: string
                     nullable: true
                     example: https://example.com/thumbnail.jpg
+                  is_in_my_want_to_read:
+                    type: boolean
+                    nullable: true
+                    example: true
+                    description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                 required:
-                - isbn
-                - title
-                - authors
-                - thumbnail_url
+                - is_in_my_want_to_read
         '401':
           description: アクセストークンが無効
           content:
@@ -481,11 +486,17 @@ paths:
                               type: string
                               nullable: true
                               example:
+                            is_in_my_want_to_read:
+                              type: boolean
+                              nullable: true
+                              example:
+                              description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                           required:
                           - isbn
                           - title
                           - authors
                           - thumbnail_url
+                          - is_in_my_want_to_read
                         user:
                           type: object
                           properties:
@@ -1160,11 +1171,16 @@ paths:
                           type: string
                           nullable: true
                           example: https://example.com/thumb.jpg
+                        is_in_my_want_to_read:
+                          type: boolean
+                          example: true
+                          description: 自分の読みたいリスト由来のため常に true
                       required:
                       - isbn
                       - title
                       - authors
                       - thumbnail_url
+                      - is_in_my_want_to_read
                     example: []
                   pagination:
                     type: object
@@ -1599,6 +1615,13 @@ paths:
       tags:
       - 本棚系
       parameters:
+      - name: Authorization
+        in: header
+        required: false
+        description: アクセストークン。任意。指定時は book.is_in_my_want_to_read が boolean になる（未指定時は
+          null）
+        schema:
+          type: string
       - name: username
         in: path
         required: true
@@ -1665,11 +1688,13 @@ paths:
                               type: string
                               nullable: true
                               example:
+                            is_in_my_want_to_read:
+                              type: boolean
+                              nullable: true
+                              example: true
+                              description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                           required:
-                          - isbn
-                          - title
-                          - authors
-                          - thumbnail_url
+                          - is_in_my_want_to_read
                       required:
                       - id
                       - content
@@ -1735,6 +1760,13 @@ paths:
       tags:
       - 本棚系
       parameters:
+      - name: Authorization
+        in: header
+        required: false
+        description: アクセストークン。任意。指定時は book.is_in_my_want_to_read が boolean になる（未指定時は
+          null）
+        schema:
+          type: string
       - name: username
         in: path
         required: true
@@ -1793,11 +1825,13 @@ paths:
                         type: string
                         nullable: true
                         example:
+                      is_in_my_want_to_read:
+                        type: boolean
+                        nullable: true
+                        example: true
+                        description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                     required:
-                    - isbn
-                    - title
-                    - authors
-                    - thumbnail_url
+                    - is_in_my_want_to_read
                   user:
                     type: object
                     properties:

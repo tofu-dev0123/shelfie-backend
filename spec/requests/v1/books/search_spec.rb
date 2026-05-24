@@ -50,12 +50,13 @@ RSpec.describe "書籍系", type: :request do
               items: {
                 type: :object,
                 properties: {
-                  isbn:          { type: :string, example: "9784873118079" },
-                  title:         { type: :string, example: "リーダブルコード" },
-                  authors:       { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
-                  thumbnail_url: { type: :string, nullable: true, example: "https://..." }
+                  isbn:                  { type: :string, example: "9784873118079" },
+                  title:                 { type: :string, example: "リーダブルコード" },
+                  authors:               { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
+                  thumbnail_url:         { type: :string, nullable: true, example: "https://..." },
+                  is_in_my_want_to_read: { type: :boolean, nullable: true, example: false, description: "ログイン中ユーザーが読みたいリストに登録しているか。検索は認証必須のため未ログイン (null) は通常発生しない" }
                 },
-                required: %w[isbn title authors thumbnail_url]
+                required: %w[isbn title authors thumbnail_url is_in_my_want_to_read]
               }
             },
             pagination: {
@@ -69,7 +70,40 @@ RSpec.describe "書籍系", type: :request do
           },
           required: %w[items pagination]
 
-        run_test!
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["items"].first["is_in_my_want_to_read"]).to eq(false)
+        end
+      end
+
+      response "200", "読みたいリストに登録済みの書籍は is_in_my_want_to_read=true" do
+        let(:q) { "Rails" }
+
+        before do
+          stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+            .to_return(status: 200, body: rakuten_books_response, headers: { "Content-Type" => "application/json" })
+          book = create(:book, isbn: "9784873118079")
+          create(:want_to_read, user: current_user, book: book)
+        end
+
+        schema type: :object,
+          properties: {
+            items: {
+              type: :array,
+              items: {
+                type: :object,
+                properties: {
+                  is_in_my_want_to_read: { type: :boolean, nullable: true, example: true }
+                },
+                required: %w[is_in_my_want_to_read]
+              }
+            }
+          }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["items"].first["is_in_my_want_to_read"]).to eq(true)
+        end
       end
 
       response "200", "検索結果 0件" do

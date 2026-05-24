@@ -32,12 +32,13 @@ RSpec.describe "読みたい系API", type: :request do
               items: {
                 type: :object,
                 properties: {
-                  isbn:          { type: :string, example: "9784873116068" },
-                  title:         { type: :string, example: "リーダブルコード" },
-                  authors:       { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
-                  thumbnail_url: { type: :string, nullable: true, example: "https://example.com/thumb.jpg" }
+                  isbn:                  { type: :string, example: "9784873116068" },
+                  title:                 { type: :string, example: "リーダブルコード" },
+                  authors:               { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
+                  thumbnail_url:         { type: :string, nullable: true, example: "https://example.com/thumb.jpg" },
+                  is_in_my_want_to_read: { type: :boolean, example: true, description: "自分の読みたいリスト由来のため常に true" }
                 },
-                required: %w[isbn title authors thumbnail_url]
+                required: %w[isbn title authors thumbnail_url is_in_my_want_to_read]
               }
             },
             pagination: {
@@ -51,7 +52,10 @@ RSpec.describe "読みたい系API", type: :request do
           },
           required: %w[items pagination]
 
-        run_test!
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["items"].first["is_in_my_want_to_read"]).to eq(true)
+        end
       end
 
       response "200", "読みたいリストを取得（データなし）" do
