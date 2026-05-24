@@ -31,6 +31,6 @@ class UserBookShowSerializer
   def avatar_url
     return nil if @user.avatar_key.nil?
 
-    "https://#{CdnConstants::CLOUDFRONT_HOST}/#{@user.avatar_key}"
+    CdnConstants.url_for(@user.avatar_key)
   end
 end

@@ -21,7 +21,14 @@ class S3Client
   end
 
   def self.client
-    @client ||= Aws::S3::Client.new(region: REGION)
+    @client ||= begin
+      options = { region: REGION }
+      if ENV["AWS_ENDPOINT"].present?
+        options[:endpoint] = ENV["AWS_ENDPOINT"]
+        options[:force_path_style] = true
+      end
+      Aws::S3::Client.new(**options)
+    end
   end
   private_class_method :client
 end
