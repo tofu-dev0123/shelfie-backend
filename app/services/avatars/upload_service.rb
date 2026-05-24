@@ -11,14 +11,26 @@ module Avatars
         raise AvatarFileError, I18n.t("messages.avatar.file_too_large")
       end
 
-      key = "#{AvatarConstants::S3_KEY_PREFIX}/#{current_user.id}"
-      S3Client.upload(file: file, key: key)
+      # キーをアップロードのたびにユニークにし、CDN/ブラウザのキャッシュにより
+      # 古い画像が表示され続ける問題を回避する。
+      old_key = current_user.avatar_key
+      new_key = "#{AvatarConstants::S3_KEY_PREFIX}/#{current_user.id}_#{SecureRandom.hex(8)}"
+      S3Client.upload(file: file, key: new_key)
 
-      current_user.update!(avatar_key: key)
+      current_user.update!(avatar_key: new_key)
+
+      # 旧オブジェクトはベストエフォートで削除し、失敗してもアップロード自体は成功扱いとする
+      if old_key.present? && old_key != new_key
+        begin
+          S3Client.delete(key: old_key)
+        rescue StandardError => e
+          Rails.logger.warn "Avatars::UploadService: 旧アバター削除失敗 user_id=#{current_user.id} key=#{old_key} error=#{e.message}"
+        end
+      end
 
       Rails.logger.info "Avatars::UploadService: user_id=#{current_user.id} のアバターをアップロードしました"
 
-      avatar_url(key)
+      avatar_url(new_key)
     end
 
     def self.avatar_url(key)
