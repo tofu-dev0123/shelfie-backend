@@ -31,6 +31,7 @@ Rails.application.routes.draw do
     get "tags", to: "tags#index"
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"
+    get "books/:isbn", to: "books#show", constraints: { isbn: /\d{13}/ }
     get "users/username/check", to: "users#check_username"
     get "users/:username/followers", to: "user_follows#followers"
     get "users/:username/following", to: "user_follows#following"

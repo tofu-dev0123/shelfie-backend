@@ -310,6 +310,104 @@ paths:
                 required:
                 - items
                 - pagination
+  "/v1/books/{isbn}":
+    get:
+      summary: 書籍取得API
+      tags:
+      - 書籍系
+      security:
+      - Bearer: []
+      parameters:
+      - name: isbn
+        in: path
+        required: true
+        description: 書籍の ISBN-13（13桁の数字）
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 書籍取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isbn:
+                    type: string
+                    example: '9784873118079'
+                  title:
+                    type: string
+                    example: リーダブルコード
+                  authors:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - Dustin Boswell
+                    - Trevor Foucher
+                  thumbnail_url:
+                    type: string
+                    nullable: true
+                    example: https://example.com/thumbnail.jpg
+                required:
+                - isbn
+                - title
+                - authors
+                - thumbnail_url
+        '401':
+          description: アクセストークンが無効
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '404':
+          description: isbn の形式が不正（ルートにマッチしない）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: NOT_FOUND
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '503':
+          description: 楽天 Books API エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: EXTERNAL_API_ERROR
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
   "/v1/feed":
     get:
       summary: フィード取得API
