@@ -6,14 +6,15 @@ module V1
       Rails.logger.debug "BooksController#search に入りました"
       result = Books::SearchService.call(
         q: params[:q],
-        cursor: params[:cursor]
+        cursor: params[:cursor],
+        current_user: current_user
       )
       render json: result, status: :ok
     end
 
     def show
       Rails.logger.debug "BooksController#show に入りました"
-      result = Books::ShowService.call(isbn: params[:isbn])
+      result = Books::ShowService.call(isbn: params[:isbn], current_user: current_user)
       render json: result, status: :ok
     end
 

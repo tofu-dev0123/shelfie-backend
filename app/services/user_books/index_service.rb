@@ -1,6 +1,6 @@
 module UserBooks
   class IndexService
-    def self.call(username:, cursor: nil, limit: nil)
+    def self.call(username:, cursor: nil, limit: nil, current_user: nil)
       user = User.find_by(username: username)
       raise UserNotFoundError unless user
 
@@ -17,10 +17,15 @@ module UserBooks
       user_books = user_books.first(limit)
       next_cursor = has_next ? IdCursor.encode(user_books.last.id) : nil
 
+      want_to_read_isbns = Queries::WantToReadIsbnSetQuery.call(
+        user: current_user,
+        isbns: user_books.map { |ub| ub.book.isbn }
+      )
+
       Rails.logger.info "UserBooks::IndexService: username=#{username} の本棚を取得しました"
 
       {
-        items: user_books.map { |ub| UserBookSerializer.new(ub).as_json },
+        items: user_books.map { |ub| UserBookSerializer.new(ub, want_to_read_isbns: want_to_read_isbns).as_json },
         pagination: {
           next_cursor: next_cursor,
           has_next: has_next

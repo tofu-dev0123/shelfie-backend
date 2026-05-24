@@ -36,6 +36,22 @@ RSpec.describe Books::SearchService do
         )
       end
 
+      it "current_user が nil のとき is_in_my_want_to_read は nil" do
+        result = described_class.call(q: "Rails")
+        expect(result[:items].first[:is_in_my_want_to_read]).to be_nil
+      end
+
+      it "current_user が読みたい登録済みの書籍は is_in_my_want_to_read=true" do
+        user = create(:user)
+        book = create(:book, isbn: "9780000000000")
+        create(:want_to_read, user: user, book: book)
+
+        result = described_class.call(q: "Rails", current_user: user)
+
+        expect(result[:items].first[:is_in_my_want_to_read]).to eq(true)
+        expect(result[:items].second[:is_in_my_want_to_read]).to eq(false)
+      end
+
       it "pageCount より page が小さいとき has_next: true" do
         result = described_class.call(q: "Rails")
         expect(result[:pagination][:has_next]).to eq(true)
