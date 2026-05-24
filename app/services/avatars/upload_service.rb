@@ -22,7 +22,7 @@ module Avatars
     end
 
     def self.avatar_url(key)
-      "https://#{CdnConstants::CLOUDFRONT_HOST}/#{key}"
+      CdnConstants.url_for(key)
     end
     private_class_method :avatar_url
   end
