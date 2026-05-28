@@ -316,6 +316,30 @@ RSpec.describe "読みたい系API", type: :request do
         run_test!
       end
 
+      response "409", "既に本棚に登録済み" do
+        let(:Authorization) { "Bearer valid_token" }
+        let(:isbn) { "9784873116068" }
+
+        before do
+          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          book = create(:book, isbn: "9784873116068")
+          create(:user_book, user: user, book: book)
+        end
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "CONFLICT" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+
       response "422", "isbn が13桁の数字でない" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { "invalid_isbn" }

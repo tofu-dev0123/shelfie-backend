@@ -5,6 +5,8 @@ module WantToReads
 
       book = Book.find_by(isbn: isbn) || fetch_and_create_book!(isbn)
 
+      raise BookAlreadyRegisteredError if UserBook.exists?(user: current_user, book: book)
+
       ActiveRecord::Base.transaction do
         WantToRead.create!(user: current_user, book: book)
       rescue ActiveRecord::RecordNotUnique
