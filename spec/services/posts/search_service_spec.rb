@@ -56,8 +56,15 @@ RSpec.describe Posts::SearchService, type: :service do
 
       it "cursor 指定で次ページを返す" do
         ubs = create_list(:user_book, 3, content: "テスト").sort_by(&:id).reverse
-        cursor = IdCursor.encode(ubs[0].id)
+        cursor = CompoundCursor.encode(created_at: ubs[0].created_at, id: ubs[0].id)
         result = described_class.call(q: "テスト", cursor: cursor, limit: 10)
+        expect(result[:items].map { |i| i[:id] }).to eq([ ubs[1].id, ubs[2].id ])
+      end
+
+      it "旧形式カーソル ({id} のみ) でも次ページを返す（後方互換）" do
+        ubs = create_list(:user_book, 3, content: "テスト").sort_by(&:id).reverse
+        legacy_cursor = Base64.strict_encode64({ id: ubs[0].id }.to_json)
+        result = described_class.call(q: "テスト", cursor: legacy_cursor, limit: 10)
         expect(result[:items].map { |i| i[:id] }).to eq([ ubs[1].id, ubs[2].id ])
       end
 

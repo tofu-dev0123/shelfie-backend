@@ -6,19 +6,19 @@ module Posts
 
       validate_params!(q, tag)
 
-      limit    = clamp_limit(limit.to_i)
-      after_id = IdCursor.decode(cursor)
+      limit  = clamp_limit(limit.to_i)
+      after  = CompoundCursor.decode(cursor)
 
       user_books = Queries::PostSearchQuery.call(
         q: q.presence,
         tag: tag.presence,
-        after_id: after_id,
+        cursor: after,
         limit: limit
       )
 
       has_next    = user_books.size > limit
       user_books  = user_books.first(limit)
-      next_cursor = has_next ? IdCursor.encode(user_books.last.id) : nil
+      next_cursor = has_next ? CompoundCursor.encode(created_at: user_books.last.created_at, id: user_books.last.id) : nil
 
       want_to_read_isbns = Queries::WantToReadIsbnSetQuery.call(
         user: current_user,

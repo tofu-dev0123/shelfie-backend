@@ -1,18 +1,18 @@
 module WantToReads
   class IndexService
     def self.call(current_user:, cursor: nil, limit: nil)
-      limit    = clamp_limit(limit.to_i)
-      after_id = IdCursor.decode(cursor)
+      limit = clamp_limit(limit.to_i)
+      after = CompoundCursor.decode(cursor)
 
-      want_to_reads = current_user.want_to_reads
+      scope = current_user.want_to_reads
         .includes(:book)
         .order(created_at: :desc, id: :desc)
-        .then { |scope| after_id ? scope.where("want_to_reads.id < ?", after_id) : scope }
+      want_to_reads = CompoundCursor.apply_to(scope, table: "want_to_reads", cursor: after)
         .limit(limit + 1)
 
       has_next      = want_to_reads.size > limit
       want_to_reads = want_to_reads.first(limit)
-      next_cursor   = has_next ? IdCursor.encode(want_to_reads.last.id) : nil
+      next_cursor   = has_next ? CompoundCursor.encode(created_at: want_to_reads.last.created_at, id: want_to_reads.last.id) : nil
 
       Rails.logger.info "WantToReads::IndexService: user_id=#{current_user.id} の読みたいリストを取得しました"
 

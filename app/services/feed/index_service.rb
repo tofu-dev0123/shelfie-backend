@@ -2,14 +2,14 @@ module Feed
   class IndexService
     def self.call(current_user: nil, cursor: nil, limit: nil)
       limit = clamp_limit(limit.to_i)
-      after_id = IdCursor.decode(cursor)
+      after = CompoundCursor.decode(cursor)
       user_ids = target_user_ids(current_user)
 
-      user_books = Queries::FeedQuery.call(user_ids: user_ids, after_id: after_id, limit: limit)
+      user_books = Queries::FeedQuery.call(user_ids: user_ids, cursor: after, limit: limit)
 
       has_next = user_books.size > limit
       user_books = user_books.first(limit)
-      next_cursor = has_next ? IdCursor.encode(user_books.last.id) : nil
+      next_cursor = has_next ? CompoundCursor.encode(created_at: user_books.last.created_at, id: user_books.last.id) : nil
 
       want_to_read_isbns = Queries::WantToReadIsbnSetQuery.call(
         user: current_user,
