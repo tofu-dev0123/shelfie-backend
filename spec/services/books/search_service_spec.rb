@@ -18,7 +18,7 @@ RSpec.describe Books::SearchService do
   end
 
   before do
-    stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+    stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
       .to_return(status: 200, body: rakuten_books_response.to_json, headers: { "Content-Type" => "application/json" })
   end
 
@@ -59,7 +59,7 @@ RSpec.describe Books::SearchService do
       end
 
       it "最終ページのとき has_next: false" do
-        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+        stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(
             status: 200,
             body: { count: 3, page: 1, pageCount: 1, Items: rakuten_books_response[:Items].first(3) }.to_json,
@@ -72,7 +72,7 @@ RSpec.describe Books::SearchService do
       end
 
       it "検索結果 0件のとき items: [] で has_next: false" do
-        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+        stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(status: 200, body: { count: 0, page: 1, pageCount: 0, Items: [] }.to_json, headers: { "Content-Type" => "application/json" })
 
         result = described_class.call(q: "存在しない書籍")
@@ -84,11 +84,11 @@ RSpec.describe Books::SearchService do
         cursor = Base64.strict_encode64({ page: 2 }.to_json)
         described_class.call(q: "Rails", cursor: cursor)
 
-        expect(WebMock).to have_requested(:get, /app\.rakuten\.co\.jp/).with(query: hash_including("page" => "2"))
+        expect(WebMock).to have_requested(:get, /openapi\.rakuten\.co\.jp/).with(query: hash_including("page" => "2"))
       end
 
       it "著者不明の書籍は authors: []" do
-        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+        stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(
             status: 200,
             body: { count: 1, page: 1, pageCount: 1, Items: [ { isbn: "9784000000001", title: "無名の本" } ] }.to_json,
@@ -100,7 +100,7 @@ RSpec.describe Books::SearchService do
       end
 
       it "サムネイルなしの書籍は thumbnail_url: nil" do
-        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+        stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(
             status: 200,
             body: { count: 1, page: 1, pageCount: 1, Items: [ { isbn: "9784000000001", title: "サムネなし本", author: "著者" } ] }.to_json,
@@ -112,7 +112,7 @@ RSpec.describe Books::SearchService do
       end
 
       it "複数著者は ／ で分割して配列にする" do
-        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+        stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(
             status: 200,
             body: { count: 1, page: 1, pageCount: 1, Items: [ { isbn: "9784000000001", title: "共著本", author: "著者A／著者B" } ] }.to_json,
@@ -160,7 +160,7 @@ RSpec.describe Books::SearchService do
 
     context "異常系: 外部API エラー" do
       it "楽天 Books API がエラーを返したとき ExternalApiError を raise する" do
-        stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
+        stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(status: 500)
 
         expect { described_class.call(q: "Rails") }.to raise_error(ExternalApiError)
