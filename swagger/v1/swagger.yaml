@@ -1561,6 +1561,174 @@ paths:
                   example:
                   - https://github.com/komusan
         required: true
+  "/v1/posts/search":
+    get:
+      summary: 投稿検索API
+      tags:
+      - 投稿系
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        description: アクセストークン。任意。指定時は is_in_my_want_to_read が boolean になる（未指定時は null）
+        schema:
+          type: string
+      - name: q
+        in: query
+        required: false
+        description: 投稿本文の部分一致検索クエリ（空白トリム後1文字以上・100文字以内）。tag と同時指定は不可
+        schema:
+          type: string
+      - name: tag
+        in: query
+        required: false
+        description: タグ名による完全一致検索（50文字以内）。q と同時指定は不可
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        description: 前回レスポンスの next_cursor（省略時は先頭から）
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 最大取得件数（デフォルト20・上限50）。0以下はデフォルト値、上限超はクランプ
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: 該当する投稿が0件
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        content:
+                          type: string
+                          nullable: true
+                          example: 'とても良い本でした #Go'
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                          example:
+                          - Go
+                        created_at:
+                          type: string
+                          example: '2026-03-05T00:00:00Z'
+                        book:
+                          type: object
+                          properties:
+                            isbn:
+                              type: string
+                              example: '9784873118079'
+                            title:
+                              type: string
+                              example: リーダブルコード
+                            authors:
+                              type: array
+                              items:
+                                type: string
+                              example:
+                              - Dustin Boswell
+                            thumbnail_url:
+                              type: string
+                              nullable: true
+                              example:
+                            is_in_my_want_to_read:
+                              type: boolean
+                              nullable: true
+                              example:
+                          required:
+                          - isbn
+                          - title
+                          - authors
+                          - thumbnail_url
+                          - is_in_my_want_to_read
+                        user:
+                          type: object
+                          properties:
+                            username:
+                              type: string
+                              example: komusan
+                            nickname:
+                              type: string
+                              example: コムさん
+                            avatar_url:
+                              type: string
+                              nullable: true
+                              example:
+                          required:
+                          - username
+                          - nickname
+                          - avatar_url
+                      required:
+                      - id
+                      - content
+                      - tags
+                      - created_at
+                      - book
+                      - user
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        example:
+                      has_next:
+                        type: boolean
+                        example: false
+                    required:
+                    - next_cursor
+                    - has_next
+                required:
+                - items
+                - pagination
+        '422':
+          description: 不正なカーソル値
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
+        '401':
+          description: アクセストークンが無効・期限切れ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                    - code
+                    - message
   "/v1/tags":
     get:
       summary: タグサジェストAPI

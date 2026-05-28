@@ -29,6 +29,7 @@ Rails.application.routes.draw do
     end
     get "feed", to: "feed#index"
     get "tags", to: "tags#index"
+    get "posts/search", to: "posts#search"
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"
     get "books/:isbn", to: "books#show", constraints: { isbn: /\d{13}/ }
