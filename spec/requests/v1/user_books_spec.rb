@@ -134,7 +134,7 @@ RSpec.describe "本棚系", type: :request do
         let(:Authorization) { nil }
         let(:username) { user.username }
         let!(:user_books) { create_list(:user_book, 3, user: user) }
-        let(:cursor) { Base64.strict_encode64({ id: user_books.second.id }.to_json) }
+        let(:cursor) { CompoundCursor.encode(created_at: user_books.second.created_at, id: user_books.second.id) }
 
         schema type: :object,
           properties: {

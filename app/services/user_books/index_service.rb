@@ -5,17 +5,17 @@ module UserBooks
       raise UserNotFoundError unless user
 
       limit = clamp_limit(limit.to_i)
-      after_id = IdCursor.decode(cursor)
+      after = CompoundCursor.decode(cursor)
 
-      user_books = user.user_books
+      scope = user.user_books
         .includes(:book, :tags)
         .order(created_at: :desc, id: :desc)
-        .then { |scope| after_id ? scope.where("user_books.id < ?", after_id) : scope }
+      user_books = CompoundCursor.apply_to(scope, table: "user_books", cursor: after)
         .limit(limit + 1)
 
       has_next = user_books.size > limit
       user_books = user_books.first(limit)
-      next_cursor = has_next ? IdCursor.encode(user_books.last.id) : nil
+      next_cursor = has_next ? CompoundCursor.encode(created_at: user_books.last.created_at, id: user_books.last.id) : nil
 
       want_to_read_isbns = Queries::WantToReadIsbnSetQuery.call(
         user: current_user,

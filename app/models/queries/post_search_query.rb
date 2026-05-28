@@ -1,6 +1,6 @@
 module Queries
   class PostSearchQuery
-    def self.call(q: nil, tag: nil, after_id: nil, limit: PostConstants::DEFAULT_LIMIT)
+    def self.call(q: nil, tag: nil, cursor: nil, limit: PostConstants::DEFAULT_LIMIT)
       scope = UserBook
         .includes(:book, :user, :tags)
         .order(created_at: :desc, id: :desc)
@@ -12,7 +12,7 @@ module Queries
         scope = scope.joins(:tags).where(tags: { name: tag })
       end
 
-      scope = scope.where("user_books.id < ?", after_id) if after_id
+      scope = CompoundCursor.apply_to(scope, table: "user_books", cursor: cursor)
       scope.limit(limit + 1)
     end
   end
