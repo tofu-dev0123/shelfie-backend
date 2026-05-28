@@ -1284,7 +1284,7 @@ paths:
                       message:
                         type: string
         '409':
-          description: 既に読みたいリストに追加済み
+          description: 既に本棚に登録済み
           content:
             application/json:
               schema:

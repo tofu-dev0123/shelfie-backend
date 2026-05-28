@@ -69,6 +69,27 @@ RSpec.describe WantToReads::CreateService, type: :service do
           .to raise_error(WantToReadAlreadyExistsError)
       end
 
+      it "既に本棚に登録済みのとき BookAlreadyRegisteredError を raise する" do
+        book = create(:book, isbn: isbn)
+        create(:user_book, user: user, book: book)
+
+        expect { described_class.call(current_user: user, isbn: isbn) }
+          .to raise_error(BookAlreadyRegisteredError)
+      end
+
+      it "本棚に登録済みのとき WantToRead は作成されない" do
+        book = create(:book, isbn: isbn)
+        create(:user_book, user: user, book: book)
+
+        expect {
+          begin
+            described_class.call(current_user: user, isbn: isbn)
+          rescue BookAlreadyRegisteredError
+            # 期待動作
+          end
+        }.not_to change(WantToRead, :count)
+      end
+
       it "楽天APIがエラーのとき ExternalApiError を raise する" do
         stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
           .to_return(status: 500)
