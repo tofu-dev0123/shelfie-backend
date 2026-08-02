@@ -3,13 +3,13 @@
 ## ER図
 
 ```
-┌──────────────┐       ┌──────────────────┐       ┌──────────────────────────┐
-│  user_links  │       │    user_books    │  1:N  │ user_book_purchase_links │
-├──────────────┤       ├──────────────────┤       ├──────────────────────────┤
-│ id           │       │ id               │───────│ id                       │
-│ user_id      │  N:1  │ user_id          │       │ user_book_id             │
-│ url          │       │ book_id          │       │ url                      │
-└──────┬───────┘       │ content          │       └──────────────────────────┘
+┌──────────────┐       ┌──────────────────┐
+│  user_links  │       │    user_books    │
+├──────────────┤       ├──────────────────┤
+│ id           │       │ id               │
+│ user_id      │  N:1  │ user_id          │
+│ url          │       │ book_id          │
+└──────┬───────┘       │ content          │
        │               └──┬──────┬────────┘
        │ N:1              │ N:1  │ 1:N
 ┌──────▼───────┐          │  ┌───▼────────────┐
@@ -50,7 +50,6 @@
 | [user_links](./tables/user_links.md) | プロフィールリンク（最大5件）|
 | [books](./tables/books.md) | 書籍データ（楽天書籍API キャッシュ）|
 | [user_books](./tables/user_books.md) | 本棚投稿 |
-| [user_book_purchase_links](./tables/user_book_purchase_links.md) | 購入リンク |
 | [tags](./tables/tags.md) | 技術タグマスタ |
 | [user_book_tags](./tables/user_book_tags.md) | 本棚投稿へのタグ付け |
 | [follows](./tables/follows.md) | フォロー関係 |
@@ -117,10 +116,9 @@ want_to_reads
   → follows
     → refresh_tokens
       → user_links
-        → user_book_purchase_links
-          → user_book_tags
-            → user_books
-              → users
+        → user_book_tags
+          → user_books
+            → users
 ```
 
 `books`・`tags` テーブルは他ユーザーも参照する共有データのため、ユーザー削除時には削除しません。
@@ -136,7 +134,6 @@ want_to_reads
 | user_books | user_id | users | RESTRICT |
 | user_books | book_id | books | RESTRICT |
 | user_links | user_id | users | RESTRICT |
-| user_book_purchase_links | user_book_id | user_books | RESTRICT |
 | follows | follower_id | users | RESTRICT |
 | follows | followee_id | users | RESTRICT |
 | want_to_reads | user_id | users | RESTRICT |
@@ -144,12 +141,6 @@ want_to_reads
 | refresh_tokens | user_id | users | RESTRICT |
 | user_book_tags | user_book_id | user_books | RESTRICT |
 | user_book_tags | tag_id | tags | RESTRICT |
-
----
-
-### 購入リンクの拡張性
-
-`user_book_purchase_links` を別テーブルにすることで、1投稿あたり最大3件のリンクを管理できます。
 
 ---
 

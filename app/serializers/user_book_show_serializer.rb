@@ -23,8 +23,7 @@ class UserBookShowSerializer
       user: {
         username: @user.username,
         nickname: @user.nickname
-      },
-      purchase_links: @user_book.user_book_purchase_links.map(&:url)
+      }
     }
   end
 

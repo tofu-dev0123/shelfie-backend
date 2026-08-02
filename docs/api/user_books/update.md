@@ -20,17 +20,13 @@
 
 ```json
 {
-  "content": "改めて読み直したら更に良かったです #Go #アーキテクチャ",
-  "purchase_links": [
-    "https://www.amazon.co.jp/..."
-  ]
+  "content": "改めて読み直したら更に良かったです #Go #アーキテクチャ"
 }
 ```
 
 | フィールド | 型 | 必須 | バリデーション |
 |---|---|---|---|
 | `content` | string | 必須 | 最大1000文字。中の `#xxx` がタグとして抽出される |
-| `purchase_links` | array | 必須 | URL形式、最大3件 |
 
 ハッシュタグ抽出仕様は POST /v1/me/books と同様。1投稿あたり最大5タグ。
 
@@ -41,7 +37,6 @@
 3. `isbn` → `book_id` を取得し、ログインユーザーの `user_books` レコードを検索
 4. `content` を送信値で上書き
 5. 抽出タグを `Tag.find_or_create_safely!` で取得・生成し、`user_book_tags` を全件置き換え（タグが抽出されなければ全削除。並列リクエストで同名タグが同時作成された場合は `RecordNotUnique` を検知して作成済みレコードを再検索する）
-6. `purchase_links` は送信値で全件置き換え（空配列 `[]` で全削除）
 
 ## レスポンス
 
@@ -60,12 +55,4 @@
 |---|---|---|
 | `UNAUTHORIZED` | 401 | アクセストークンが無効・期限切れ |
 | `NOT_FOUND` | 404 | 書籍または投稿が存在しない |
-| `VALIDATION_ERROR` | 422 | バリデーション違反（`field` に違反フィールド名を含む場合あり） |
-
-```json
-// VALIDATION_ERROR レスポンス例
-{
-  "code": "VALIDATION_ERROR",
-  "field": "purchase_links"
-}
-```
+| `VALIDATION_ERROR` | 422 | バリデーション違反（content超過・ハッシュタグ数超過） |

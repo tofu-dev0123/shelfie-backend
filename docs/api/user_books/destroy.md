@@ -20,7 +20,7 @@
 
 1. アクセストークンを検証してログインユーザーを特定
 2. `isbn` → `book_id` を取得し、ログインユーザーの `user_books` レコードを検索
-3. `user_books` レコードを削除（関連する `user_book_purchase_links` も CASCADE削除）
+3. `user_books` レコードを削除
 
 ## レスポンス
 

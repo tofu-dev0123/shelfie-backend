@@ -4,6 +4,3 @@ ja:
       isbn_invalid: "ISBNは13桁の数字で入力してください"
       content_too_long: "contentは%{count}文字以内で入力してください"
       tags_too_many: "タグは最大%{count}件まで設定できます"
-      purchase_links_too_many: "purchase_linksは最大%{count}件まで設定できます"
-      purchase_link_url_invalid: "URLの形式が正しくありません"
-      purchase_link_url_too_long: "URLは%{count}文字以内で入力してください"

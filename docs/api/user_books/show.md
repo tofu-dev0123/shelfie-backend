@@ -21,7 +21,7 @@
 
 1. `username` → `user_id`、`isbn` → `book_id` を取得
 2. `user_books` から該当レコードを検索
-3. 書籍情報・投稿者情報・投稿内容・購入リンクを返す
+3. 書籍情報・投稿者情報・投稿内容を返す
 
 ## レスポンス
 
@@ -44,12 +44,8 @@
   "user": {
     "username": "komusan",
     "nickname": "コムさん"
-  },
-  "purchase_links": [
-    "https://www.amazon.co.jp/..."
-  ]
+  }
 }
-// purchase_links が空の場合は [] を返す
 ```
 
 ### エラー

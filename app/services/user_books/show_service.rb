@@ -5,7 +5,7 @@ module UserBooks
       raise UserNotFoundError unless user
 
       user_book = user.user_books
-        .includes(:book, :tags, :user_book_purchase_links)
+        .includes(:book, :tags)
         .joins(:book)
         .find_by(books: { isbn: isbn })
       raise RecordNotFoundError unless user_book
