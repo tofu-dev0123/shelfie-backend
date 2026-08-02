@@ -72,7 +72,6 @@ app/models/
 ├── user.rb
 ├── book.rb
 ├── user_book.rb
-├── user_book_purchase_link.rb
 ├── user_link.rb
 ├── follow.rb
 ├── like.rb
@@ -114,7 +113,7 @@ app/services/
 │   └── me_update_service.rb      # 自分のプロフィール更新
 └── user_books/
     ├── create_service.rb         # 楽天書籍API取得 → books upsert → user_book作成
-    └── update_service.rb         # user_book更新 + purchase_links全置換
+    └── update_service.rb         # user_book更新 + タグ全置換
 ```
 
 ### lib/clients/

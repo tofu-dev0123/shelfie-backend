@@ -38,5 +38,4 @@
 |---|---|---|
 | users | N:1 | 投稿したユーザー |
 | books | N:1 | 対象書籍 |
-| user_book_purchase_links | 1:N | 購入リンク |
 | user_book_tags | 1:N | タグ紐付け |

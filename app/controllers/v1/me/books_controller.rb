@@ -6,8 +6,7 @@ module V1
         UserBooks::CreateService.call(
           current_user: current_user,
           isbn: book_params[:isbn],
-          content: book_params[:content],
-          purchase_links: book_params[:purchase_links] || []
+          content: book_params[:content]
         )
         render json: { message: I18n.t("messages.me.books.created") }, status: :created
       end
@@ -17,8 +16,7 @@ module V1
         UserBooks::UpdateService.call(
           current_user: current_user,
           isbn: params[:isbn],
-          content: update_params[:content],
-          purchase_links: update_params[:purchase_links]
+          content: update_params[:content]
         )
         render json: { message: I18n.t("messages.me.books.updated") }, status: :ok
       end
@@ -32,11 +30,11 @@ module V1
       private
 
       def book_params
-        params.permit(:isbn, :content, purchase_links: [])
+        params.permit(:isbn, :content)
       end
 
       def update_params
-        params.permit(:content, purchase_links: [])
+        params.permit(:content)
       end
     end
   end

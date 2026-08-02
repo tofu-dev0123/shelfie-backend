@@ -628,7 +628,7 @@ paths:
                       message:
                         type: string
         '422':
-          description: purchase_links の URL 形式が不正
+          description: 本文中のハッシュタグが5件超
           content:
             application/json:
               schema:
@@ -642,9 +642,6 @@ paths:
                         example: VALIDATION_ERROR
                       message:
                         type: string
-                      field:
-                        type: string
-                        example: purchase_links
         '503':
           description: 楽天書籍APIがエラーを返した
           content:
@@ -672,12 +669,6 @@ paths:
                 content:
                   type: string
                   example: 'とても良い本でした #Go #アーキテクチャ'
-                purchase_links:
-                  type: array
-                  items:
-                    type: string
-                  example:
-                  - https://www.amazon.co.jp/...
               required:
               - isbn
         required: true
@@ -739,7 +730,7 @@ paths:
                       message:
                         type: string
         '422':
-          description: purchase_links の URL 形式が不正
+          description: 本文中のハッシュタグが5件超
           content:
             application/json:
               schema:
@@ -753,9 +744,6 @@ paths:
                         example: VALIDATION_ERROR
                       message:
                         type: string
-                      field:
-                        type: string
-                        example: purchase_links
       requestBody:
         content:
           application/json:
@@ -765,15 +753,8 @@ paths:
                 content:
                   type: string
                   example: '改めて読み直したら更に良かったです #Go #アーキテクチャ'
-                purchase_links:
-                  type: array
-                  items:
-                    type: string
-                  example:
-                  - https://www.amazon.co.jp/...
               required:
               - content
-              - purchase_links
         required: true
     delete:
       summary: 本棚投稿削除API
@@ -1791,7 +1772,7 @@ paths:
           type: string
       responses:
         '200':
-          description: 購入リンクなし
+          description: ログイン中ユーザーが対象書籍を読みたい登録済み
           content:
             application/json:
               schema:
@@ -1854,13 +1835,14 @@ paths:
                     required:
                     - username
                     - nickname
-                  purchase_links:
-                    type: array
-                    items:
-                      type: string
-                    example: []
                 required:
-                - purchase_links
+                - id
+                - content
+                - tags
+                - created_at
+                - updated_at
+                - book
+                - user
         '404':
           description: 投稿が存在しない
           content:

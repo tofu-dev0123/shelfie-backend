@@ -221,7 +221,6 @@ RSpec.describe "本棚系", type: :request do
 
         before do
           create(:user_book_tag, user_book: user_book, tag: tag)
-          create(:user_book_purchase_link, user_book: user_book, url: "https://www.amazon.co.jp/dp/xxxxxxxx")
         end
 
         schema type: :object,
@@ -249,10 +248,9 @@ RSpec.describe "本棚系", type: :request do
                 nickname: { type: :string, example: "コムさん" }
               },
               required: %w[username nickname]
-            },
-            purchase_links: { type: :array, items: { type: :string }, example: [ "https://www.amazon.co.jp/dp/xxxxxxxx" ] }
+            }
           },
-          required: %w[id content tags created_at updated_at book user purchase_links]
+          required: %w[id content tags created_at updated_at book user]
 
         run_test!
       end
@@ -288,25 +286,6 @@ RSpec.describe "本棚系", type: :request do
         end
       end
 
-      response "200", "購入リンクなし" do
-        let(:user) { create(:user) }
-        let(:Authorization) { nil }
-        let(:book) { create(:book) }
-        let!(:user_book) { create(:user_book, user: user, book: book) }
-        let(:username) { user.username }
-        let(:isbn) { book.isbn }
-
-        schema type: :object,
-          properties: {
-            purchase_links: { type: :array, items: { type: :string }, example: [] }
-          },
-          required: %w[purchase_links]
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["purchase_links"]).to eq([])
-        end
-      end
 
       response "404", "ユーザーが存在しない" do
         let(:Authorization) { nil }
