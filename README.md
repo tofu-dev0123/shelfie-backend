@@ -15,7 +15,6 @@
 | Lint | RuboCop |
 | CI | GitHub Actions |
 | デプロイ | Kamal |
-| ローカル S3 | LocalStack |
 
 ## 必要条件
 
@@ -48,9 +47,6 @@ cp .env.example .env.local
 | `DEV_JWT_SECRET` | 開発用 JWT シークレット（デフォルト: `dev-secret-change-me`） |
 | `DEV_CLERK_USER_ID` | 開発用 Clerk ユーザー ID |
 | `DEV_EMAIL` | 開発用メールアドレス |
-| `AWS_ACCESS_KEY_ID` | LocalStack 用（デフォルト: `test`） |
-| `AWS_SECRET_ACCESS_KEY` | LocalStack 用（デフォルト: `test`） |
-| `S3_BUCKET_NAME` | S3 バケット名（デフォルト: `shelfie-local`） |
 
 ### 3. コンテナの起動
 

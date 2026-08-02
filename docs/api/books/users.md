@@ -51,8 +51,7 @@ LIMIT 20;
   "items": [
     {
       "username": "komusan",
-      "nickname": "コムさん",
-      "avatar_url": null
+      "nickname": "コムさん"
     }
   ],
   "pagination": {

@@ -280,11 +280,10 @@ RSpec.describe "書籍系", type: :request do
               items: {
                 type: :object,
                 properties: {
-                  username:   { type: :string, example: "komusan" },
-                  nickname:   { type: :string, example: "コムさん" },
-                  avatar_url: { type: :string, nullable: true, example: nil }
+                  username: { type: :string, example: "komusan" },
+                  nickname: { type: :string, example: "コムさん" }
                 },
-                required: %w[username nickname avatar_url]
+                required: %w[username nickname]
               }
             },
             pagination: {

@@ -245,11 +245,10 @@ RSpec.describe "本棚系", type: :request do
             user: {
               type: :object,
               properties: {
-                username:   { type: :string, example: "komusan" },
-                nickname:   { type: :string, example: "コムさん" },
-                avatar_url: { type: :string, nullable: true, example: nil }
+                username: { type: :string, example: "komusan" },
+                nickname: { type: :string, example: "コムさん" }
               },
-              required: %w[username nickname avatar_url]
+              required: %w[username nickname]
             },
             purchase_links: { type: :array, items: { type: :string }, example: [ "https://www.amazon.co.jp/dp/xxxxxxxx" ] }
           },

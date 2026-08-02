@@ -14,7 +14,6 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 | email | string(254) | NO | UNIQUE | Google アカウントのメールアドレス |
 | nickname | string(30) | NO | | アプリ上の表示名（初回ログイン時に設定必須）|
 | username | string(40) | NO | UNIQUE | @ ハンドル（初回ログイン時に設定必須）|
-| avatar_key | string | YES | | S3 のキーパス（例: `profile-images/user_123.jpg`）。NULL の場合はデフォルト画像を表示 |
 | bio | text | YES | | 自己紹介文 |
 | created_at | datetime | NO | | |
 | updated_at | datetime | NO | | |
@@ -41,6 +40,4 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 ## 備考
 
 - 初回ログイン時は Clerk JWT の `name` クレーム（Google アカウントの表示名）を `nickname` の入力欄にプリフィルして表示しますが、DB には保存しません
-- `avatar_key` が NULL の場合、アプリケーション側でデフォルト画像を表示します
-- アバター画像は S3 に保存し、CloudFront 経由で配信する。DB には S3 のキーパスのみ保存し、URL はレスポンス時に動的に組み立てる（詳細: [ストレージ構成](../storage.md)）
 - `bio` の最大文字数（500文字）はアプリケーション層のバリデーションで制御します

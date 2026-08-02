@@ -43,8 +43,7 @@
   },
   "user": {
     "username": "komusan",
-    "nickname": "コムさん",
-    "avatar_url": null
+    "nickname": "コムさん"
   },
   "purchase_links": [
     "https://www.amazon.co.jp/..."

@@ -22,7 +22,6 @@
 2. プロフィール情報・リンク一覧・フォロワー数・フォロー数・読了数を返す
    - 各カウントは集計クエリで毎回計算する
    - `books_count` は本棚に登録済みの書籍数をカウントする
-   - `avatar_url` は `avatar_key` をもとに CloudFront URL を生成して返す（`avatar_key` が null の場合は null を返す）
 3. 認証済みの場合、リクエストユーザーが対象ユーザーをフォローしているか返す
    - 自分自身のプロフィールを取得した場合は `false` を返す
 
@@ -36,7 +35,6 @@
   "username": "komusan",
   "nickname": "コムさん",
   "bio": "エンジニアです",
-  "avatar_url": null,
   "followers_count": 10,
   "following_count": 5,
   "books_count": 20,
@@ -52,7 +50,6 @@
   "username": "komusan",
   "nickname": "コムさん",
   "bio": "エンジニアです",
-  "avatar_url": null,
   "followers_count": 10,
   "following_count": 5,
   "books_count": 20,

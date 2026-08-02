@@ -62,9 +62,9 @@ SNS 的な気軽さで読了記録を投稿・管理でき、エンジニアの�
 │ id       │──────<│ user_id     │>──────│ id       │
 │ name     │       │ book_id     │       │ title    │
 │ email    │       │ content     │       │ authors  │
-│ avatar   │       │ created_at  │       │ isbn     │
-│ bio      │       └─────────────┘       │thumbnail_url│
-└──────────┘                             └──────────┘
+│ bio      │       │ created_at  │       │ isbn     │
+└──────────┘       └─────────────┘       │thumbnail_url│
+                                         └──────────┘
 ```
 
 - `Books` テーブルは楽天書籍APIから取得したデータをキャッシュします

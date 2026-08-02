@@ -12,7 +12,6 @@
 |---|---|---|
 | `web` | Ruby（Dockerfile） | Rails API サーバー |
 | `db` | postgres | データベース（PostgreSQL） |
-| `localstack` | localstack/localstack | S3 ローカルエミュレーション |
 
 > Clerk はクラウドサービスのため Docker では管理しない。環境変数で API キーを渡すのみ。
 
@@ -54,7 +53,7 @@ CMD ["rails", "server", "-b", "0.0.0.0"]
 
 ## docker-compose.yml
 
-3 つのサービスをまとめて管理します。
+2 つのサービスをまとめて管理します。
 
 ```yaml
 services:
@@ -75,13 +74,6 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  localstack:
-    image: localstack/localstack
-    ports:
-      - "4566:4566"
-    environment:
-      - SERVICES=s3
 
 volumes:
   postgres_data:
@@ -108,13 +100,6 @@ CLERK_SECRET_KEY=
 
 # JWT
 JWT_SECRET_KEY=
-
-# LocalStack（S3）
-AWS_ACCESS_KEY_ID=test
-AWS_SECRET_ACCESS_KEY=test
-AWS_REGION=ap-northeast-1
-AWS_ENDPOINT=http://localstack:4566
-S3_BUCKET_NAME=shelfie-local
 ```
 
 > `.env` は `.gitignore` に追加し、Git 管理外とする。

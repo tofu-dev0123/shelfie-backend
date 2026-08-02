@@ -29,7 +29,7 @@ Clerk JWT を検証し、nickname・username を受け取って User レコー�
 1. `Authorization` ヘッダーから Clerk JWT を検証し、`clerk_user_id` / `email` を取得
 2. `clerk_user_id` で既存 User レコードの存在チェック（重複登録防止）
 3. `username` の重複チェック
-4. User レコードを作成（`avatar_key` は null、デフォルト画像はフロントで制御）
+4. User レコードを作成
 5. アクセストークン（60分）・リフレッシュトークン（30日）を発行
 6. リフレッシュトークンを `refresh_tokens` テーブルに保存
 7. アクセストークンをレスポンスボディ、リフレッシュトークンを HttpOnly Cookie で返す

@@ -20,9 +20,9 @@
 │ email        │             │ tag_id         │───────│ tags │
 │ nickname     │             └────────────────┘       ├──────┤
 │ username     │                                       │ id   │
-│ avatar_url   │  want_to_reads                        │ name │
-│ bio          │  ┌─────────────┐                     └──────┘
-└──────┬───────┘  │ user_id     │──► users
+│ bio          │  want_to_reads                        │ name │
+└──────┬───────┘  ┌─────────────┐                     └──────┘
+       │          │ user_id     │──► users
        │   1:N ◄──│ book_id     │──► books
        │          └─────────────┘
        │          follows
