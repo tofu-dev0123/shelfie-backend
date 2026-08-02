@@ -52,8 +52,6 @@ app/controllers/
         ├── base_controller.rb        # before_action :authenticate_user!
         ├── profiles_controller.rb    # GET /v1/me
         │                             # PATCH /v1/me
-        ├── avatars_controller.rb     # POST /v1/me/avatar
-        │                             # DELETE /v1/me/avatar
         ├── books_controller.rb       # POST /v1/me/books
         │                             # PATCH /v1/me/books/:isbn
         │                             # DELETE /v1/me/books/:isbn
@@ -126,8 +124,7 @@ app/services/
 ```
 lib/clients/
 ├── clerk_client.rb           # Clerk JWT検証
-├── rakuten_books_client.rb   # 楽天書籍API
-└── s3_client.rb              # S3 ファイルアップロード
+└── rakuten_books_client.rb   # 楽天書籍API
 ```
 
 ### lib/（直下）
@@ -148,7 +145,6 @@ Railsの設定ファイル群。主な設定ファイルを記載する。
 config/
 ├── routes.rb          # ルーティング定義
 ├── database.yml       # DB接続設定
-├── storage.yml        # ActiveStorage（S3）設定
 └── initializers/
     └── cors.rb        # CORS設定
 ```
@@ -199,4 +195,3 @@ Controller
 | レスポンスJSON組み立て | Serializer |
 | 外部APIとの通信 | Client（`lib/clients/`） |
 | DBや外部APIに依存しない共通ロジック | `lib/` 直下 |
-| ファイルストレージ（S3） | `S3Client`（`lib/clients/s3_client.rb`） |

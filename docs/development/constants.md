@@ -46,14 +46,14 @@ APIレスポンスに含める固定メッセージを定数化する。
 
 ```ruby
 module Messages
-  AVATAR_DELETED = "アバター画像を削除しました"
+  BOOK_DESTROYED = "削除が完了しました"
 end
 ```
 
 ### Controllerでの使い方
 
 ```ruby
-render json: { message: Messages::AVATAR_DELETED }
+render json: { message: Messages::BOOK_DESTROYED }
 
 # ErrorHandlerでの使い方
 render json: {

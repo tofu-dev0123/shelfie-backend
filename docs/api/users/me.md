@@ -28,7 +28,6 @@
   "username": "komusan",
   "nickname": "コムさん",
   "bio": "エンジニアです",
-  "avatar_url": null,
   "followers_count": 10,
   "following_count": 5,
   "books_count": 20,

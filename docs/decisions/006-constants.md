@@ -47,7 +47,7 @@ end
 
 # app/constants/messages.rb
 module Messages
-  AVATAR_DELETED = "アバター画像を削除しました"
+  BOOK_DESTROYED = "削除が完了しました"
 end
 ```
 

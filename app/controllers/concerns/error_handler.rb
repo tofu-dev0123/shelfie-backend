@@ -9,8 +9,6 @@ module ErrorHandler
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
     rescue_from BadRequestError, with: :render_bad_request
     rescue_from ValidationError, with: :render_validation_error
-    rescue_from AvatarFileError, with: :render_avatar_file_error
-    rescue_from S3UploadError, S3DeleteError, with: :render_internal_server_error
     rescue_from BookAlreadyRegisteredError, WantToReadAlreadyExistsError, FollowAlreadyExistsError, with: :render_conflict
     rescue_from ExternalApiError, with: :render_external_api_error
   end
@@ -75,16 +73,6 @@ module ErrorHandler
     }
     error_body[:field] = e.field if e.field.present?
     render json: { error: error_body }, status: :unprocessable_entity
-  end
-
-  def render_avatar_file_error(e)
-    Rails.logger.warn "アバターファイルエラー: #{e.message}"
-    render json: {
-      error: {
-        code: ErrorCodes::UNPROCESSABLE_ENTITY,
-        message: I18n.t("messages.errors.unprocessable_entity")
-      }
-    }, status: :unprocessable_entity
   end
 
   def render_conflict(e)

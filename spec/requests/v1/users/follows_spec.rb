@@ -29,11 +29,10 @@ RSpec.describe "フォロー系API（一覧）", type: :request do
               items: {
                 type: :object,
                 properties: {
-                  username:   { type: :string, example: "follower1" },
-                  nickname:   { type: :string, example: "フォロワー1" },
-                  avatar_url: { type: :string, nullable: true, example: nil }
+                  username: { type: :string, example: "follower1" },
+                  nickname: { type: :string, example: "フォロワー1" }
                 },
-                required: %w[username nickname avatar_url]
+                required: %w[username nickname]
               }
             },
             pagination: {
@@ -198,11 +197,10 @@ RSpec.describe "フォロー系API（一覧）", type: :request do
               items: {
                 type: :object,
                 properties: {
-                  username:   { type: :string, example: "followee1" },
-                  nickname:   { type: :string, example: "フォロー中1" },
-                  avatar_url: { type: :string, nullable: true, example: nil }
+                  username: { type: :string, example: "followee1" },
+                  nickname: { type: :string, example: "フォロー中1" }
                 },
-                required: %w[username nickname avatar_url]
+                required: %w[username nickname]
               }
             },
             pagination: {

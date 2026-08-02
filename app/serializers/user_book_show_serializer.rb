@@ -22,8 +22,7 @@ class UserBookShowSerializer
       },
       user: {
         username: @user.username,
-        nickname: @user.nickname,
-        avatar_url: avatar_url
+        nickname: @user.nickname
       },
       purchase_links: @user_book.user_book_purchase_links.map(&:url)
     }
@@ -36,11 +35,5 @@ class UserBookShowSerializer
     return nil if @want_to_read_isbns.nil?
 
     @want_to_read_isbns.include?(@user_book.book.isbn)
-  end
-
-  def avatar_url
-    return nil if @user.avatar_key.nil?
-
-    CdnConstants.url_for(@user.avatar_key)
   end
 end

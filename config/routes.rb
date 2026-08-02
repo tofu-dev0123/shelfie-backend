@@ -16,8 +16,6 @@ Rails.application.routes.draw do
     namespace :me do
       get   "/",      to: "profiles#show"
       patch "/",      to: "profiles#update"
-      post   "avatar", to: "avatars#create"
-      delete "avatar", to: "avatars#destroy"
       get    "want_to_reads",       to: "want_to_reads#index"
       post   "want_to_reads/:isbn", to: "want_to_reads#create"
       delete "want_to_reads/:isbn", to: "want_to_reads#destroy"

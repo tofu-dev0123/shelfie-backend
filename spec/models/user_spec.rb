@@ -13,8 +13,8 @@ RSpec.describe User, type: :model do
         expect(user.username).to eq("testuser")
       end
 
-      it "bio と avatar_key は空でも有効" do
-        expect(build(:user, bio: nil, avatar_key: nil)).to be_valid
+      it "bio は空でも有効" do
+        expect(build(:user, bio: nil)).to be_valid
       end
     end
 

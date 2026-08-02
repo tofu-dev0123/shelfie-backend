@@ -224,13 +224,12 @@ RSpec.describe "ユーザー系", type: :request do
             username:        { type: :string, example: "komusan" },
             nickname:        { type: :string, example: "コムさん" },
             bio:             { type: :string, nullable: true, example: "エンジニアです" },
-            avatar_url:      { type: :string, nullable: true, example: nil },
             followers_count: { type: :integer, example: 0 },
             following_count: { type: :integer, example: 0 },
             books_count:     { type: :integer, example: 0 },
             links:           { type: :array, items: { type: :string }, example: [] }
           },
-          required: %w[username nickname bio avatar_url followers_count following_count books_count links]
+          required: %w[username nickname bio followers_count following_count books_count links]
 
         run_test!
       end
@@ -250,13 +249,12 @@ RSpec.describe "ユーザー系", type: :request do
             username:        { type: :string },
             nickname:        { type: :string },
             bio:             { type: :string, nullable: true },
-            avatar_url:      { type: :string, nullable: true },
             followers_count: { type: :integer },
             following_count: { type: :integer },
             books_count:     { type: :integer },
             links:           { type: :array, items: { type: :string } }
           },
-          required: %w[username nickname bio avatar_url followers_count following_count books_count links]
+          required: %w[username nickname bio followers_count following_count books_count links]
 
         run_test!
       end
