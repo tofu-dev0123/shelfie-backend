@@ -18,7 +18,6 @@ RSpec.describe "フィード系", type: :request do
         properties: {
           id:         { type: :integer, example: 1 },
           content:    { type: :string, nullable: true, example: "とても良い本でした" },
-          tags:       { type: :array, items: { type: :string }, example: [ "Architecture", "Go" ] },
           created_at: { type: :string, example: "2026-03-05T00:00:00Z" },
           book: {
             type: :object,
@@ -39,7 +38,7 @@ RSpec.describe "フィード系", type: :request do
             required: %w[username nickname]
           }
         },
-        required: %w[id content tags created_at book user]
+        required: %w[id content created_at book user]
       }
 
       success_schema = {

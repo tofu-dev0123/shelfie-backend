@@ -46,9 +46,8 @@ RSpec.describe "本棚API", type: :request do
           required: %w[message]
 
         run_test! do
-          expect(Tag.find_by(name: "Go")).to be_present
           user_book = user.user_books.last
-          expect(user_book.tags.pluck(:name)).to eq([ "Go" ])
+          expect(user_book.content).to eq("良い本 #Go")
         end
       end
 
@@ -70,14 +69,13 @@ RSpec.describe "本棚API", type: :request do
         run_test!
       end
 
-      response "201", "本文中のハッシュタグから Tag を動的に生成する" do
+      response "201", "本文中の `#` はただのテキストとして保持される" do
         let(:Authorization) { "Bearer valid_token" }
         let(:body) { { isbn: "9784873116068", content: "#Go #アーキテクチャ 良かった" } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
           create(:book, isbn: "9784873116068")
-          create(:tag, name: "Go")  # 既存タグは再利用される
         end
 
         schema type: :object,
@@ -87,9 +85,8 @@ RSpec.describe "本棚API", type: :request do
           required: %w[message]
 
         run_test! do
-          expect(Tag.where(name: [ "Go", "アーキテクチャ" ]).count).to eq(2)
           user_book = user.user_books.last
-          expect(user_book.tags.pluck(:name)).to contain_exactly("Go", "アーキテクチャ")
+          expect(user_book.content).to eq("#Go #アーキテクチャ 良かった")
         end
       end
 
@@ -203,30 +200,6 @@ RSpec.describe "本棚API", type: :request do
         run_test!
       end
 
-      response "422", "本文中のハッシュタグが5件超" do
-        let(:Authorization) { "Bearer valid_token" }
-        let(:body) { { isbn: "9784873116068", content: "#a #b #c #d #e #f" } }
-        let!(:book) { create(:book, isbn: "9784873116068") }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
-        end
-
-        schema type: :object,
-          properties: {
-            error: {
-              type: :object,
-              properties: {
-                code:    { type: :string, example: "VALIDATION_ERROR" },
-                message: { type: :string }
-              }
-            }
-          }
-
-        run_test!
-      end
-
-
       response "503", "楽天書籍APIがエラーを返した" do
         let(:Authorization) { "Bearer valid_token" }
         let(:body) { { isbn: "9784873116068" } }
@@ -273,7 +246,7 @@ RSpec.describe "本棚API", type: :request do
       let(:user) { create(:user) }
       let(:book) { create(:book) }
 
-      response "200", "更新成功（本文のハッシュタグからタグが置き換わる）" do
+      response "200", "更新成功（本文中の `#` はただのテキストとして保持される）" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
         let(:body) { { content: "改めて読み直したら更に良かったです #Go" } }
@@ -291,20 +264,18 @@ RSpec.describe "本棚API", type: :request do
 
         run_test! do
           user_book = UserBook.find_by!(user: user, book: book)
-          expect(user_book.tags.pluck(:name)).to eq([ "Go" ])
+          expect(user_book.content).to eq("改めて読み直したら更に良かったです #Go")
         end
       end
 
-      response "200", "ハッシュタグが本文から消えると tag も外れる" do
+      response "200", "本文を空文字で置き換えられる" do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
         let(:body) { { content: "" } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
-          tag = create(:tag, name: "Go")
-          user_book = create(:user_book, user: user, book: book)
-          create(:user_book_tag, user_book: user_book, tag: tag)
+          create(:user_book, user: user, book: book, content: "以前の本文 #Go")
         end
 
         schema type: :object,
@@ -315,7 +286,7 @@ RSpec.describe "本棚API", type: :request do
 
         run_test! do
           user_book = UserBook.find_by!(user: user, book: book)
-          expect(user_book.tags).to be_empty
+          expect(user_book.content).to eq("")
         end
       end
 
@@ -388,30 +359,6 @@ RSpec.describe "本棚API", type: :request do
         let(:Authorization) { "Bearer valid_token" }
         let(:isbn) { book.isbn }
         let(:body) { { content: "a" * 1001 } }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
-          create(:user_book, user: user, book: book)
-        end
-
-        schema type: :object,
-          properties: {
-            error: {
-              type: :object,
-              properties: {
-                code:    { type: :string, example: "VALIDATION_ERROR" },
-                message: { type: :string }
-              }
-            }
-          }
-
-        run_test!
-      end
-
-      response "422", "本文中のハッシュタグが5件超" do
-        let(:Authorization) { "Bearer valid_token" }
-        let(:isbn) { book.isbn }
-        let(:body) { { content: "#a #b #c #d #e #f" } }
 
         before do
           allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })

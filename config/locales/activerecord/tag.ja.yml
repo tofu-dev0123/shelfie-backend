@@ -1,5 +1,0 @@
-ja:
-  tags:
-    errors:
-      query_required: "検索クエリ q は必須です"
-      query_too_long: "検索クエリは%{count}文字以内で入力してください"

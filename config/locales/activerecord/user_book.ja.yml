@@ -3,4 +3,3 @@ ja:
     errors:
       isbn_invalid: "ISBNは13桁の数字で入力してください"
       content_too_long: "contentは%{count}文字以内で入力してください"
-      tags_too_many: "タグは最大%{count}件まで設定できます"
