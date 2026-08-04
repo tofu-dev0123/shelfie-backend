@@ -1,8 +1,6 @@
 class UserSerializer
-  def initialize(user:, followers_count:, following_count:, books_count:, links:, include_id: false, **_ignored)
+  def initialize(user:, books_count:, links:, include_id: false, **_ignored)
     @user            = user
-    @followers_count = followers_count
-    @following_count = following_count
     @books_count     = books_count
     @links           = links
     @include_id      = include_id
@@ -15,8 +13,6 @@ class UserSerializer
       username:        @user.username,
       nickname:        @user.nickname,
       bio:             @user.bio,
-      followers_count: @followers_count,
-      following_count: @following_count,
       books_count:     @books_count,
       links:           @links
     )

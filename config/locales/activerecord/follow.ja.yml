@@ -1,5 +1,0 @@
-ja:
-  follows:
-    errors:
-      self_follow_forbidden: "自分自身をフォローすることはできません"
-      self_unfollow_forbidden: "自分自身のフォローを解除することはできません"

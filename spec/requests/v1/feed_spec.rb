@@ -71,34 +71,9 @@ RSpec.describe "フィード系", type: :request do
         }
       }
 
-      response "200", "ログイン済み：フォロー中ユーザー + 自分の投稿を取得" do
+      response "200", "ログイン済み：全ユーザーの投稿を取得" do
         let(:user) { create(:user, username: "komusan") }
-        let(:followee) { create(:user, username: "followee_user") }
-        let(:non_followed) { create(:user, username: "non_followed") }
-        let(:Authorization) { "Bearer valid_token" }
-        let(:cursor) { nil }
-        let(:limit) { nil }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
-          create(:follow, follower: user, followee: followee)
-          create(:user_book, user: user, content: "自分の投稿")
-          create(:user_book, user: followee, content: "フォロー中の投稿")
-          create(:user_book, user: non_followed, content: "フォローしていない人の投稿")
-        end
-
-        schema success_schema
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          contents = data["items"].map { |item| item["content"] }
-          expect(contents).to contain_exactly("自分の投稿", "フォロー中の投稿")
-        end
-      end
-
-      response "200", "ログイン済み：フォロー0人 → 自分の投稿のみ" do
-        let(:user) { create(:user) }
-        let(:other) { create(:user) }
+        let(:other) { create(:user, username: "other_user") }
         let(:Authorization) { "Bearer valid_token" }
         let(:cursor) { nil }
         let(:limit) { nil }
@@ -114,7 +89,7 @@ RSpec.describe "フィード系", type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           contents = data["items"].map { |item| item["content"] }
-          expect(contents).to eq([ "自分の投稿" ])
+          expect(contents).to contain_exactly("自分の投稿", "他人の投稿")
         end
       end
 
