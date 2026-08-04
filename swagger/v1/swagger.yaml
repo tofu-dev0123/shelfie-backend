@@ -166,14 +166,11 @@ paths:
                           type: string
                           nullable: true
                           example: https://...
-                        is_in_my_want_to_read:
-                          type: boolean
-                          nullable: true
-                          example: true
-                          description: ログイン中ユーザーが読みたいリストに登録しているか。検索は認証必須のため未ログイン (null)
-                            は通常発生しない
                       required:
-                      - is_in_my_want_to_read
+                      - isbn
+                      - title
+                      - authors
+                      - thumbnail_url
                     example: []
                   pagination:
                     type: object
@@ -324,7 +321,7 @@ paths:
           type: string
       responses:
         '200':
-          description: 読みたいリストに登録済みなら is_in_my_want_to_read=true
+          description: 書籍取得成功
           content:
             application/json:
               schema:
@@ -347,13 +344,11 @@ paths:
                     type: string
                     nullable: true
                     example: https://example.com/thumbnail.jpg
-                  is_in_my_want_to_read:
-                    type: boolean
-                    nullable: true
-                    example: true
-                    description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                 required:
-                - is_in_my_want_to_read
+                - isbn
+                - title
+                - authors
+                - thumbnail_url
         '401':
           description: アクセストークンが無効
           content:
@@ -481,17 +476,11 @@ paths:
                               type: string
                               nullable: true
                               example:
-                            is_in_my_want_to_read:
-                              type: boolean
-                              nullable: true
-                              example:
-                              description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                           required:
                           - isbn
                           - title
                           - authors
                           - thumbnail_url
-                          - is_in_my_want_to_read
                         user:
                           type: object
                           properties:
@@ -955,268 +944,6 @@ paths:
                         example: VALIDATION_ERROR
                       message:
                         type: string
-  "/v1/me/want_to_reads":
-    get:
-      summary: 読みたいリストを取得する
-      tags:
-      - 読みたい系
-      security:
-      - Bearer: []
-      parameters:
-      - name: cursor
-        in: query
-        required: false
-        description: 前回レスポンスの next_cursor
-        schema:
-          type: string
-      - name: limit
-        in: query
-        required: false
-        description: 最大取得件数（デフォルト20・上限50）
-        schema:
-          type: integer
-      responses:
-        '200':
-          description: cursor / limit を指定してページネーション
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        isbn:
-                          type: string
-                          example: '9784873116068'
-                        title:
-                          type: string
-                          example: リーダブルコード
-                        authors:
-                          type: array
-                          items:
-                            type: string
-                          example:
-                          - Dustin Boswell
-                        thumbnail_url:
-                          type: string
-                          nullable: true
-                          example: https://example.com/thumb.jpg
-                        is_in_my_want_to_read:
-                          type: boolean
-                          example: true
-                          description: 自分の読みたいリスト由来のため常に true
-                      required:
-                      - isbn
-                      - title
-                      - authors
-                      - thumbnail_url
-                      - is_in_my_want_to_read
-                    example: []
-                  pagination:
-                    type: object
-                    properties:
-                      next_cursor:
-                        type: string
-                        nullable: true
-                      has_next:
-                        type: boolean
-                    required:
-                    - next_cursor
-                    - has_next
-                required:
-                - items
-                - pagination
-        '401':
-          description: アクセストークンなし
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: UNAUTHORIZED
-                      message:
-                        type: string
-        '422':
-          description: cursor が無効な値
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: VALIDATION_ERROR
-                      message:
-                        type: string
-  "/v1/me/want_to_reads/{isbn}":
-    post:
-      summary: 読みたいリストに書籍を追加する
-      tags:
-      - 読みたい系
-      security:
-      - Bearer: []
-      parameters:
-      - name: isbn
-        in: path
-        required: true
-        description: ISBN-13形式（13桁の数字のみ）
-        schema:
-          type: string
-      responses:
-        '201':
-          description: 追加成功（DBに書籍なし→楽天API取得）
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: 読みたいリストに追加しました
-                required:
-                - message
-        '401':
-          description: アクセストークンが無効・期限切れ
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: UNAUTHORIZED
-                      message:
-                        type: string
-        '404':
-          description: 楽天書籍APIに書籍が存在しない
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: NOT_FOUND
-                      message:
-                        type: string
-        '409':
-          description: 既に本棚に登録済み
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: CONFLICT
-                      message:
-                        type: string
-        '422':
-          description: isbn が13桁の数字でない
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: VALIDATION_ERROR
-                      message:
-                        type: string
-        '503':
-          description: 楽天書籍APIがエラー
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: EXTERNAL_API_ERROR
-                      message:
-                        type: string
-    delete:
-      summary: 読みたいリストから書籍を削除する
-      tags:
-      - 読みたい系
-      security:
-      - Bearer: []
-      parameters:
-      - name: isbn
-        in: path
-        required: true
-        description: ISBN-13形式（13桁の数字のみ）
-        schema:
-          type: string
-      responses:
-        '200':
-          description: 削除成功（DBに書籍自体が存在しない場合も200を返す）
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: 読みたいリストから削除しました
-                required:
-                - message
-        '401':
-          description: アクセストークンが無効・期限切れ
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: UNAUTHORIZED
-                      message:
-                        type: string
-        '422':
-          description: isbn が13桁の数字でない
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: VALIDATION_ERROR
-                      message:
-                        type: string
   "/v1/me":
     get:
       summary: マイプロフィール取得API
@@ -1395,12 +1122,6 @@ paths:
       tags:
       - 投稿系
       parameters:
-      - name: Authorization
-        in: header
-        required: false
-        description: アクセストークン。任意。指定時は is_in_my_want_to_read が boolean になる（未指定時は null）
-        schema:
-          type: string
       - name: q
         in: query
         required: false
@@ -1473,16 +1194,11 @@ paths:
                               type: string
                               nullable: true
                               example:
-                            is_in_my_want_to_read:
-                              type: boolean
-                              nullable: true
-                              example:
                           required:
                           - isbn
                           - title
                           - authors
                           - thumbnail_url
-                          - is_in_my_want_to_read
                         user:
                           type: object
                           properties:
@@ -1520,23 +1236,6 @@ paths:
                 - pagination
         '422':
           description: 不正なカーソル値
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                      message:
-                        type: string
-                    required:
-                    - code
-                    - message
-        '401':
-          description: アクセストークンが無効・期限切れ
           content:
             application/json:
               schema:
@@ -1606,13 +1305,6 @@ paths:
       tags:
       - 本棚系
       parameters:
-      - name: Authorization
-        in: header
-        required: false
-        description: アクセストークン。任意。指定時は book.is_in_my_want_to_read が boolean になる（未指定時は
-          null）
-        schema:
-          type: string
       - name: username
         in: path
         required: true
@@ -1679,13 +1371,11 @@ paths:
                               type: string
                               nullable: true
                               example:
-                            is_in_my_want_to_read:
-                              type: boolean
-                              nullable: true
-                              example: true
-                              description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                           required:
-                          - is_in_my_want_to_read
+                          - isbn
+                          - title
+                          - authors
+                          - thumbnail_url
                       required:
                       - id
                       - content
@@ -1751,13 +1441,6 @@ paths:
       tags:
       - 本棚系
       parameters:
-      - name: Authorization
-        in: header
-        required: false
-        description: アクセストークン。任意。指定時は book.is_in_my_want_to_read が boolean になる（未指定時は
-          null）
-        schema:
-          type: string
       - name: username
         in: path
         required: true
@@ -1772,7 +1455,7 @@ paths:
           type: string
       responses:
         '200':
-          description: ログイン中ユーザーが対象書籍を読みたい登録済み
+          description: 投稿詳細取得成功
           content:
             application/json:
               schema:
@@ -1816,13 +1499,11 @@ paths:
                         type: string
                         nullable: true
                         example:
-                      is_in_my_want_to_read:
-                        type: boolean
-                        nullable: true
-                        example: true
-                        description: ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null
                     required:
-                    - is_in_my_want_to_read
+                    - isbn
+                    - title
+                    - authors
+                    - thumbnail_url
                   user:
                     type: object
                     properties:

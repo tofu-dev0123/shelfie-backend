@@ -11,15 +11,10 @@ module Feed
       user_books = user_books.first(limit)
       next_cursor = has_next ? CompoundCursor.encode(created_at: user_books.last.created_at, id: user_books.last.id) : nil
 
-      want_to_read_isbns = Queries::WantToReadIsbnSetQuery.call(
-        user: current_user,
-        isbns: user_books.map { |ub| ub.book.isbn }
-      )
-
       Rails.logger.info "Feed::IndexService: current_user_id=#{current_user&.id} のフィードを取得しました"
 
       {
-        items: user_books.map { |ub| FeedItemSerializer.new(ub, want_to_read_isbns: want_to_read_isbns).as_json },
+        items: user_books.map { |ub| FeedItemSerializer.new(ub).as_json },
         pagination: {
           next_cursor: next_cursor,
           has_next: has_next

@@ -43,13 +43,12 @@ RSpec.describe "書籍系", type: :request do
 
         schema type: :object,
           properties: {
-            isbn:                  { type: :string, example: "9784873118079" },
-            title:                 { type: :string, example: "リーダブルコード" },
-            authors:               { type: :array, items: { type: :string }, example: [ "Dustin Boswell", "Trevor Foucher" ] },
-            thumbnail_url:         { type: :string, nullable: true, example: "https://example.com/thumbnail.jpg" },
-            is_in_my_want_to_read: { type: :boolean, nullable: true, example: false, description: "ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null" }
+            isbn:          { type: :string, example: "9784873118079" },
+            title:         { type: :string, example: "リーダブルコード" },
+            authors:       { type: :array, items: { type: :string }, example: [ "Dustin Boswell", "Trevor Foucher" ] },
+            thumbnail_url: { type: :string, nullable: true, example: "https://example.com/thumbnail.jpg" }
           },
-          required: %w[isbn title authors thumbnail_url is_in_my_want_to_read]
+          required: %w[isbn title authors thumbnail_url]
 
         run_test! do |response|
           data = JSON.parse(response.body)
@@ -57,29 +56,6 @@ RSpec.describe "書籍系", type: :request do
           expect(data["title"]).to eq("リーダブルコード")
           expect(data["authors"]).to eq([ "Dustin Boswell", "Trevor Foucher" ])
           expect(data["thumbnail_url"]).to eq("https://example.com/thumbnail.jpg")
-          expect(data["is_in_my_want_to_read"]).to eq(false)
-        end
-      end
-
-      response "200", "読みたいリストに登録済みなら is_in_my_want_to_read=true" do
-        let(:isbn) { "9784873118079" }
-
-        before do
-          stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
-            .to_return(status: 200, body: rakuten_books_response, headers: { "Content-Type" => "application/json" })
-          book = create(:book, isbn: "9784873118079")
-          create(:want_to_read, user: current_user, book: book)
-        end
-
-        schema type: :object,
-          properties: {
-            is_in_my_want_to_read: { type: :boolean, nullable: true, example: true }
-          },
-          required: %w[is_in_my_want_to_read]
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["is_in_my_want_to_read"]).to eq(true)
         end
       end
 

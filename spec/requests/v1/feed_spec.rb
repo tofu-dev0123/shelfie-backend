@@ -23,13 +23,12 @@ RSpec.describe "フィード系", type: :request do
           book: {
             type: :object,
             properties: {
-              isbn:                  { type: :string, example: "9784873116068" },
-              title:                 { type: :string, example: "リーダブルコード" },
-              authors:               { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
-              thumbnail_url:         { type: :string, nullable: true, example: nil },
-              is_in_my_want_to_read: { type: :boolean, nullable: true, example: nil, description: "ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null" }
+              isbn:          { type: :string, example: "9784873116068" },
+              title:         { type: :string, example: "リーダブルコード" },
+              authors:       { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
+              thumbnail_url: { type: :string, nullable: true, example: nil }
             },
-            required: %w[isbn title authors thumbnail_url is_in_my_want_to_read]
+            required: %w[isbn title authors thumbnail_url]
           },
           user: {
             type: :object,
@@ -120,28 +119,7 @@ RSpec.describe "フィード系", type: :request do
         end
       end
 
-      response "200", "ログイン済み：読みたい登録済み書籍は is_in_my_want_to_read=true" do
-        let(:user) { create(:user) }
-        let(:Authorization) { "Bearer valid_token" }
-        let(:cursor) { nil }
-        let(:limit) { nil }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
-          book = create(:book)
-          create(:user_book, user: user, book: book)
-          create(:want_to_read, user: user, book: book)
-        end
-
-        schema success_schema
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["items"].first["book"]["is_in_my_want_to_read"]).to eq(true)
-        end
-      end
-
-      response "200", "未ログイン：全ユーザーの投稿を取得（is_in_my_want_to_read は null）" do
+      response "200", "未ログイン：全ユーザーの投稿を取得" do
         let(:Authorization) { nil }
         let(:cursor) { nil }
         let(:limit) { nil }
@@ -158,7 +136,6 @@ RSpec.describe "フィード系", type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data["items"].size).to eq(2)
-          expect(data["items"].first["book"]["is_in_my_want_to_read"]).to be_nil
         end
       end
 

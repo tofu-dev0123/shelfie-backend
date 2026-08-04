@@ -57,14 +57,6 @@
 | GET | `/v1/users/:username/followers` | フォロワー一覧取得API | フォロワー一覧 | 不要 |
 | GET | `/v1/users/:username/following` | フォロー中一覧取得API | フォロー中一覧 | 不要 |
 
-## 読みたい系
-
-| メソッド | パス | オペレーション名 | 説明 | 認証 |
-|---|---|---|---|---|
-| GET | `/v1/me/want_to_reads` | 読みたいリスト取得API | 自分の読みたいリスト取得 | 必須 |
-| POST | `/v1/me/want_to_reads/:isbn` | 読みたい追加API | 読みたいリストに追加 | 必須 |
-| DELETE | `/v1/me/want_to_reads/:isbn` | 読みたい削除API | 読みたいリストから削除 | 必須 |
-
 ## タグ系
 
 | メソッド | パス | オペレーション名 | 説明 | 認証 |

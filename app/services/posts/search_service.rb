@@ -1,6 +1,6 @@
 module Posts
   class SearchService
-    def self.call(q: nil, tag: nil, current_user: nil, cursor: nil, limit: nil)
+    def self.call(q: nil, tag: nil, cursor: nil, limit: nil)
       q   = q.to_s.strip
       tag = tag.to_s.strip
 
@@ -20,15 +20,10 @@ module Posts
       user_books  = user_books.first(limit)
       next_cursor = has_next ? CompoundCursor.encode(created_at: user_books.last.created_at, id: user_books.last.id) : nil
 
-      want_to_read_isbns = Queries::WantToReadIsbnSetQuery.call(
-        user: current_user,
-        isbns: user_books.map { |ub| ub.book.isbn }
-      )
-
       Rails.logger.info "Posts::SearchService: q=#{q.presence.inspect} tag=#{tag.presence.inspect} 件数=#{user_books.size} has_next=#{has_next}"
 
       {
-        items: user_books.map { |ub| FeedItemSerializer.new(ub, want_to_read_isbns: want_to_read_isbns).as_json },
+        items: user_books.map { |ub| FeedItemSerializer.new(ub).as_json },
         pagination: {
           next_cursor: next_cursor,
           has_next: has_next

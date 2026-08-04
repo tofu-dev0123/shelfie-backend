@@ -4,7 +4,6 @@ class User < ApplicationRecord
   has_many :refresh_tokens, dependent: :destroy
   has_many :user_links, dependent: :destroy
   has_many :user_books, dependent: :destroy
-  has_many :want_to_reads, dependent: :destroy
   has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
   has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
 

@@ -1,6 +1,6 @@
 module UserBooks
   class ShowService
-    def self.call(username:, isbn:, current_user: nil)
+    def self.call(username:, isbn:)
       user = User.find_by(username: username)
       raise UserNotFoundError unless user
 
@@ -10,11 +10,9 @@ module UserBooks
         .find_by(books: { isbn: isbn })
       raise RecordNotFoundError unless user_book
 
-      want_to_read_isbns = Queries::WantToReadIsbnSetQuery.call(user: current_user, isbns: [ user_book.book.isbn ])
-
       Rails.logger.info "UserBooks::ShowService: username=#{username}, isbn=#{isbn} の投稿詳細を取得しました"
 
-      { user_book: user_book, user: user, want_to_read_isbns: want_to_read_isbns }
+      { user_book: user_book, user: user }
     end
   end
 end

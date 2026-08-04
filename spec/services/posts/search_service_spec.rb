@@ -81,25 +81,6 @@ RSpec.describe Posts::SearchService, type: :service do
       end
     end
 
-    context "is_in_my_want_to_read" do
-      it "ログイン時は読みたい登録済みなら true" do
-        user = create(:user)
-        book = create(:book)
-        create(:user_book, user: user, book: book, content: "テスト")
-        create(:want_to_read, user: user, book: book)
-
-        result = described_class.call(q: "テスト", current_user: user)
-
-        expect(result[:items].first[:book][:is_in_my_want_to_read]).to eq(true)
-      end
-
-      it "未ログイン時は nil" do
-        create(:user_book, content: "テスト")
-        result = described_class.call(q: "テスト", current_user: nil)
-        expect(result[:items].first[:book][:is_in_my_want_to_read]).to be_nil
-      end
-    end
-
     context "バリデーション" do
       it "q と tag のどちらも未指定の場合は ValidationError" do
         expect { described_class.call }.to raise_error(ValidationError)
