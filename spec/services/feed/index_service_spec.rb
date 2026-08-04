@@ -4,32 +4,16 @@ RSpec.describe Feed::IndexService, type: :service do
   describe ".call" do
     context "ログインユーザー" do
       let(:user) { create(:user) }
-      let(:followee) { create(:user) }
-      let(:non_followed) { create(:user) }
+      let(:other) { create(:user) }
 
-      before do
-        create(:follow, follower: user, followee: followee)
-      end
-
-      it "フォロー中ユーザーと自分の投稿のみを返す" do
+      it "全ユーザーの投稿を返す" do
         own = create(:user_book, user: user, content: "自分")
-        followed = create(:user_book, user: followee, content: "フォロー中")
-        create(:user_book, user: non_followed, content: "フォロー外")
+        others = create(:user_book, user: other, content: "他人")
 
         result = described_class.call(current_user: user)
 
         ids = result[:items].map { |i| i[:id] }
-        expect(ids).to contain_exactly(own.id, followed.id)
-      end
-
-      it "フォロー0人の場合、自分の投稿のみを返す" do
-        user_without_follows = create(:user)
-        own = create(:user_book, user: user_without_follows)
-        create(:user_book, user: create(:user))
-
-        result = described_class.call(current_user: user_without_follows)
-
-        expect(result[:items].map { |i| i[:id] }).to eq([ own.id ])
+        expect(ids).to contain_exactly(own.id, others.id)
       end
 
       it "created_at DESC + id DESC で並ぶ" do

@@ -9,7 +9,7 @@ module ErrorHandler
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity
     rescue_from BadRequestError, with: :render_bad_request
     rescue_from ValidationError, with: :render_validation_error
-    rescue_from BookAlreadyRegisteredError, FollowAlreadyExistsError, with: :render_conflict
+    rescue_from BookAlreadyRegisteredError, with: :render_conflict
     rescue_from ExternalApiError, with: :render_external_api_error
   end
 

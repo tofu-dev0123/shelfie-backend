@@ -3,9 +3,8 @@ module Feed
     def self.call(current_user: nil, cursor: nil, limit: nil)
       limit = clamp_limit(limit.to_i)
       after = CompoundCursor.decode(cursor)
-      user_ids = target_user_ids(current_user)
 
-      user_books = Queries::FeedQuery.call(user_ids: user_ids, cursor: after, limit: limit)
+      user_books = Queries::FeedQuery.call(cursor: after, limit: limit)
 
       has_next = user_books.size > limit
       user_books = user_books.first(limit)
@@ -28,13 +27,6 @@ module Feed
       [ limit, FeedConstants::MAX_LIMIT ].min
     end
 
-    def self.target_user_ids(current_user)
-      return nil unless current_user
-
-      followee_ids = current_user.follows_as_follower.pluck(:followee_id)
-      [ current_user.id, *followee_ids ]
-    end
-
-    private_class_method :clamp_limit, :target_user_ids
+    private_class_method :clamp_limit
   end
 end
