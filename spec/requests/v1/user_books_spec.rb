@@ -18,9 +18,8 @@ RSpec.describe "本棚系", type: :request do
         let(:username) { user.username }
         let(:book) { create(:book) }
         let(:user_book) { create(:user_book, user: user, book: book, content: "とても良い本でした") }
-        let(:tag) { create(:tag, name: "Go") }
 
-        before { create(:user_book_tag, user_book: user_book, tag: tag) }
+        before { user_book }
 
         schema type: :object,
           properties: {
@@ -31,7 +30,6 @@ RSpec.describe "本棚系", type: :request do
                 properties: {
                   id:         { type: :integer, example: 1 },
                   content:    { type: :string, nullable: true, example: "とても良い本でした" },
-                  tags:       { type: :array, items: { type: :string }, example: [ "Go" ] },
                   created_at: { type: :string, example: "2026-03-05T00:00:00Z" },
                   book: {
                     type: :object,
@@ -44,7 +42,7 @@ RSpec.describe "本棚系", type: :request do
                     required: %w[isbn title authors thumbnail_url]
                   }
                 },
-                required: %w[id content tags created_at book]
+                required: %w[id content created_at book]
               }
             },
             pagination: {
@@ -166,19 +164,15 @@ RSpec.describe "本棚系", type: :request do
         let(:user) { create(:user, username: "komusan") }
         let(:book) { create(:book) }
         let(:user_book) { create(:user_book, user: user, book: book, content: "とても良い本でした") }
-        let(:tag) { create(:tag, name: "Go") }
         let(:username) { user.username }
         let(:isbn) { book.isbn }
 
-        before do
-          create(:user_book_tag, user_book: user_book, tag: tag)
-        end
+        before { user_book }
 
         schema type: :object,
           properties: {
             id:         { type: :integer, example: 1 },
             content:    { type: :string, nullable: true, example: "とても良い本でした" },
-            tags:       { type: :array, items: { type: :string }, example: [ "Go" ] },
             created_at: { type: :string, example: "2026-03-05T00:00:00Z" },
             updated_at: { type: :string, example: "2026-03-06T00:00:00Z" },
             book: {
@@ -200,7 +194,7 @@ RSpec.describe "本棚系", type: :request do
               required: %w[username nickname]
             }
           },
-          required: %w[id content tags created_at updated_at book user]
+          required: %w[id content created_at updated_at book user]
 
         run_test!
       end

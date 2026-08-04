@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_04_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_04_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,21 +43,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_000001) do
     t.index ["expires_at"], name: "index_refresh_tokens_on_expires_at"
     t.index ["token"], name: "index_refresh_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_refresh_tokens_on_user_id"
-  end
-
-  create_table "tags", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "name", limit: 50, null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_tags_on_name", unique: true
-  end
-
-  create_table "user_book_tags", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "tag_id", null: false
-    t.bigint "user_book_id", null: false
-    t.index ["tag_id"], name: "index_user_book_tags_on_tag_id"
-    t.index ["user_book_id", "tag_id"], name: "index_user_book_tags_on_user_book_id_and_tag_id", unique: true
   end
 
   create_table "user_books", force: :cascade do |t|
@@ -95,8 +80,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_04_000001) do
   add_foreign_key "follows", "users", column: "followee_id", on_delete: :restrict
   add_foreign_key "follows", "users", column: "follower_id", on_delete: :restrict
   add_foreign_key "refresh_tokens", "users", on_delete: :restrict
-  add_foreign_key "user_book_tags", "tags", on_delete: :restrict
-  add_foreign_key "user_book_tags", "user_books", on_delete: :restrict
   add_foreign_key "user_books", "books", on_delete: :restrict
   add_foreign_key "user_books", "users", on_delete: :restrict
   add_foreign_key "user_links", "users", on_delete: :restrict

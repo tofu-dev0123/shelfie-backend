@@ -23,7 +23,6 @@ Rails.application.routes.draw do
       delete "follows/:username", to: "follows#destroy"
     end
     get "feed", to: "feed#index"
-    get "tags", to: "tags#index"
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"
     get "books/:isbn", to: "books#show", constraints: { isbn: /\d{13}/ }

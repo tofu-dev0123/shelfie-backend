@@ -8,7 +8,7 @@ module UserBooks
       after = CompoundCursor.decode(cursor)
 
       scope = user.user_books
-        .includes(:book, :tags)
+        .includes(:book)
         .order(created_at: :desc, id: :desc)
       user_books = CompoundCursor.apply_to(scope, table: "user_books", cursor: after)
         .limit(limit + 1)

@@ -447,13 +447,6 @@ paths:
                           type: string
                           nullable: true
                           example: とても良い本でした
-                        tags:
-                          type: array
-                          items:
-                            type: string
-                          example:
-                          - Architecture
-                          - Go
                         created_at:
                           type: string
                           example: '2026-03-05T00:00:00Z'
@@ -496,7 +489,6 @@ paths:
                       required:
                       - id
                       - content
-                      - tags
                       - created_at
                       - book
                       - user
@@ -560,7 +552,7 @@ paths:
       parameters: []
       responses:
         '201':
-          description: 本文中のハッシュタグから Tag を動的に生成する
+          description: 本文中の `#` はただのテキストとして保持される
           content:
             application/json:
               schema:
@@ -617,7 +609,7 @@ paths:
                       message:
                         type: string
         '422':
-          description: 本文中のハッシュタグが5件超
+          description: ISBNが13桁の数字でない
           content:
             application/json:
               schema:
@@ -677,7 +669,7 @@ paths:
           type: string
       responses:
         '200':
-          description: ハッシュタグが本文から消えると tag も外れる
+          description: 本文を空文字で置き換えられる
           content:
             application/json:
               schema:
@@ -719,7 +711,7 @@ paths:
                       message:
                         type: string
         '422':
-          description: 本文中のハッシュタグが5件超
+          description: content が1000文字超
           content:
             application/json:
               schema:
@@ -1116,54 +1108,6 @@ paths:
                   example:
                   - https://github.com/komusan
         required: true
-  "/v1/tags":
-    get:
-      summary: タグサジェストAPI
-      tags:
-      - タグ系
-      parameters:
-      - name: q
-        in: query
-        required: true
-        description: 検索クエリ（部分一致・最大50文字）
-        schema:
-          type: string
-      responses:
-        '200':
-          description: ヒット0件
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                          example: Ruby
-                      required:
-                      - name
-                    example: []
-                required:
-                - tags
-        '422':
-          description: q が50文字超
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: VALIDATION_ERROR
-                      message:
-                        type: string
   "/v1/users/{username}/books":
     get:
       summary: 本棚一覧取得API
@@ -1208,12 +1152,6 @@ paths:
                           type: string
                           nullable: true
                           example: とても良い本でした
-                        tags:
-                          type: array
-                          items:
-                            type: string
-                          example:
-                          - Go
                         created_at:
                           type: string
                           example: '2026-03-05T00:00:00Z'
@@ -1244,7 +1182,6 @@ paths:
                       required:
                       - id
                       - content
-                      - tags
                       - created_at
                       - book
                     example: []
@@ -1333,12 +1270,6 @@ paths:
                     type: string
                     nullable: true
                     example: とても良い本でした
-                  tags:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - Go
                   created_at:
                     type: string
                     example: '2026-03-05T00:00:00Z'
@@ -1384,7 +1315,6 @@ paths:
                 required:
                 - id
                 - content
-                - tags
                 - created_at
                 - updated_at
                 - book

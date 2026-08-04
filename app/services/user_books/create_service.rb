@@ -1,29 +1,20 @@
 module UserBooks
   class CreateService
     def self.call(current_user:, isbn:, content: nil)
-      tag_names = HashtagParser.extract(content)
-      validate_params!(isbn, content, tag_names)
+      validate_params!(isbn, content)
 
       book = Book.find_by(isbn: isbn) || fetch_and_create_book!(isbn)
 
       raise BookAlreadyRegisteredError if UserBook.exists?(user: current_user, book: book)
 
-      ActiveRecord::Base.transaction do
-        user_book = UserBook.create!(user: current_user, book: book, content: content)
-
-        tag_names.each do |name|
-          tag = Tag.find_or_create_safely!(name)
-          UserBookTag.create!(user_book: user_book, tag: tag)
-        end
-      end
+      UserBook.create!(user: current_user, book: book, content: content)
 
       Rails.logger.info "UserBooks::CreateService: user_id=#{current_user.id} isbn=#{isbn} 書籍を本棚に追加しました"
     end
 
-    def self.validate_params!(isbn, content, tag_names)
+    def self.validate_params!(isbn, content)
       raise ValidationError, I18n.t("user_books.errors.isbn_invalid") unless isbn.to_s.match?(BookConstants::ISBN_FORMAT)
       raise ValidationError, I18n.t("user_books.errors.content_too_long", count: UserBookConstants::MAX_CONTENT_LENGTH) if content && content.length > UserBookConstants::MAX_CONTENT_LENGTH
-      raise ValidationError, I18n.t("user_books.errors.tags_too_many", count: UserBookConstants::MAX_TAGS) if tag_names.length > UserBookConstants::MAX_TAGS
     end
     private_class_method :validate_params!
 

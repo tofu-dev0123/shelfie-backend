@@ -134,17 +134,12 @@ RSpec.describe Feed::IndexService, type: :service do
       it "items に必要なフィールドが含まれる" do
         book = create(:book)
         user_book = create(:user_book, user: user, book: book, content: "本文")
-        tag_a = create(:tag, name: "Architecture")
-        tag_g = create(:tag, name: "Go")
-        create(:user_book_tag, user_book: user_book, tag: tag_g)
-        create(:user_book_tag, user_book: user_book, tag: tag_a)
 
         result = described_class.call(current_user: user)
 
         item = result[:items].first
         expect(item[:id]).to eq(user_book.id)
         expect(item[:content]).to eq("本文")
-        expect(item[:tags]).to eq([ "Architecture", "Go" ])
         expect(item[:book][:isbn]).to eq(book.isbn)
         expect(item[:user][:username]).to eq(user.username)
       end

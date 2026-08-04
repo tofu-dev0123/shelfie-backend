@@ -7,7 +7,6 @@ class UserBookSerializer
     {
       id: @user_book.id,
       content: @user_book.content,
-      tags: @user_book.tags.map(&:name),
       created_at: @user_book.created_at.iso8601,
       book: {
         isbn: @user_book.book.isbn,
