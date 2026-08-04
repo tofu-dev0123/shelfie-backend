@@ -20,14 +20,11 @@
 │ email        │             │ tag_id         │───────│ tags │
 │ nickname     │             └────────────────┘       ├──────┤
 │ username     │                                       │ id   │
-│ bio          │  want_to_reads                        │ name │
-└──────┬───────┘  ┌─────────────┐                     └──────┘
-       │          │ user_id     │──► users
-       │   1:N ◄──│ book_id     │──► books
-       │          └─────────────┘
+│ bio          │                                       │ name │
+└──────┬───────┘                                      └──────┘
        │          follows
        │          ┌──────────────┐
-       │          │ follower_id  │──► users
+       │   1:N ◄──│ follower_id  │──► users
        │          │ followee_id  │──► users
        │          └──────────────┘
        └── 1:N ──►┌──────────────┐
@@ -53,7 +50,6 @@
 | [tags](./tables/tags.md) | 技術タグマスタ |
 | [user_book_tags](./tables/user_book_tags.md) | 本棚投稿へのタグ付け |
 | [follows](./tables/follows.md) | フォロー関係 |
-| [want_to_reads](./tables/want_to_reads.md) | 読みたいリスト |
 | [refresh_tokens](./tables/refresh_tokens.md) | リフレッシュトークン管理 |
 
 ---
@@ -67,7 +63,6 @@
 | books | UNIQUE (isbn) | 同一書籍の重複登録防止 |
 | user_books | UNIQUE (user_id, book_id) | 同じ本を複数回投稿不可 |
 | follows | UNIQUE (follower_id, followee_id) | 重複フォロー防止 |
-| want_to_reads | UNIQUE (user_id, book_id) | 同じ書籍の重複登録防止 |
 | tags | UNIQUE (name) | タグ名の一意性 |
 | user_book_tags | UNIQUE (user_book_id, tag_id) | 同一投稿への重複タグ付与防止 |
 
@@ -112,13 +107,12 @@ ORDER BY user_books.created_at DESC;
 ユーザー削除時はアプリケーション層でトランザクション内の順次削除を行います。削除順序は以下の通りです（FK 制約の依存関係に従う）。
 
 ```
-want_to_reads
-  → follows
-    → refresh_tokens
-      → user_links
-        → user_book_tags
-          → user_books
-            → users
+follows
+  → refresh_tokens
+    → user_links
+      → user_book_tags
+        → user_books
+          → users
 ```
 
 `books`・`tags` テーブルは他ユーザーも参照する共有データのため、ユーザー削除時には削除しません。
@@ -136,8 +130,6 @@ want_to_reads
 | user_links | user_id | users | RESTRICT |
 | follows | follower_id | users | RESTRICT |
 | follows | followee_id | users | RESTRICT |
-| want_to_reads | user_id | users | RESTRICT |
-| want_to_reads | book_id | books | RESTRICT |
 | refresh_tokens | user_id | users | RESTRICT |
 | user_book_tags | user_book_id | user_books | RESTRICT |
 | user_book_tags | tag_id | tags | RESTRICT |

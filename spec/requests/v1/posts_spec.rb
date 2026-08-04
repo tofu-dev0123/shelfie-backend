@@ -6,8 +6,6 @@ RSpec.describe "投稿系", type: :request do
       tags "投稿系"
       produces "application/json"
 
-      parameter name: :Authorization, in: :header, type: :string, required: false,
-        description: "アクセストークン。任意。指定時は is_in_my_want_to_read が boolean になる（未指定時は null）"
       parameter name: :q, in: :query, type: :string, required: false,
         description: "投稿本文の部分一致検索クエリ（空白トリム後1文字以上・100文字以内）。tag と同時指定は不可"
       parameter name: :tag, in: :query, type: :string, required: false,
@@ -27,13 +25,12 @@ RSpec.describe "投稿系", type: :request do
           book: {
             type: :object,
             properties: {
-              isbn:                  { type: :string, example: "9784873118079" },
-              title:                 { type: :string, example: "リーダブルコード" },
-              authors:               { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
-              thumbnail_url:         { type: :string, nullable: true, example: nil },
-              is_in_my_want_to_read: { type: :boolean, nullable: true, example: nil }
+              isbn:          { type: :string, example: "9784873118079" },
+              title:         { type: :string, example: "リーダブルコード" },
+              authors:       { type: :array, items: { type: :string }, example: [ "Dustin Boswell" ] },
+              thumbnail_url: { type: :string, nullable: true, example: nil }
             },
-            required: %w[isbn title authors thumbnail_url is_in_my_want_to_read]
+            required: %w[isbn title authors thumbnail_url]
           },
           user: {
             type: :object,
@@ -78,7 +75,6 @@ RSpec.describe "投稿系", type: :request do
       }
 
       response "200", "本文検索：部分一致した投稿を取得" do
-        let(:Authorization) { nil }
         let(:q) { "Ruby" }
         let(:tag) { nil }
         let(:cursor) { nil }
@@ -100,7 +96,6 @@ RSpec.describe "投稿系", type: :request do
       end
 
       response "200", "タグ検索：完全一致した投稿を取得" do
-        let(:Authorization) { nil }
         let(:q) { nil }
         let(:tag) { "Go" }
         let(:cursor) { nil }
@@ -129,50 +124,7 @@ RSpec.describe "投稿系", type: :request do
         end
       end
 
-      response "200", "ログイン済み：読みたい登録済み書籍は is_in_my_want_to_read=true" do
-        let(:user) { create(:user) }
-        let(:Authorization) { "Bearer valid_token" }
-        let(:q) { "テスト" }
-        let(:tag) { nil }
-        let(:cursor) { nil }
-        let(:limit) { nil }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
-          book = create(:book)
-          create(:user_book, user: user, book: book, content: "テスト投稿")
-          create(:want_to_read, user: user, book: book)
-        end
-
-        schema success_schema
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["items"].first["book"]["is_in_my_want_to_read"]).to eq(true)
-        end
-      end
-
-      response "200", "未ログイン：is_in_my_want_to_read は null" do
-        let(:Authorization) { nil }
-        let(:q) { "テスト" }
-        let(:tag) { nil }
-        let(:cursor) { nil }
-        let(:limit) { nil }
-
-        before do
-          create(:user_book, content: "テスト投稿")
-        end
-
-        schema success_schema
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["items"].first["book"]["is_in_my_want_to_read"]).to be_nil
-        end
-      end
-
       response "200", "cursor / limit を指定してページネーション" do
-        let(:Authorization) { nil }
         let(:q) { "テスト" }
         let(:tag) { nil }
         let(:limit) { 1 }
@@ -193,7 +145,6 @@ RSpec.describe "投稿系", type: :request do
       end
 
       response "200", "該当する投稿が0件" do
-        let(:Authorization) { nil }
         let(:q) { "存在しないキーワード" }
         let(:tag) { nil }
         let(:cursor) { nil }
@@ -210,7 +161,6 @@ RSpec.describe "投稿系", type: :request do
       end
 
       response "422", "q と tag を同時指定" do
-        let(:Authorization) { nil }
         let(:q) { "Ruby" }
         let(:tag) { "Go" }
         let(:cursor) { nil }
@@ -225,7 +175,6 @@ RSpec.describe "投稿系", type: :request do
       end
 
       response "422", "q と tag のどちらも未指定" do
-        let(:Authorization) { nil }
         let(:q) { nil }
         let(:tag) { nil }
         let(:cursor) { nil }
@@ -240,7 +189,6 @@ RSpec.describe "投稿系", type: :request do
       end
 
       response "422", "q が長すぎる" do
-        let(:Authorization) { nil }
         let(:q) { "a" * 101 }
         let(:tag) { nil }
         let(:cursor) { nil }
@@ -255,7 +203,6 @@ RSpec.describe "投稿系", type: :request do
       end
 
       response "422", "tag が長すぎる" do
-        let(:Authorization) { nil }
         let(:q) { nil }
         let(:tag) { "a" * 51 }
         let(:cursor) { nil }
@@ -270,7 +217,6 @@ RSpec.describe "投稿系", type: :request do
       end
 
       response "422", "不正なカーソル値" do
-        let(:Authorization) { nil }
         let(:q) { "テスト" }
         let(:tag) { nil }
         let(:cursor) { "invalid_cursor!!!" }
@@ -281,25 +227,6 @@ RSpec.describe "投稿系", type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data["error"]["code"]).to eq("VALIDATION_ERROR")
-        end
-      end
-
-      response "401", "アクセストークンが無効・期限切れ" do
-        let(:Authorization) { "Bearer invalid_token" }
-        let(:q) { "テスト" }
-        let(:tag) { nil }
-        let(:cursor) { nil }
-        let(:limit) { nil }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
-        end
-
-        schema error_schema
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["error"]["code"]).to eq("UNAUTHORIZED")
         end
       end
     end

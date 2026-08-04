@@ -6,8 +6,6 @@ RSpec.describe "本棚系", type: :request do
       tags "本棚系"
       produces "application/json"
 
-      parameter name: :Authorization, in: :header, type: :string, required: false,
-        description: "アクセストークン。任意。指定時は book.is_in_my_want_to_read が boolean になる（未指定時は null）"
       parameter name: :username, in: :path, type: :string, required: true,
         description: "取得するユーザーの username"
       parameter name: :cursor, in: :query, type: :string, required: false,
@@ -17,7 +15,6 @@ RSpec.describe "本棚系", type: :request do
 
       response "200", "本棚一覧取得成功" do
         let(:user) { create(:user, username: "komusan") }
-        let(:Authorization) { nil }
         let(:username) { user.username }
         let(:book) { create(:book) }
         let(:user_book) { create(:user_book, user: user, book: book, content: "とても良い本でした") }
@@ -39,13 +36,12 @@ RSpec.describe "本棚系", type: :request do
                   book: {
                     type: :object,
                     properties: {
-                      isbn:                  { type: :string, example: "9784873118079" },
-                      title:                 { type: :string, example: "リーダブルコード" },
-                      authors:               { type: :array, items: { type: :string }, example: [ "著者名" ] },
-                      thumbnail_url:         { type: :string, nullable: true, example: nil },
-                      is_in_my_want_to_read: { type: :boolean, nullable: true, example: nil, description: "ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null" }
+                      isbn:          { type: :string, example: "9784873118079" },
+                      title:         { type: :string, example: "リーダブルコード" },
+                      authors:       { type: :array, items: { type: :string }, example: [ "著者名" ] },
+                      thumbnail_url: { type: :string, nullable: true, example: nil }
                     },
-                    required: %w[isbn title authors thumbnail_url is_in_my_want_to_read]
+                    required: %w[isbn title authors thumbnail_url]
                   }
                 },
                 required: %w[id content tags created_at book]
@@ -65,47 +61,8 @@ RSpec.describe "本棚系", type: :request do
         run_test!
       end
 
-      response "200", "ログイン中ユーザーが対象書籍を読みたい登録済み" do
-        let(:viewer) { create(:user) }
-        let(:Authorization) { "Bearer valid_token" }
-        let(:user) { create(:user) }
-        let(:username) { user.username }
-        let(:book) { create(:book) }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => viewer.id })
-          create(:user_book, user: user, book: book)
-          create(:want_to_read, user: viewer, book: book)
-        end
-
-        schema type: :object,
-          properties: {
-            items: {
-              type: :array,
-              items: {
-                type: :object,
-                properties: {
-                  book: {
-                    type: :object,
-                    properties: {
-                      is_in_my_want_to_read: { type: :boolean, nullable: true, example: true }
-                    },
-                    required: %w[is_in_my_want_to_read]
-                  }
-                }
-              }
-            }
-          }
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["items"].first["book"]["is_in_my_want_to_read"]).to eq(true)
-        end
-      end
-
       response "200", "本棚が空" do
         let(:user) { create(:user) }
-        let(:Authorization) { nil }
         let(:username) { user.username }
 
         schema type: :object,
@@ -131,7 +88,6 @@ RSpec.describe "本棚系", type: :request do
 
       response "200", "cursor 指定でページネーション" do
         let(:user) { create(:user) }
-        let(:Authorization) { nil }
         let(:username) { user.username }
         let!(:user_books) { create_list(:user_book, 3, user: user) }
         let(:cursor) { CompoundCursor.encode(created_at: user_books.second.created_at, id: user_books.second.id) }
@@ -157,7 +113,6 @@ RSpec.describe "本棚系", type: :request do
       end
 
       response "404", "ユーザーが存在しない" do
-        let(:Authorization) { nil }
         let(:username) { "nonexistent_user" }
 
         schema type: :object,
@@ -177,7 +132,6 @@ RSpec.describe "本棚系", type: :request do
 
       response "422", "不正なカーソル値" do
         let(:user) { create(:user) }
-        let(:Authorization) { nil }
         let(:username) { user.username }
         let(:cursor) { "invalid_cursor!!!" }
 
@@ -203,8 +157,6 @@ RSpec.describe "本棚系", type: :request do
       tags "本棚系"
       produces "application/json"
 
-      parameter name: :Authorization, in: :header, type: :string, required: false,
-        description: "アクセストークン。任意。指定時は book.is_in_my_want_to_read が boolean になる（未指定時は null）"
       parameter name: :username, in: :path, type: :string, required: true,
         description: "投稿したユーザーの username"
       parameter name: :isbn, in: :path, type: :string, required: true,
@@ -212,7 +164,6 @@ RSpec.describe "本棚系", type: :request do
 
       response "200", "投稿詳細取得成功" do
         let(:user) { create(:user, username: "komusan") }
-        let(:Authorization) { nil }
         let(:book) { create(:book) }
         let(:user_book) { create(:user_book, user: user, book: book, content: "とても良い本でした") }
         let(:tag) { create(:tag, name: "Go") }
@@ -233,13 +184,12 @@ RSpec.describe "本棚系", type: :request do
             book: {
               type: :object,
               properties: {
-                isbn:                  { type: :string, example: "9784873118079" },
-                title:                 { type: :string, example: "リーダブルコード" },
-                authors:               { type: :array, items: { type: :string }, example: [ "著者名" ] },
-                thumbnail_url:         { type: :string, nullable: true, example: nil },
-                is_in_my_want_to_read: { type: :boolean, nullable: true, example: nil, description: "ログイン中ユーザーが読みたいリストに登録しているか。未ログイン時は null" }
+                isbn:          { type: :string, example: "9784873118079" },
+                title:         { type: :string, example: "リーダブルコード" },
+                authors:       { type: :array, items: { type: :string }, example: [ "著者名" ] },
+                thumbnail_url: { type: :string, nullable: true, example: nil }
               },
-              required: %w[isbn title authors thumbnail_url is_in_my_want_to_read]
+              required: %w[isbn title authors thumbnail_url]
             },
             user: {
               type: :object,
@@ -255,40 +205,7 @@ RSpec.describe "本棚系", type: :request do
         run_test!
       end
 
-      response "200", "ログイン中ユーザーが対象書籍を読みたい登録済み" do
-        let(:viewer) { create(:user) }
-        let(:Authorization) { "Bearer valid_token" }
-        let(:user) { create(:user) }
-        let(:book) { create(:book) }
-        let!(:user_book) { create(:user_book, user: user, book: book) }
-        let(:username) { user.username }
-        let(:isbn) { book.isbn }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => viewer.id })
-          create(:want_to_read, user: viewer, book: book)
-        end
-
-        schema type: :object,
-          properties: {
-            book: {
-              type: :object,
-              properties: {
-                is_in_my_want_to_read: { type: :boolean, nullable: true, example: true }
-              },
-              required: %w[is_in_my_want_to_read]
-            }
-          }
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data["book"]["is_in_my_want_to_read"]).to eq(true)
-        end
-      end
-
-
       response "404", "ユーザーが存在しない" do
-        let(:Authorization) { nil }
         let(:username) { "nonexistent_user" }
         let(:isbn) { "9784000000001" }
 
@@ -309,7 +226,6 @@ RSpec.describe "本棚系", type: :request do
 
       response "404", "投稿が存在しない" do
         let(:user) { create(:user) }
-        let(:Authorization) { nil }
         let(:username) { user.username }
         let(:isbn) { "9784000000001" }
 
