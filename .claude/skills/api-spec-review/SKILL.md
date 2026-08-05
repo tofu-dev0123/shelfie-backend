@@ -32,7 +32,7 @@ API仕様の壁打ちと確認・更新を行います。以下のステップ�
 
 ### ドキュメントパスのマッピング規則
 
-`references/endpoints.md` に記載されたエンドポイントは以下のパス構造に対応します：
+`docs/api/endpoints.md` に記載されたエンドポイントは以下のパス構造に対応します：
 
 | エンドポイントのパス | ドキュメントディレクトリ |
 |---|---|
@@ -40,10 +40,6 @@ API仕様の壁打ちと確認・更新を行います。以下のステップ�
 | `/v1/users/*` または `/v1/me` 系ユーザー | `docs/api/users/` |
 | `/v1/books/*` | `docs/api/books/` |
 | `/v1/users/:username/books/*` または `/v1/me/books/*` | `docs/api/user_books/` |
-| `/v1/me/follows/*` または `/v1/users/:username/follow*` | `docs/api/follows/` |
-| `/v1/me/likes/*` | `docs/api/likes/` |
-| `/v1/tags` または `/v1/me/tag_follows/*` | `docs/api/tags/` または `docs/api/tag_follows/` |
-| `/v1/feed*` | `docs/api/feed/` |
 
 ファイル名はアクション（create/show/index/update/destroy/login/logout/refresh など）に対応します。
 

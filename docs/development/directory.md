@@ -15,7 +15,9 @@ shelfie-backend/
 ├── lib/
 │   ├── clients/
 │   ├── token_issuer.rb
-│   └── cursor.rb
+│   ├── cursor.rb
+│   ├── id_cursor.rb
+│   └── compound_cursor.rb
 └── spec/
 ```
 
@@ -26,8 +28,8 @@ shelfie-backend/
 リクエストを受け取り、Serviceを1つ呼び、レスポンスを返す。ビジネスロジックは書かない。
 
 - `v1/me/` 配下はすべて `V1::Me::BaseController` を継承し、全アクションで認証必須となる
-- それ以外は認証不要（`/v1/feed` のみオプション認証を個別に適用）
-- 例外: `GET /v1/books/search` は楽天書籍APIのリクエスト制限対策のため、`v1/` 直下ながら認証必須（`before_action :authenticate_user!` を個別に適用）
+- それ以外は認証不要
+- 例外: `GET /v1/books/search` と `GET /v1/books/:isbn` は楽天書籍APIのリクエスト制限対策のため、`v1/` 直下ながら認証必須（`before_action :authenticate_user!` を個別に適用）
 
 ```
 app/controllers/
@@ -38,12 +40,10 @@ app/controllers/
     │                                  # POST /v1/users
     │                                  # GET /v1/users/username/check
     ├── books_controller.rb            # GET /v1/books/search
+    │                                  # GET /v1/books/:isbn
     │                                  # GET /v1/books/:isbn/users
     ├── user_books_controller.rb       # GET /v1/users/:username/books
     │                                  # GET /v1/users/:username/books/:isbn
-    ├── follows_controller.rb          # GET /v1/users/:username/followers
-    │                                  # GET /v1/users/:username/following
-    ├── feed_controller.rb             # GET /v1/feed
     ├── auth/
     │   └── sessions_controller.rb    # POST /v1/auth/login
     │                                  # POST /v1/auth/refresh
@@ -52,13 +52,9 @@ app/controllers/
         ├── base_controller.rb        # before_action :authenticate_user!
         ├── profiles_controller.rb    # GET /v1/me
         │                             # PATCH /v1/me
-        ├── books_controller.rb       # POST /v1/me/books
-        │                             # PATCH /v1/me/books/:isbn
-        │                             # DELETE /v1/me/books/:isbn
-        ├── follows_controller.rb     # POST /v1/me/follows/:username
-        │                             # DELETE /v1/me/follows/:username
-        └── likes_controller.rb       # POST /v1/me/likes/:username/:isbn
-                                      # DELETE /v1/me/likes/:username/:isbn
+        └── books_controller.rb       # POST /v1/me/books
+                                      # PUT /v1/me/books/:isbn
+                                      # DELETE /v1/me/books/:isbn
 ```
 
 ### app/models/
@@ -73,11 +69,8 @@ app/models/
 ├── book.rb
 ├── user_book.rb
 ├── user_link.rb
-├── follow.rb
-├── like.rb
 ├── refresh_token.rb
 └── queries/
-    ├── feed_query.rb           # follows → user_books → users の結合 + カーソルページネーション
     └── book_readers_query.rb   # books → user_books → users の結合
 ```
 
@@ -87,10 +80,11 @@ app/models/
 
 ```
 app/serializers/
-├── user_serializer.rb          # ユーザープロフィール全体（GET /v1/me, GET /v1/users/:username）
-├── user_profile_serializer.rb  # プロフィール更新レスポンス（PATCH /v1/me）
-├── book_serializer.rb
-└── user_book_serializer.rb
+├── user_serializer.rb            # ユーザープロフィール全体（GET /v1/me, GET /v1/users/:username）
+├── user_profile_serializer.rb    # プロフィール更新レスポンス（PATCH /v1/me）
+├── user_summary_serializer.rb    # ユーザー要約（GET /v1/books/:isbn/users）
+├── user_book_serializer.rb       # 本棚一覧の1件（GET /v1/users/:username/books）
+└── user_book_show_serializer.rb  # 本棚投稿詳細（GET /v1/users/:username/books/:isbn）
 ```
 
 ### app/services/
@@ -111,9 +105,16 @@ app/services/
 │   ├── check_username_service.rb # username重複チェック
 │   ├── me_show_service.rb        # 自分のプロフィール取得
 │   └── me_update_service.rb      # 自分のプロフィール更新
+├── books/
+│   ├── search_service.rb         # 楽天書籍API検索
+│   ├── show_service.rb           # ISBN指定で書籍取得
+│   └── readers_service.rb        # 書籍を登録しているユーザー一覧
 └── user_books/
+    ├── index_service.rb          # 本棚一覧取得
+    ├── show_service.rb           # 本棚投稿詳細取得
     ├── create_service.rb         # 楽天書籍API取得 → books upsert → user_book作成
-    └── update_service.rb         # user_book更新 + タグ全置換
+    ├── update_service.rb         # user_book更新
+    └── destroy_service.rb        # user_book削除
 ```
 
 ### lib/clients/
@@ -132,8 +133,10 @@ DBや外部APIに依存しない共通ユーティリティ。
 
 ```
 lib/
-├── token_issuer.rb   # JWT生成・パース
-└── cursor.rb         # カーソルのBase64エンコード・デコード
+├── token_issuer.rb       # JWT生成・パース
+├── cursor.rb             # カーソルのBase64エンコード・デコード
+├── id_cursor.rb          # id 単一キーのカーソル
+└── compound_cursor.rb    # (created_at, id) 複合キーのカーソル
 ```
 
 ### config/

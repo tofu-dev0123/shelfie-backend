@@ -33,9 +33,7 @@ Clerk から取得・保存するのは `clerk_user_id` と `email` のみです
 |---|---|---|
 | user_links | 1:N | プロフィールリンク（最大5件）|
 | user_books | 1:N | 本棚投稿 |
-| follows (follower_id) | 1:N | フォローしているユーザー |
-| follows (followee_id) | 1:N | フォロワー |
-| likes | 1:N | いいねした投稿 |
+| refresh_tokens | 1:N | リフレッシュトークン |
 
 ## 備考
 

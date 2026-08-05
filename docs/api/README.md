@@ -67,10 +67,7 @@
 
 | エンドポイント | カーソルの基準 |
 |---|---|
-| `GET /v1/feed` | `created_at` + `id` |
 | `GET /v1/users/:username/books` | `created_at` + `id` |
-| `GET /v1/users/:username/followers` | `id` |
-| `GET /v1/users/:username/following` | `id` |
 | `GET /v1/books/:isbn/users`（読んだユーザー） | `id` |
 
 > `created_at` のみをカーソルにすると同一時刻レコードで重複・抜けが発生するため、`id` を組み合わせて一意性を保証します。
@@ -107,5 +104,5 @@
 | `FORBIDDEN` | 403 | 他人のリソースを操作しようとした |
 | `NOT_FOUND` | 404 | リソースが存在しない |
 | `VALIDATION_ERROR` | 422 | 入力値の検証エラー |
-| `CONFLICT` | 409 | 重複（いいね済み・フォロー済みなど） |
+| `CONFLICT` | 409 | 重複（本棚に登録済みの書籍など） |
 | `INTERNAL_SERVER_ERROR` | 500 | サーバー内部エラー |

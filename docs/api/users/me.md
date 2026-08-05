@@ -14,8 +14,8 @@
 ## 処理詳細
 
 1. アクセストークンを検証してログインユーザーを特定
-2. プロフィール情報・リンク一覧・フォロワー数・フォロー数・投稿数を返す
-   - 各カウントは集計クエリで毎回計算する
+2. プロフィール情報・リンク一覧・登録書籍数を返す
+   - `books_count` は集計クエリで毎回計算する
 
 ## レスポンス
 
@@ -28,8 +28,6 @@
   "username": "komusan",
   "nickname": "コムさん",
   "bio": "エンジニアです",
-  "followers_count": 10,
-  "following_count": 5,
   "books_count": 20,
   "links": [
     "https://github.com/komusan"

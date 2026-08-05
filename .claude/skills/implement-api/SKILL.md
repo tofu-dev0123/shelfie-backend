@@ -38,10 +38,6 @@ APIを1本、順を追って実装するスキル。各フェーズで必ず止�
 | `/v1/me` 系 | `docs/api/users/` または `docs/api/user_books/` |
 | `/v1/books/*` | `docs/api/books/` |
 | `/v1/users/:username/books/*` または `/v1/me/books/*` | `docs/api/user_books/` |
-| `/v1/me/follows/*` または `/v1/users/:username/follow*` | `docs/api/follows/` |
-| `/v1/me/likes/*` | `docs/api/likes/` |
-| `/v1/tags` または `/v1/me/tag_follows/*` | `docs/api/tags/` または `docs/api/tag_follows/` |
-| `/v1/feed*` | `docs/api/feed/` |
 
 ファイル名はアクション（create / show / index / update / destroy / login / logout / refresh など）に対応する。
 

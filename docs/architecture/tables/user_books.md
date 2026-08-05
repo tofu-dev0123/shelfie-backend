@@ -23,14 +23,13 @@
 |---|---|---|
 | PRIMARY KEY | id | |
 | UNIQUE | (user_id, book_id) | 同じ本の重複投稿防止 |
-| INDEX | (user_id, created_at DESC) | フィード取得クエリ（IN + ORDER BY created_at DESC）の効率化 |
+| INDEX | (user_id, created_at DESC) | 本棚一覧取得クエリ（user_id 絞り込み + ORDER BY created_at DESC）の効率化 |
 | INDEX | book_id | 書籍を登録しているユーザー一覧取得 |
 
 ## 備考
 
 - `content` は NULL 許容のため、本文なしで書籍のみ登録することも可能です
 - 文字数制限（最大1000文字）はアプリケーション層のバリデーションで制御します
-- タグは `user_book_tags` 経由で紐付く。1投稿につき最大5件の制限はアプリケーション層で制御します
 
 ## リレーション
 
@@ -38,4 +37,3 @@
 |---|---|---|
 | users | N:1 | 投稿したユーザー |
 | books | N:1 | 対象書籍 |
-| user_book_tags | 1:N | タグ紐付け |

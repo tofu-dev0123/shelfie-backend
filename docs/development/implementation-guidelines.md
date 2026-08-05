@@ -40,7 +40,7 @@
 
 **認証：**
 - `v1/me/` 配下 → 全アクション認証必須
-- それ以外 → 認証不要（`/v1/feed` のみ例外）
+- それ以外 → 認証不要（`GET /v1/books/search` / `GET /v1/books/:isbn` のみ例外で認証必須）
 
 **エラーハンドリング：**
 - `ErrorHandler` Concern に集約（BaseController に直書きしない）
@@ -70,7 +70,7 @@ Rails 標準（ファイル名・クラス名・メソッド名等）は RuboCop
 |---|---|---|
 | Service クラス | `{Action}Service` | `Auth::LoginService` |
 | Serializer クラス | `{Resource}Serializer` | `UserSerializer` |
-| Query Object クラス | `{Resource}Query` | `FeedQuery` |
+| Query Object クラス | `{Resource}Query` | `BookReadersQuery` |
 | spec ファイル | ソースのパスをミラー | `spec/services/auth/login_service_spec.rb` |
 | Request spec ファイル | `spec/requests/v1/` 配下 | `spec/requests/v1/users_spec.rb` |
 

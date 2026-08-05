@@ -2,11 +2,9 @@ module V1
   class UsersController < BaseController
     include RefreshTokenCookie
 
-    before_action :authenticate_user_if_token_present, only: [ :show ]
-
     def show
       Rails.logger.debug "UsersController#show に入りました"
-      result = Users::ShowService.call(username: params[:username], current_user: current_user)
+      result = Users::ShowService.call(username: params[:username])
       render json: UserSerializer.new(**result).as_json, status: :ok
     end
 
