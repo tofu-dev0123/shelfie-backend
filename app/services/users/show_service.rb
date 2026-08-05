@@ -1,6 +1,6 @@
 module Users
   class ShowService
-    def self.call(username:, current_user: nil)
+    def self.call(username:)
       user = User.find_by(username: username)
       raise UserNotFoundError unless user
 

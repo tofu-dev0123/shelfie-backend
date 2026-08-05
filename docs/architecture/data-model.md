@@ -10,23 +10,19 @@
 │ user_id      │  N:1  │ user_id          │
 │ url          │       │ book_id          │
 └──────┬───────┘       │ content          │
-       │               └──┬──────┬────────┘
-       │ N:1              │ N:1  │ 1:N
-┌──────▼───────┐          │  ┌───▼────────────┐
-│    users     │──────────┘  │ user_book_tags │
-├──────────────┤             ├────────────────┤
-│ id           │             │ id             │
-│ clerk_user_id│             │ user_book_id   │  N:1  ┌──────┐
-│ email        │             │ tag_id         │───────│ tags │
-│ nickname     │             └────────────────┘       ├──────┤
-│ username     │                                       │ id   │
-│ bio          │                                       │ name │
-└──────┬───────┘                                      └──────┘
-       │          follows
-       │          ┌──────────────┐
-       │   1:N ◄──│ follower_id  │──► users
-       │          │ followee_id  │──► users
-       │          └──────────────┘
+       │               └──┬───────────────┘
+       │ N:1              │ N:1
+┌──────▼───────┐          │
+│    users     │──────────┘
+├──────────────┤
+│ id           │
+│ clerk_user_id│
+│ email        │
+│ nickname     │
+│ username     │
+│ bio          │
+└──────┬───────┘
+       │
        └── 1:N ──►┌──────────────┐
                   │    books     │
                   ├──────────────┤
@@ -47,9 +43,6 @@
 | [user_links](./tables/user_links.md) | プロフィールリンク（最大5件）|
 | [books](./tables/books.md) | 書籍データ（楽天書籍API キャッシュ）|
 | [user_books](./tables/user_books.md) | 本棚投稿 |
-| [tags](./tables/tags.md) | 技術タグマスタ |
-| [user_book_tags](./tables/user_book_tags.md) | 本棚投稿へのタグ付け |
-| [follows](./tables/follows.md) | フォロー関係 |
 | [refresh_tokens](./tables/refresh_tokens.md) | リフレッシュトークン管理 |
 
 ---
@@ -62,9 +55,6 @@
 | users | UNIQUE (username) | ユーザー名の一意性 |
 | books | UNIQUE (isbn) | 同一書籍の重複登録防止 |
 | user_books | UNIQUE (user_id, book_id) | 同じ本を複数回投稿不可 |
-| follows | UNIQUE (follower_id, followee_id) | 重複フォロー防止 |
-| tags | UNIQUE (name) | タグ名の一意性 |
-| user_book_tags | UNIQUE (user_book_id, tag_id) | 同一投稿への重複タグ付与防止 |
 
 ---
 
@@ -83,22 +73,18 @@ INNER JOIN user_books ON users.id = user_books.user_id
 WHERE user_books.book_id = :book_id;
 ```
 
-### フォローベースのフィード
+### 本棚一覧のインデックス
 
-フィードは follows テーブルを使ってフォロー中ユーザーの投稿を取得します。
+`user_books` には複合インデックス `INDEX (user_id, created_at DESC)` を設けています。
+「特定ユーザーの本棚を新着順に取得する」というアクセスパターンを、ユーザー絞り込みと `ORDER BY created_at DESC` の両面でカバーします。
 
 ```sql
--- フォロー中ユーザーの投稿一覧（フィード）
+-- 特定ユーザーの本棚一覧（新着順）
 SELECT user_books.*
 FROM user_books
-WHERE user_books.user_id IN (
-  SELECT followee_id FROM follows WHERE follower_id = :current_user_id
-)
-ORDER BY user_books.created_at DESC;
+WHERE user_books.user_id = :user_id
+ORDER BY user_books.created_at DESC, user_books.id DESC;
 ```
-
-このクエリの効率化のため、`user_books` に複合インデックス `INDEX (user_id, created_at DESC)` を設けています。
-`IN` 句によるユーザー絞り込みと `ORDER BY created_at DESC` の両方をカバーします。
 
 ### 削除ポリシー
 
@@ -107,15 +93,13 @@ ORDER BY user_books.created_at DESC;
 ユーザー削除時はアプリケーション層でトランザクション内の順次削除を行います。削除順序は以下の通りです（FK 制約の依存関係に従う）。
 
 ```
-follows
-  → refresh_tokens
-    → user_links
-      → user_book_tags
-        → user_books
-          → users
+refresh_tokens
+  → user_links
+    → user_books
+      → users
 ```
 
-`books`・`tags` テーブルは他ユーザーも参照する共有データのため、ユーザー削除時には削除しません。
+`books` テーブルは他ユーザーも参照する共有データのため、ユーザー削除時には削除しません。
 
 #### FK の ON DELETE 動作
 
@@ -128,11 +112,7 @@ follows
 | user_books | user_id | users | RESTRICT |
 | user_books | book_id | books | RESTRICT |
 | user_links | user_id | users | RESTRICT |
-| follows | follower_id | users | RESTRICT |
-| follows | followee_id | users | RESTRICT |
 | refresh_tokens | user_id | users | RESTRICT |
-| user_book_tags | user_book_id | user_books | RESTRICT |
-| user_book_tags | tag_id | tags | RESTRICT |
 
 ---
 

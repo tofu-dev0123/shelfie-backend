@@ -210,12 +210,11 @@ RSpec.describe "ユーザー系", type: :request do
     get "ユーザープロフィール取得API" do
       tags "ユーザー系"
       produces "application/json"
-      security [ { Bearer: [] }, {} ]
 
       parameter name: :username, in: :path, type: :string, required: true,
         description: "取得するユーザーの username"
 
-      response "200", "プロフィール取得成功（未認証時）" do
+      response "200", "プロフィール取得成功" do
         let(:target_user) { create(:user) }
         let(:username) { target_user.username }
 
@@ -232,29 +231,6 @@ RSpec.describe "ユーザー系", type: :request do
         run_test!
       end
 
-      response "200", "プロフィール取得成功（認証済み時・他ユーザー）" do
-        let(:target_user)   { create(:user) }
-        let(:current_user)  { create(:user) }
-        let(:username)      { target_user.username }
-        let(:Authorization) { "Bearer valid_token" }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => current_user.id })
-        end
-
-        schema type: :object,
-          properties: {
-            username:        { type: :string },
-            nickname:        { type: :string },
-            bio:             { type: :string, nullable: true },
-            books_count:     { type: :integer },
-            links:           { type: :array, items: { type: :string } }
-          },
-          required: %w[username nickname bio books_count links]
-
-        run_test!
-      end
-
       response "404", "ユーザーが存在しない" do
         let(:username) { "nonexistent_user" }
 
@@ -264,29 +240,6 @@ RSpec.describe "ユーザー系", type: :request do
               type: :object,
               properties: {
                 code:    { type: :string, example: "NOT_FOUND" },
-                message: { type: :string }
-              }
-            }
-          }
-
-        run_test!
-      end
-
-      response "401", "アクセストークンが不正" do
-        let(:target_user)   { create(:user) }
-        let(:username)      { target_user.username }
-        let(:Authorization) { "Bearer invalid_token" }
-
-        before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
-        end
-
-        schema type: :object,
-          properties: {
-            error: {
-              type: :object,
-              properties: {
-                code:    { type: :string, example: "UNAUTHORIZED" },
                 message: { type: :string }
               }
             }

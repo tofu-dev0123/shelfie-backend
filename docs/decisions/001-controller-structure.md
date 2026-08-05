@@ -50,14 +50,12 @@ ApplicationController
 └── V1::BaseController              # v1共通処理
     ├── V1::Me::BaseController      # before_action :authenticate_user!
     │   ├── V1::Me::BooksController
-    │   ├── V1::Me::FollowsController
-    │   └── V1::Me::LikesController
+    │   └── V1::Me::ProfilesController
     └── （公開系コントローラー）
         ├── V1::UsersController
         ├── V1::BooksController
         ├── V1::UserBooksController
-        ├── V1::FollowsController
-        └── V1::FeedController      # オプション認証（例外）
+        └── V1::Auth::SessionsController
 ```
 
 ### ディレクトリ構成
@@ -70,15 +68,12 @@ app/controllers/
     ├── users_controller.rb
     ├── books_controller.rb
     ├── user_books_controller.rb
-    ├── follows_controller.rb
-    ├── feed_controller.rb
     ├── auth/
     │   └── sessions_controller.rb
     └── me/
         ├── base_controller.rb
         ├── books_controller.rb
-        ├── follows_controller.rb
-        └── likes_controller.rb
+        └── profiles_controller.rb
 ```
 
 ## 理由
@@ -89,4 +84,4 @@ app/controllers/
 
 ## 例外
 
-`GET /v1/feed` はログイン状態で挙動が変わるオプション認証のため、`V1::FeedController` に個別で `authenticate_user_if_token_present!` を呼ぶ形とする。例外はこの1つのみ。
+`GET /v1/books/search` と `GET /v1/books/:isbn` は楽天書籍APIのリクエスト制限対策のため、`v1/` 直下ながら `V1::BooksController` に個別で `before_action :authenticate_user!` を適用する。オプション認証（トークンがある場合のみ認証）は使用しない。

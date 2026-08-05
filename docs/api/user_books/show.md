@@ -32,7 +32,6 @@
 {
   "id": 1,
   "content": "とても良い本でした",
-  "tags": ["Go", "Architecture"],
   "created_at": "2026-03-05T00:00:00Z",
   "updated_at": "2026-03-06T00:00:00Z",
   "book": {

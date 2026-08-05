@@ -35,39 +35,50 @@ app/
 │       ├── users_controller.rb
 │       ├── books_controller.rb
 │       ├── user_books_controller.rb
-│       ├── follows_controller.rb
-│       ├── feed_controller.rb
 │       ├── auth/
 │       │   └── sessions_controller.rb
 │       └── me/
 │           ├── base_controller.rb
 │           ├── books_controller.rb
-│           ├── follows_controller.rb
-│           └── likes_controller.rb
+│           └── profiles_controller.rb
 ├── models/
 │   ├── user.rb
 │   ├── book.rb
 │   ├── user_book.rb
+│   ├── user_link.rb
+│   ├── refresh_token.rb
 │   └── queries/
-│       ├── feed_query.rb
 │       └── book_readers_query.rb
 └── services/
     ├── auth/
     │   ├── login_service.rb
     │   ├── refresh_service.rb
     │   └── logout_service.rb
+    ├── books/
+    │   ├── search_service.rb
+    │   ├── show_service.rb
+    │   └── readers_service.rb
     ├── users/
-    │   └── create_service.rb
+    │   ├── create_service.rb
+    │   ├── show_service.rb
+    │   ├── check_username_service.rb
+    │   ├── me_show_service.rb
+    │   └── me_update_service.rb
     └── user_books/
+        ├── index_service.rb
+        ├── show_service.rb
         ├── create_service.rb
-        └── update_service.rb
+        ├── update_service.rb
+        └── destroy_service.rb
 
 lib/
 ├── clients/
 │   ├── clerk_client.rb
 │   └── rakuten_books_client.rb
 ├── token_issuer.rb
-└── cursor.rb
+├── cursor.rb
+├── id_cursor.rb
+└── compound_cursor.rb
 ```
 
 ## 各レイヤーの判断基準
@@ -89,7 +100,6 @@ Query Objectを `app/models/queries/` に置く理由は、DB操作という性�
 
 | クエリ | 理由 |
 |---|---|
-| `FeedQuery` | follows → user_books → books → users の複数テーブル結合 + カーソルページネーション |
 | `BookReadersQuery` | books → user_books → users の複数テーブル結合 |
 
 ### Clientにする基準
@@ -100,7 +110,7 @@ Query Objectを `app/models/queries/` に置く理由は、DB操作という性�
 ### ユーティリティにする基準
 
 - DBや外部APIに依存しない純粋なロジック → `lib/` 直下
-- このプロジェクトでは JWT生成・パース（`token_issuer.rb`）、カーソルのBase64エンコード・デコード（`cursor.rb`）が該当
+- このプロジェクトでは JWT生成・パース（`token_issuer.rb`）、カーソルのBase64エンコード・デコード（`cursor.rb` / `id_cursor.rb` / `compound_cursor.rb`）が該当
 
 ## 呼び出し関係
 

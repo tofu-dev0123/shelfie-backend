@@ -26,19 +26,6 @@ module V1
       raise ClerkClient::UnauthorizedError unless @current_user
     end
 
-    # トークンがある場合のみ認証する。トークンがない場合は current_user = nil のまま通過
-    # トークンが不正・期限切れの場合は ClerkClient::UnauthorizedError を raise → 401
-    def authenticate_user_if_token_present
-      token = clerk_token_from_header
-      return if token.blank?
-
-      payload = TokenIssuer.decode(token)
-      raise ClerkClient::UnauthorizedError unless payload
-
-      @current_user = User.find_by(id: payload["user_id"])
-      raise ClerkClient::UnauthorizedError unless @current_user
-    end
-
     def current_user
       @current_user
     end

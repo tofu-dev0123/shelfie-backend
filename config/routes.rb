@@ -20,7 +20,6 @@ Rails.application.routes.draw do
       put    "books/:isbn", to: "books#update"
       delete "books/:isbn", to: "books#destroy"
     end
-    get "feed", to: "feed#index"
     get "books/search", to: "books#search"
     get "books/:isbn/users", to: "books#users"
     get "books/:isbn", to: "books#show", constraints: { isbn: /\d{13}/ }
