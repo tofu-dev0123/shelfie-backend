@@ -8,38 +8,68 @@ body:
         このテンプレートは、ループが無人で実装する issue 用です。
 
         着手前に `/loop-triage` が契約のプレフライト検査を行い、
-        **下記4ブロックのいずれかが不十分だと着手せず差し戻します。**
+        **必須ブロックのいずれかが不十分だと着手せず差し戻します。**
+
+        起票を補助するスキルがあります → `/agent-issue`
 
         自律度ラベル（`agent:pr` など）の付与は**人間の専権事項**です。
         起票後に手動で付けてください。ラベルが無い issue には着手しません。
+
+  - type: dropdown
+    id: change_type
+    attributes:
+      label: 変更の種類
+      description: 実装するレイヤーの判断に使います。
+      options:
+        - 新機能（API 追加）
+        - 既存改修（振る舞いの変更）
+        - 削除（機能・コードの除去）
+        - リファクタ（振る舞いを変えない）
+        - 設定・基盤（CI / ドキュメント / ツール）
+    validations:
+      required: true
 
   - type: textarea
     id: background
     attributes:
       label: 背景
-      description: なぜこの変更が必要か。ループは「なぜ」を判断材料に使います。
+      description: なぜこの変更が必要か。判断に迷ったとき、ループはここを根拠にします。
       placeholder: |
         現状 XXX になっており、YYY という問題がある。
     validations:
       required: true
 
   - type: textarea
+    id: scope
+    attributes:
+      label: やること
+      description: |
+        何を作る・変える・消すのかを箇条書きで。
+        完了条件だけでは「何を作るのか」が伝わりません。
+      placeholder: |
+        - `GET /v1/me/books` を追加する
+        - レスポンスは仕様書 `docs/api/user_books/index.md` に従う
+        - ページネーションは既存の Query Object を再利用する
+    validations:
+      required: true
+
+  - type: textarea
     id: acceptance
     attributes:
-      label: 完了条件
+      label: 完了条件（この issue 固有のもの）
       description: |
         **機械判定できるチェックボックスで書いてください。**
         「正しく動くこと」「使いやすくすること」のような文は差し戻されます。
-        コマンドと期待結果の形に落としてください。
+        コマンドと期待結果、または「このファイルにこの記述が存在する」の形に落としてください。
+
+        rspec / rubocop / steep / brakeman / bundler-audit の5ゲートは
+        `gate-verifier` が毎回必ず実行するので、ここに書く必要はありません。
+        **この issue でしか確認できないこと**を書いてください。
       placeholder: |
-        - [ ] `docker compose exec -e RAILS_ENV=test web bundle exec rspec` が通る
-        - [ ] `docker compose exec web bundle exec rubocop` がクリーン
-        - [ ] `docker compose exec web bundle exec steep check` が通る
-        - [ ] `curl -s localhost:3000/v1/xxx | jq -e '.id'` が値を返す
-        - [ ] `spec/requests/v1/xxx_spec.rb` に異常系（401 / 404）のテストが存在する
+        - [ ] `spec/requests/v1/me/books_spec.rb` が存在し、200 / 401 / 404 をカバーしている
+        - [ ] `docker compose exec web bundle exec rails routes | grep 'v1/me/books'` が GET を返す
+        - [ ] `swagger/v1/swagger.yaml` に `/v1/me/books` の定義が含まれる
       value: |
-        - [ ] `docker compose exec -e RAILS_ENV=test web bundle exec rspec` が通る
-        - [ ] `docker compose exec web bundle exec rubocop` がクリーン
         - [ ]
     validations:
       required: true
@@ -64,14 +94,11 @@ body:
       description: |
         変更が必要になった時点でループは停止し、draft PR を出して人間に判断を求めます。
         「無し」ではなく、必ず明示してください。
-      placeholder: |
+      value: |
         - `db/migrate/**` — 適用済みマイグレーションの改変は禁止（フックでもブロック）
         - `.github/workflows/**` — CI の変更は別 issue
         - `Gemfile` `Gemfile.lock` — 依存追加は人間の判断
-      value: |
-        - `db/migrate/**` — 適用済みマイグレーションの改変は禁止
-        - `.github/workflows/**` — CI の変更は別 issue
-        - `Gemfile` `Gemfile.lock` — 依存追加は人間の判断
+        - `.claude/settings.json` `.claude/hooks/**` `.claude/rules/**` — 強制層は人間の専権
     validations:
       required: true
 
@@ -81,11 +108,8 @@ body:
       label: エスカレーション条件
       description: |
         どうなったら止まって人間に聞くか。
-        ここに書かれていない迷いは、ループが自分で判断して進みます。
-      placeholder: |
-        - 3回試して完了条件を満たせない場合は draft PR を出して停止する
-        - 既存の API のレスポンス形式を変更する必要が出た場合は、実装せず選択肢を提示する
-        - 外部サービスの仕様が docs と食い違っていた場合は停止する
+        **ここに書かれていない迷いは、ループが自分で判断して進みます。**
+        判断を委ねたくない論点があるなら、必ずここに書いてください。
       value: |
         - 3回試して完了条件を満たせない場合は draft PR を出して停止する
         -
@@ -96,9 +120,12 @@ body:
     id: references
     attributes:
       label: 参考
-      description: 仕様書・関連 issue・外部ドキュメントなど
+      description: |
+        仕様書・関連 issue・外部ドキュメントなど。
+        API を追加・変更する issue は、`docs/api/**` の仕様書を**必ず**指定してください。
+        仕様書が無い場合、ループは着手せず差し戻します（先に `/api-spec-review` が必要）。
       placeholder: |
-        - `docs/api/users/create.md`
+        - `docs/api/user_books/index.md`
         - #123
     validations:
       required: false
