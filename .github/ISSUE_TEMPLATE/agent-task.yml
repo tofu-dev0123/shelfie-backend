@@ -65,6 +65,12 @@ body:
         rspec / rubocop / steep / brakeman / bundler-audit の5ゲートは
         `gate-verifier` が毎回必ず実行するので、ここに書く必要はありません。
         **この issue でしか確認できないこと**を書いてください。
+
+        ⚠️ **差分のファイル数を固定する条件は書かないでください。**
+        （例: 「`git diff --name-only` の出力が1行のみ」）
+        ループは終了時に必ず `.claude/state/loop.md` を更新するため、差分は必ず1件増えます。
+        スコープ逸脱を防ぎたい場合は「特定のディレクトリに差分が無いこと」の形で書いてください。
+        例: `git diff --name-only develop...HEAD | grep -qE '^(app|db|spec|config)/' が失敗する`
       placeholder: |
         - [ ] `spec/requests/v1/me/books_spec.rb` が存在し、200 / 401 / 404 をカバーしている
         - [ ] `docker compose exec web bundle exec rails routes | grep 'v1/me/books'` が GET を返す
@@ -94,6 +100,12 @@ body:
       description: |
         変更が必要になった時点でループは停止し、draft PR を出して人間に判断を求めます。
         「無し」ではなく、必ず明示してください。
+
+        ⚠️ **`.claude/**` とまとめて禁止しないでください。**
+        `.claude/state/loop.md` はループが終了時に必ず更新する記帳ファイルで、
+        どの契約でも例外的に更新してよいことになっています（`.claude/rules/loop-policy.md` §2）。
+        まとめて禁止すると、ループが着手できずに差し戻します。
+        禁止したいのは強制層（`settings.json` / `hooks/**` / `rules/**`）です。
       value: |
         - `db/migrate/**` — 適用済みマイグレーションの改変は禁止（フックでもブロック）
         - `.github/workflows/**` — CI の変更は別 issue
