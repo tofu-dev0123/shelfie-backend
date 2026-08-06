@@ -56,6 +56,17 @@ rspec / rubocop / steep / brakeman / bundler-audit は `gate-verifier` が毎回
 完了条件に書くと本質的な条件が埋もれるので書かない。
 **この issue でしか確認できないこと**だけを書く。
 
+### 差分のファイル数を固定しない
+
+`git diff --name-only develop...HEAD` の出力が N 行、のような条件を書かない。
+ループは終了時に必ず `.claude/state/loop.md` を更新するので、**差分は必ず1件増えて落ちる**。
+
+スコープ逸脱を防ぎたい場合は「**禁止したいディレクトリに差分が無いこと**」の形にする。
+
+| ✗ 壊れる書き方 | ✓ 正しい書き方 |
+|---|---|
+| `git diff --name-only develop...HEAD` が1行のみ | `git diff --name-only develop...HEAD \| grep -qE '^(app\|db\|spec\|config)/'` が失敗する |
+
 ## Step 4: 触ってよい / いけないファイルを決める
 
 「触ってよいファイル」は**必要最小限**にする。広く取ると Over-Reach の余地が生まれる。
@@ -69,6 +80,10 @@ Step 2 の調査結果から具体的なパスを提案する。
 - `Gemfile` `Gemfile.lock` — 依存追加は人間の判断
 - `.claude/settings.json` `.claude/hooks/**` `.claude/rules/**` — 強制層は人間の専権
 ```
+
+**`.claude/**` とまとめて禁止しない。** `.claude/state/loop.md` はループが終了時に
+必ず更新する記帳ファイルで、どの契約でも例外的に更新してよい（`loop-policy.md` §2）。
+まとめて禁止すると、ループが着手できずに差し戻す。禁止したいのは強制層3つだけ。
 
 ## Step 5: エスカレーション条件を決める
 
