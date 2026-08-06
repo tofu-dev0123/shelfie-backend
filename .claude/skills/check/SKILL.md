@@ -6,33 +6,22 @@ tools: [Bash, Agent]
 
 lint チェック・型チェック・実装ガイドラインレビューを実行してください。
 
+対話での作業中に使う軽量チェック。**PR 前の合否判定には `gate-verifier` を使うこと**
+（このスキルは brakeman と bundler-audit を含まないため、CI が通る保証にはならない）。
+
 ## 対象ファイル
 
 引数 `$ARGUMENTS` が指定されていればそのファイルを対象にする。指定がない場合は変更されたファイル全体を対象にする。
 
 ## 手順
 
-### Step 1: RuboCop（lint）
+### Step 1: lint と型チェック
 
-引数あり:
-```bash
-docker compose exec web bundle exec rubocop $ARGUMENTS --autocorrect
-docker compose exec web bundle exec rubocop $ARGUMENTS
-```
+`lint-fixer` サブエージェントを起動し、対象ファイルのパスを渡す（引数がなければその旨を伝える）。
 
-引数なし:
-```bash
-docker compose exec web bundle exec rubocop --autocorrect
-docker compose exec web bundle exec rubocop
-```
+RuboCop の自動修正と Steep の型チェックを行い、残存する違反を報告する。
 
-### Step 2: Steep（型チェック）
-
-```bash
-docker compose exec web bundle exec steep check
-```
-
-### Step 3: 実装ガイドラインレビュー
+### Step 2: 実装ガイドラインレビュー
 
 1. レビュー対象ファイルを特定する
    - 引数 `$ARGUMENTS` が指定されていればそのファイルを使う
@@ -42,7 +31,7 @@ docker compose exec web bundle exec steep check
      ```
    - `app/` 配下の Ruby ファイル（`.rb`）のみを対象とする
 
-2. `reviewer` サブエージェントを起動し、対象ファイルのパスを渡してレビューを依頼する
+2. `guideline-reviewer` サブエージェントを起動し、対象ファイルのパスを渡してレビューを依頼する
 
 ## 出力形式
 
@@ -57,14 +46,8 @@ docker compose exec web bundle exec steep check
 
 ❌ チェック失敗
 
-**RuboCop:**
-- 自動修正済み: {n}件
-- 未解決: {n}件
-  - {ファイルパス}:{行番号} - {内容}
-
-**Steep:**
-- エラー: {n}件
-  - {ファイルパス}:{行番号} - {内容}
+**RuboCop / Steep:**
+- `lint-fixer` サブエージェントの出力をそのまま表示する
 
 **実装ガイドライン:**
-- reviewer サブエージェントの出力をそのまま表示する
+- `guideline-reviewer` サブエージェントの出力をそのまま表示する（証跡欄を含む）

@@ -13,15 +13,33 @@
      - Request spec は rswag DSL で書く（テスト兼 Swagger ドキュメント）
      - Model / Service spec は通常の RSpec で書く
 □ 4. 実装を書く
-□ 5. テスト実行サブエージェントを起動
-□ 6. パス → swagger.yaml を生成する
-     bundle exec rails rswag:specs:swaggerize
-□ 7. コードチェックサブエージェントを起動（RuboCop + Steep）
-□ 8. パス → レビューサブエージェントを起動
-□ 9. 指摘なし → 完了 / 指摘あり → 5. に戻る
+□ 5. テストが落ちていれば test-fixer を起動して直す
+□ 6. swagger.yaml を生成する（API を追加・変更した場合）
+     docker compose exec web bundle exec rails rswag:specs:swaggerize
+□ 7. lint が落ちていれば lint-fixer を起動して直す（RuboCop 自動修正 + Steep）
+□ 8. gate-verifier を起動して合否を判定させる（CI と同じ5ゲート）
+□ 9. 合格 → guideline-reviewer を起動
+□10. 🔴 必須 の指摘あり → 5. に戻る（往復は最大3回）
+     指摘なし / 🟡 推奨 のみ → 完了
 ```
 
 サブエージェントの定義 → `.claude/agents/`
+
+**「直す者」と「判定する者」を分けている。**
+`test-fixer` と `lint-fixer` はファイルを書き換えるため、合否の判定はしない。
+機械判定の合否を出すのは `gate-verifier` だけで、このエージェントは実装ツールを持たない。
+
+| エージェント | 層 | 役割 |
+|---|---|---|
+| `test-fixer` | 直す者 | spec をパスさせる（最大3回） |
+| `lint-fixer` | 直す者 | RuboCop の自動修正 + Steep の検出 |
+| `gate-verifier` | 判定する者 | CI と同じ5ゲートを通しで判定。実装しない |
+| `guideline-reviewer` | 判定する者 | 規約との照合。ファイルを修正しない |
+
+`gate-verifier` が実行する5ゲートは `.github/workflows/ci.yml` と同じ。
+rspec / rubocop / steep / brakeman / bundler-audit のすべてが通って初めて合格。
+
+無人ループでこのフローを回す場合の停止条件 → `.claude/rules/loop-policy.md`
 
 ---
 

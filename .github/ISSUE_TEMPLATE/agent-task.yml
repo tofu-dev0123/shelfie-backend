@@ -1,0 +1,104 @@
+name: エージェントタスク
+description: ループが自走で実装する issue を起票する（完了条件を機械判定できるものに限る）
+title: "「」"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        このテンプレートは、ループが無人で実装する issue 用です。
+
+        着手前に `/loop-triage` が契約のプレフライト検査を行い、
+        **下記4ブロックのいずれかが不十分だと着手せず差し戻します。**
+
+        自律度ラベル（`agent:pr` など）の付与は**人間の専権事項**です。
+        起票後に手動で付けてください。ラベルが無い issue には着手しません。
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景
+      description: なぜこの変更が必要か。ループは「なぜ」を判断材料に使います。
+      placeholder: |
+        現状 XXX になっており、YYY という問題がある。
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完了条件
+      description: |
+        **機械判定できるチェックボックスで書いてください。**
+        「正しく動くこと」「使いやすくすること」のような文は差し戻されます。
+        コマンドと期待結果の形に落としてください。
+      placeholder: |
+        - [ ] `docker compose exec -e RAILS_ENV=test web bundle exec rspec` が通る
+        - [ ] `docker compose exec web bundle exec rubocop` がクリーン
+        - [ ] `docker compose exec web bundle exec steep check` が通る
+        - [ ] `curl -s localhost:3000/v1/xxx | jq -e '.id'` が値を返す
+        - [ ] `spec/requests/v1/xxx_spec.rb` に異常系（401 / 404）のテストが存在する
+      value: |
+        - [ ] `docker compose exec -e RAILS_ENV=test web bundle exec rspec` が通る
+        - [ ] `docker compose exec web bundle exec rubocop` がクリーン
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: allowed_files
+    attributes:
+      label: 触ってよいファイル
+      description: グロブで書いてください。ここに書かれていないファイルには手を出しません。
+      placeholder: |
+        - `app/controllers/v1/**`
+        - `app/services/**`
+        - `spec/requests/v1/**`
+        - `config/routes.rb`
+    validations:
+      required: true
+
+  - type: textarea
+    id: forbidden_files
+    attributes:
+      label: 触ってはいけないファイル
+      description: |
+        変更が必要になった時点でループは停止し、draft PR を出して人間に判断を求めます。
+        「無し」ではなく、必ず明示してください。
+      placeholder: |
+        - `db/migrate/**` — 適用済みマイグレーションの改変は禁止（フックでもブロック）
+        - `.github/workflows/**` — CI の変更は別 issue
+        - `Gemfile` `Gemfile.lock` — 依存追加は人間の判断
+      value: |
+        - `db/migrate/**` — 適用済みマイグレーションの改変は禁止
+        - `.github/workflows/**` — CI の変更は別 issue
+        - `Gemfile` `Gemfile.lock` — 依存追加は人間の判断
+    validations:
+      required: true
+
+  - type: textarea
+    id: escalation
+    attributes:
+      label: エスカレーション条件
+      description: |
+        どうなったら止まって人間に聞くか。
+        ここに書かれていない迷いは、ループが自分で判断して進みます。
+      placeholder: |
+        - 3回試して完了条件を満たせない場合は draft PR を出して停止する
+        - 既存の API のレスポンス形式を変更する必要が出た場合は、実装せず選択肢を提示する
+        - 外部サービスの仕様が docs と食い違っていた場合は停止する
+      value: |
+        - 3回試して完了条件を満たせない場合は draft PR を出して停止する
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 参考
+      description: 仕様書・関連 issue・外部ドキュメントなど
+      placeholder: |
+        - `docs/api/users/create.md`
+        - #123
+    validations:
+      required: false
