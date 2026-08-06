@@ -36,3 +36,6 @@
 .gem_rbs_collection/
 sig/rbs_rails/
 
+# Claude Code の個人用オーバーライド（settings.json はコミットする）
+/.claude/settings.local.json
+
