@@ -100,6 +100,35 @@ gh issue list --state open --limit 50 --json number,title,labels,updatedAt
 - この実行でコメントした issue を「ラベル提案済み」に追記
 - プレフライト検査で弾いた件を「次回への申し送り」に追記
 
+#### コミット先
+
+**着手する場合**（`/implement-issue` に続く）は、ここではコミットしない。
+feature ブランチ上で `implement-issue` Step 13 がまとめてコミットする。
+
+**トリアージだけで終わる場合**は feature ブランチが存在しないので、
+`develop` を dirty にしたまま放置しない（次の周の `git status` チェックで止まる）。
+
+まず**実質的な変更があったか**を判定する。
+
+```bash
+git diff --stat .claude/state/loop.md
+```
+
+- **最終実行日しか変わっていない** → コミットしない。`git checkout -- .claude/state/loop.md` で戻す。
+  日付だけの PR を毎周作ると通知が埋まる（Notification Fatigue）
+- **それ以外の変更がある**（差し戻し記録・ラベル提案・blocked の増減・申し送り）→ 専用ブランチで PR を出す
+
+```bash
+git checkout -b "chore/loop-state-$(date +%Y%m%d-%H%M)"
+git add .claude/state/loop.md
+git commit -m "chore: ループの記帳を更新する"
+git push -u origin HEAD
+gh pr create --base develop --title "chore: ループの記帳を更新する" \
+  --body "トリアージのみの周の記帳。差し戻した issue と申し送りを記録する。"
+```
+
+**`develop` に直接コミットしない。** ブランチ運用を崩さないため。
+
 ### 8. 報告する
 
 5行以内。
