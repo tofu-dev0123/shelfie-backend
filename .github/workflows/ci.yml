@@ -105,6 +105,13 @@ jobs:
       RAKUTEN_ACCESS_KEY: dummy
       JWT_SECRET_KEY: dummy_secret_for_ci
       CLERK_SECRET_KEY: dummy_secret_for_ci
+      # OAuth も同様。ENV.fetch を使うため未設定だと KeyError で落ちる
+      GOOGLE_OAUTH_CLIENT_ID: dummy_google_client_id
+      GOOGLE_OAUTH_CLIENT_SECRET: dummy_google_client_secret
+      GITHUB_OAUTH_CLIENT_ID: dummy_github_client_id
+      GITHUB_OAUTH_CLIENT_SECRET: dummy_github_client_secret
+      API_BASE_URL: https://api.example.com
+      FRONTEND_URL: https://example.com
 
     steps:
       - name: Checkout code
