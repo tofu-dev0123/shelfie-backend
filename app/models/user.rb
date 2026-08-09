@@ -4,6 +4,7 @@ class User < ApplicationRecord
   has_many :refresh_tokens, dependent: :destroy
   has_many :user_links, dependent: :destroy
   has_many :user_books, dependent: :destroy
+  has_many :user_identities, dependent: :destroy
 
   attr_accessor :links_input
 

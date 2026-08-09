@@ -1,0 +1,22 @@
+ja:
+  activerecord:
+    attributes:
+      user_identity:
+        user:         "ユーザー"
+        provider:     "プロバイダ"
+        provider_uid: "プロバイダID"
+        email:        "メールアドレス"
+    errors:
+      models:
+        user_identity:
+          attributes:
+            user:
+              required: "を指定してください"
+            provider:
+              blank: "は必須です"
+              taken: "はすでに連携されています"
+            provider_uid:
+              blank: "は必須です"
+              taken: "はすでに使用されています"
+            email:
+              blank: "は必須です"
