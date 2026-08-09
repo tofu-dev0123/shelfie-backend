@@ -30,8 +30,10 @@
       "Bash(rails db:reset:*)",
       "Bash(gh pr merge:*)",
       "Edit(/.claude/settings.json)",
-      "Read(/.env*)",
-
+      "Read(/.env)",
+      "Read(/.env.local)",
+      "Read(/.env.develop)",
+      "Read(/.env.production)",
       "Bash(* db:drop*)",
       "Bash(* db:reset*)",
       "Bash(* db:schema:load*)",
