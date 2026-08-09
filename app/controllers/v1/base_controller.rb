@@ -14,7 +14,8 @@ module V1
       payload[:user_id] = current_user&.id
     end
 
-    # トークンが必須。トークンがない・不正・期限切れの場合は ClerkClient::UnauthorizedError を raise → 401
+    # トークンが必須。トークンがない・不正・期限切れ・purpose が access でない場合は
+    # ClerkClient::UnauthorizedError を raise → 401
     def authenticate_user!
       token = clerk_token_from_header
       raise ClerkClient::UnauthorizedError unless token

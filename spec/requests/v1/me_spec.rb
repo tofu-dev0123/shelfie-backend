@@ -12,7 +12,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:Authorization) { "Bearer valid_token" }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -33,7 +33,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:Authorization) { "Bearer invalid_token" }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+          allow(TokenIssuer).to receive(:decode).with("invalid_token", purpose: "access").and_return(nil)
         end
 
         schema type: :object,
@@ -121,7 +121,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:body) { { nickname: "コムさん", bio: "エンジニアです" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -141,7 +141,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:body) { { links: [ "https://github.com/komusan", "https://x.com/komusan" ] } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -162,7 +162,7 @@ RSpec.describe "マイページ系", type: :request do
 
         before do
           create(:user_link, user: user)
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -182,7 +182,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:body) { {} }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -204,7 +204,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:body) { { nickname: "コムさん" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+          allow(TokenIssuer).to receive(:decode).with("invalid_token", purpose: "access").and_return(nil)
         end
 
         schema type: :object,
@@ -245,7 +245,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:body) { { nickname: "あ" * 51 } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -278,7 +278,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:body) { { links: (1..6).map { |i| "https://example.com/#{i}" } } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -311,7 +311,7 @@ RSpec.describe "マイページ系", type: :request do
         let(:body) { { links: [ "not-a-url" ] } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
