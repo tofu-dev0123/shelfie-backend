@@ -84,12 +84,17 @@ body:
     id: allowed_files
     attributes:
       label: 触ってよいファイル
-      description: グロブで書いてください。ここに書かれていないファイルには手を出しません。
+      description: |
+        グロブで書いてください。ここに書かれていないファイルには手を出しません。
+
+        ⚠️ API を追加・変更する issue では、**該当する `docs/api/**` を必ず含めてください。**
+        仕様書は実装と同じ PR で更新する運用のため、ここに無いとループが着手できません。
       placeholder: |
         - `app/controllers/v1/**`
         - `app/services/**`
         - `spec/requests/v1/**`
         - `config/routes.rb`
+        - `docs/api/user_books/index.md`
     validations:
       required: true
 
@@ -133,9 +138,10 @@ body:
     attributes:
       label: 参考
       description: |
-        仕様書・関連 issue・外部ドキュメントなど。
-        API を追加・変更する issue は、`docs/api/**` の仕様書を**必ず**指定してください。
-        仕様書が無い場合、ループは着手せず差し戻します（先に `/api-spec-review` が必要）。
+        関連 issue・既存の仕様書・外部ドキュメントなど。
+        API を追加・変更する issue は、仕様そのものを「やること」に書ききってください。
+        **仕様の正はこの issue** で、`docs/api/**` は実装と同じ PR で更新します。
+        既存 API を変更する場合は、現行の仕様書のパスをここに書いてください。
       placeholder: |
         - `docs/api/user_books/index.md`
         - #123

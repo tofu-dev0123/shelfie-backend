@@ -64,7 +64,7 @@ Claude が自分で付け替えてはいけない（`settings.json` の deny で
 | 条件 | 止まり方 |
 |---|---|
 | 契約のプレフライト検査に不合格 | 着手せず issue に1コメント |
-| 仕様が `docs/api/**` に無い | 着手せず issue に1コメント |
+| API 案件なのに issue 本文に仕様が無い | 着手せず issue に1コメント |
 | `gate-verifier` が3回連続不合格 | draft PR を出して停止 |
 | `guideline-reviewer` の 🔴 必須 指摘が3回で解消しない | draft PR を出して停止 |
 | issue の「触ってはいけないファイル」の変更が必要になった | draft PR を出して停止 |
@@ -109,7 +109,8 @@ issue の「触ってよいファイル」の外に手を出さない。
 
 - `docs/development/implementation-guidelines.md` — アーキテクチャ制約・禁止事項・命名ルール
 - `docs/development/directory.md` — 各層の責務・呼び出し関係・判断基準
-- `docs/api/**` — API の仕様
+- `docs/api/**` — 実装済み API の仕様書。**新規・変更のときは issue が正**で、
+  docs は実装と同じ PR で更新する
 
 実装前に必ず上2つを読むこと。ここにコピーを作ると、docs と食い違ったときに
 **高い遵守率のまま間違いを実行する**ことになる。
