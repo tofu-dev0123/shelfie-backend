@@ -50,6 +50,25 @@ RSpec.describe "マイページ系", type: :request do
         run_test!
       end
 
+      response "401", "リフレッシュトークンをアクセストークンとして送信" do
+        # purpose クレームが access でないため認証を通さない
+        let(:user) { create(:user) }
+        let(:Authorization) { "Bearer #{TokenIssuer.issue_refresh_token(user)}" }
+
+        schema type: :object,
+          properties: {
+            error: {
+              type: :object,
+              properties: {
+                code:    { type: :string, example: "UNAUTHORIZED" },
+                message: { type: :string }
+              }
+            }
+          }
+
+        run_test!
+      end
+
       response "401", "アクセストークンなし" do
         # Authorization ヘッダーを送らないことで 401 を確認する
         let(:Authorization) { nil }

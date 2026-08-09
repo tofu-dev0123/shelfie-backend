@@ -19,7 +19,7 @@ module V1
       token = clerk_token_from_header
       raise ClerkClient::UnauthorizedError unless token
 
-      payload = TokenIssuer.decode(token)
+      payload = TokenIssuer.decode(token, purpose: TokenIssuer::PURPOSE_ACCESS)
       raise ClerkClient::UnauthorizedError unless payload
 
       @current_user = User.find_by(id: payload["user_id"])
