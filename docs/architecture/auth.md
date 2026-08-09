@@ -187,16 +187,20 @@ Next.js                              Rails API
 ### アクセストークン
 
 ```ruby
-payload = { user_id: user.id, exp: 60.minutes.from_now.to_i }
+payload = { user_id: user.id, purpose: "access", exp: 60.minutes.from_now.to_i }
 token = JWT.encode(payload, Rails.application.secret_key_base, "HS256")
 ```
 
 ### リフレッシュトークン
 
 ```ruby
-payload = { user_id: user.id, exp: 30.days.from_now.to_i }
+payload = { user_id: user.id, purpose: "refresh", exp: 30.days.from_now.to_i }
 token = JWT.encode(payload, Rails.application.secret_key_base, "HS256")
 ```
+
+`purpose` クレームでトークン種別を区別する。`TokenIssuer.decode` は `purpose` を
+必須キーワード引数で受け取り、一致しない場合は `nil` を返す。これによりリフレッシュ
+トークンを `Authorization: Bearer` に入れてもアクセストークンとしては通らない。
 
 発行後、トークンの値を `refresh_tokens` テーブルに保存する。JWT 単体では無効化できないため、DB 管理することで強制ログアウト・デバイス別ログアウトを実現する。
 

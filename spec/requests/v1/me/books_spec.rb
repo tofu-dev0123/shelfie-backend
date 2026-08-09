@@ -34,7 +34,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { isbn: "9784873116068", content: "良い本 #Go" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_return(status: 200, body: rakuten_response.to_json, headers: { "Content-Type" => "application/json" })
         end
@@ -56,7 +56,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { isbn: "9784873116068" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           create(:book, isbn: "9784873116068")
         end
 
@@ -74,7 +74,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { isbn: "9784873116068", content: "#Go #アーキテクチャ 良かった" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           create(:book, isbn: "9784873116068")
         end
 
@@ -95,7 +95,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { isbn: "9784873116068" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+          allow(TokenIssuer).to receive(:decode).with("invalid_token", purpose: "access").and_return(nil)
         end
 
         schema type: :object,
@@ -135,7 +135,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { isbn: "9784873116068" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_return(status: 200, body: { Items: [], count: 0 }.to_json, headers: { "Content-Type" => "application/json" })
         end
@@ -160,7 +160,7 @@ RSpec.describe "本棚API", type: :request do
         let!(:existing_book) { create(:book, isbn: "9784873116068") }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           create(:user_book, user: user, book: existing_book)
         end
 
@@ -183,7 +183,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { isbn: "invalid" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -205,7 +205,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { isbn: "9784873116068" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           stub_request(:get, /openapi\.rakuten\.co\.jp\/services\/api\/BooksBook/)
             .to_raise(ExternalApiError)
         end
@@ -252,7 +252,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { content: "改めて読み直したら更に良かったです #Go" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           create(:user_book, user: user, book: book)
         end
 
@@ -274,7 +274,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { content: "" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           create(:user_book, user: user, book: book, content: "以前の本文 #Go")
         end
 
@@ -296,7 +296,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { content: "" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+          allow(TokenIssuer).to receive(:decode).with("invalid_token", purpose: "access").and_return(nil)
         end
 
         schema type: :object,
@@ -338,7 +338,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { content: "" } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -361,7 +361,7 @@ RSpec.describe "本棚API", type: :request do
         let(:body) { { content: "a" * 1001 } }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           create(:user_book, user: user, book: book)
         end
 
@@ -396,7 +396,7 @@ RSpec.describe "本棚API", type: :request do
         let(:isbn) { book.isbn }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
           create(:user_book, user: user, book: book)
         end
 
@@ -414,7 +414,7 @@ RSpec.describe "本棚API", type: :request do
         let(:isbn) { book.isbn }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -431,7 +431,7 @@ RSpec.describe "本棚API", type: :request do
         let(:isbn) { "9784000000001" }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,
@@ -448,7 +448,7 @@ RSpec.describe "本棚API", type: :request do
         let(:isbn) { book.isbn }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+          allow(TokenIssuer).to receive(:decode).with("invalid_token", purpose: "access").and_return(nil)
         end
 
         schema type: :object,
@@ -488,7 +488,7 @@ RSpec.describe "本棚API", type: :request do
         let(:isbn) { "invalid" }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => user.id })
+          allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
         end
 
         schema type: :object,

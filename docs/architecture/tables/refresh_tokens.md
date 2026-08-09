@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | `id` | bigint | NO | PK | |
 | `user_id` | bigint | NO | FK (users.id) | トークンの所有者 |
-| `token` | string(128) | NO | UNIQUE | トークンの値 |
+| `token` | string(512) | NO | UNIQUE | トークンの値 |
 | `expires_at` | datetime | NO | | 有効期限 |
 | `created_at` | datetime | NO | | 発行日時 |
 

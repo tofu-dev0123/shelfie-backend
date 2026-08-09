@@ -5,7 +5,7 @@ RSpec.describe "書籍系", type: :request do
   let(:Authorization) { "Bearer valid_token" }
 
   before do
-    allow(TokenIssuer).to receive(:decode).with("valid_token").and_return({ "user_id" => current_user.id })
+    allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => current_user.id })
   end
 
   path "/v1/books/{isbn}" do
@@ -64,7 +64,7 @@ RSpec.describe "書籍系", type: :request do
         let(:Authorization) { "Bearer invalid_token" }
 
         before do
-          allow(TokenIssuer).to receive(:decode).with("invalid_token").and_return(nil)
+          allow(TokenIssuer).to receive(:decode).with("invalid_token", purpose: "access").and_return(nil)
         end
 
         schema type: :object,
