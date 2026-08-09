@@ -25,6 +25,23 @@ RSpec.describe UserIdentity, type: :model do
       it "空のとき無効" do
         expect(build(:user_identity, provider: "")).not_to be_valid
       end
+
+      it "許可されていないプロバイダのとき無効" do
+        expect(build(:user_identity, provider: "twitter")).not_to be_valid
+      end
+
+      it "大文字でも小文字に正規化されて有効" do
+        identity = build(:user_identity, provider: "GOOGLE")
+        identity.valid?
+        expect(identity.provider).to eq("google")
+      end
+
+      it "表記ゆれでは二重連携できない" do
+        user = create(:user)
+        create(:user_identity, user: user, provider: "google")
+
+        expect(build(:user_identity, user: user, provider: "Google")).not_to be_valid
+      end
     end
 
     context "provider_uid" do
@@ -43,11 +60,25 @@ RSpec.describe UserIdentity, type: :model do
 
         expect(build(:user_identity, provider: "github", provider_uid: "same_uid")).to be_valid
       end
+
+      it "上限を超える長さのとき無効" do
+        too_long = "a" * (UserIdentityConstants::PROVIDER_UID_MAX_LENGTH + 1)
+        expect(build(:user_identity, provider_uid: too_long)).not_to be_valid
+      end
     end
 
     context "email" do
       it "空のとき無効" do
         expect(build(:user_identity, email: "")).not_to be_valid
+      end
+
+      it "形式が不正のとき無効" do
+        expect(build(:user_identity, email: "not-an-email")).not_to be_valid
+      end
+
+      it "上限を超える長さのとき無効" do
+        too_long = "#{'a' * UserIdentityConstants::EMAIL_MAX_LENGTH}@example.com"
+        expect(build(:user_identity, email: too_long)).not_to be_valid
       end
     end
 

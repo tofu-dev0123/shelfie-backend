@@ -13,10 +13,14 @@ ja:
             user:
               required: "を指定してください"
             provider:
-              blank: "は必須です"
-              taken: "はすでに連携されています"
+              blank:     "は必須です"
+              taken:     "はすでに連携されています"
+              inclusion: "は連携に対応していません"
             provider_uid:
-              blank: "は必須です"
-              taken: "はすでに使用されています"
+              blank:    "は必須です"
+              taken:    "はすでに使用されています"
+              too_long: "は%{count}文字以内で入力してください"
             email:
-              blank: "は必須です"
+              blank:    "は必須です"
+              invalid:  "の形式が正しくありません"
+              too_long: "は%{count}文字以内で入力してください"
