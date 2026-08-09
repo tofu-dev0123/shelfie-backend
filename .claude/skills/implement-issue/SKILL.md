@@ -64,7 +64,10 @@ git checkout -b "feature/issue#{number}"
 
 ### API に関わる issue の場合
 
-対応する仕様書を読む。
+**仕様の正は issue 本文。** 起票の段階で確定している前提で読む。
+`docs/api/**` は実装済み API の仕様書であり、**新規・変更のときは issue が先、docs は後**。
+
+既存 API を変更する issue なら、現行の仕様書も読んで差分を把握する。
 
 | エンドポイント | ドキュメントディレクトリ |
 |---|---|
@@ -75,10 +78,16 @@ git checkout -b "feature/issue#{number}"
 | `/v1/users/:username/books/*` または `/v1/me/books/*` | `docs/api/user_books/` |
 
 ファイル名はアクション（create / show / index / update / destroy / login / logout / refresh など）に対応する。
+`/v1` 外のエンドポイントはパスに対応するディレクトリを作る（例: `/auth/:provider` → `docs/api/oauth/`）。
 
-**仕様書が存在しない場合は実装しない。** issue にその旨をコメントして停止する。
+**該当する `docs/api/**` を同じ PR で更新する。** 新規なら `docs/api/template.md` の
+節構成（`## 概要` / `## リクエスト` / `## 処理詳細` / `## レスポンス`）に従って作成する。
+エンドポイントを増減させたときは `docs/api/endpoints.md` の一覧も更新する。
+
+「実装だけして docs は別 PR」はしない。仕様書と実装がずれた状態を作らないため。
+
+**issue 本文に仕様が無い場合は実装しない。** issue にその旨をコメントして停止する。
 仕様を自分で決めるのは担当範囲外（`.claude/rules/loop-policy.md`）。
-先に `/api-spec-review` で人間と仕様を固める必要がある。
 
 ### 既存ファイルの確認
 
