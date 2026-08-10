@@ -64,5 +64,6 @@
 
 ## 関連ドキュメント
 - [認証フロー詳細](./auth.md)
-- [外部サービス連携](./external-services.md)
+- [外部 API 連携（楽天書籍API）](../api/books/search.md)
+- [外部 API との通信層の置き場](../development/directory.md#libclients)
 - [アーキテクチャ決定記録](../decisions/README.md)
