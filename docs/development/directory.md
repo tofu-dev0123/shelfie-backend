@@ -14,6 +14,7 @@ shelfie-backend/
 ├── docs/
 ├── lib/
 │   ├── clients/
+│   ├── oauth/
 │   ├── token_issuer.rb
 │   ├── cursor.rb
 │   ├── id_cursor.rb
@@ -28,12 +29,19 @@ shelfie-backend/
 リクエストを受け取り、Serviceを1つ呼び、レスポンスを返す。ビジネスロジックは書かない。
 
 - `v1/me/` 配下はすべて `V1::Me::BaseController` を継承し、全アクションで認証必須となる
-- それ以外は認証不要
+- それ以外はアクセストークンによる認証不要（Cookie で認証するものはある。下記 `oauth_controller.rb` / `v1/auth/signups_controller.rb`）
 - 例外: `GET /v1/books/search` と `GET /v1/books/:isbn` は楽天書籍APIのリクエスト制限対策のため、`v1/` 直下ながら認証必須（`before_action :authenticate_user!` を個別に適用）
 
 ```
 app/controllers/
 ├── application_controller.rb
+├── oauth_controller.rb                # GET /auth/:provider
+│                                      # GET /auth/:provider/callback
+├── concerns/
+│   ├── error_handler.rb              # 例外 → JSON エラーレスポンス
+│   ├── refresh_token_cookie.rb       # refresh_token Cookie の set / clear
+│   ├── oauth_state_cookie.rb         # oauth_state Cookie の set / clear
+│   └── signup_token_cookie.rb        # signup_token Cookie の set / clear
 └── v1/
     ├── base_controller.rb             # v1共通処理
     ├── users_controller.rb            # GET /v1/users/:username
@@ -45,9 +53,9 @@ app/controllers/
     ├── user_books_controller.rb       # GET /v1/users/:username/books
     │                                  # GET /v1/users/:username/books/:isbn
     ├── auth/
-    │   └── sessions_controller.rb    # POST /v1/auth/login
-    │                                  # POST /v1/auth/refresh
-    │                                  # DELETE /v1/auth/logout
+    │   ├── sessions_controller.rb    # POST /v1/auth/refresh
+    │   │                             # DELETE /v1/auth/logout
+    │   └── signups_controller.rb     # GET /v1/auth/signup_context
     └── me/
         ├── base_controller.rb        # before_action :authenticate_user!
         ├── profiles_controller.rb    # GET /v1/me
@@ -56,6 +64,10 @@ app/controllers/
                                       # PUT /v1/me/books/:isbn
                                       # DELETE /v1/me/books/:isbn
 ```
+
+`oauth_controller.rb` だけは **`V1::BaseController` を継承せず、`ErrorHandler` も通さない**。
+ブラウザのトップレベル遷移で叩かれるため、JSON を返すと生の JSON がページとして表示される。
+成否によらず 302 リダイレクトで返す（詳細は `docs/api/oauth/callback.md`）。
 
 ### app/models/
 
@@ -66,6 +78,7 @@ app/controllers/
 ```
 app/models/
 ├── user.rb
+├── user_identity.rb            # 外部プロバイダとの連携（provider, provider_uid）
 ├── book.rb
 ├── user_book.rb
 ├── user_link.rb
@@ -95,12 +108,15 @@ Serviceの内部ではClient・Model・Query Object・`lib/` のユーティリ�
 
 ```
 app/services/
+├── oauth/
+│   ├── start_service.rb          # state/PKCE発行 → 認可URL組立
+│   └── callback_service.rb       # state照合 → コード交換 → ログイン/サインアップ分岐
 ├── auth/
-│   ├── login_service.rb          # Clerk検証 → JWT発行 → refresh_token保存
+│   ├── signup_context_service.rb # signup_token検証 → サインアップ画面の初期表示情報
 │   ├── refresh_service.rb        # refresh_token検証 → アクセストークン再発行
 │   └── logout_service.rb         # refresh_token削除
 ├── users/
-│   ├── create_service.rb         # Clerk検証 → User作成 → JWT発行
+│   ├── create_service.rb         # signup_token検証 → User+UserIdentity+refresh_token作成 → JWT発行
 │   ├── show_service.rb           # ユーザープロフィール取得
 │   ├── check_username_service.rb # username重複チェック
 │   ├── me_show_service.rb        # 自分のプロフィール取得
@@ -123,8 +139,27 @@ app/services/
 
 ```
 lib/clients/
-├── clerk_client.rb           # Clerk JWT検証
 └── rakuten_books_client.rb   # 楽天書籍API
+```
+
+### lib/oauth/
+
+OAuth プロバイダとの通信と、プロバイダ差の吸収を担う。
+**プロバイダごとの違いはこの層に閉じる。** ここより上（`app/services/oauth/**`・`OauthController`）に
+`google` / `github` という名前が出てきたら設計が崩れているサイン。
+
+```
+lib/oauth/
+├── providers.rb              # 許可プロバイダのレジストリ（名前 → クラス解決）
+├── providers/
+│   ├── base.rb              # 認可URL組立・コード交換の共通処理
+│   ├── google.rb            # id_token の iss/aud/exp/email_verified 検証
+│   └── github.rb            # /user と /user/emails から Identity を組み立て
+├── identity.rb               # プロバイダ差を吸収したあとの本人情報
+├── state.rb                  # state と PKCE の往復データ（署名付き Cookie）
+├── provider_error.rb
+├── email_unavailable_error.rb
+└── unsupported_provider_error.rb
 ```
 
 ### lib/（直下）
@@ -133,7 +168,7 @@ DBや外部APIに依存しない共通ユーティリティ。
 
 ```
 lib/
-├── token_issuer.rb       # JWT生成・パース
+├── token_issuer.rb       # JWT生成・パース（access / refresh / signup）
 ├── cursor.rb             # カーソルのBase64エンコード・デコード
 ├── id_cursor.rb          # id 単一キーのカーソル
 └── compound_cursor.rb    # (created_at, id) 複合キーのカーソル
