@@ -84,4 +84,46 @@ app/controllers/
 
 ## 例外
 
+### 1. `v1/` 直下で認証必須にするエンドポイント
+
 `GET /v1/books/search` と `GET /v1/books/:isbn` は楽天書籍APIのリクエスト制限対策のため、`v1/` 直下ながら `V1::BooksController` に個別で `before_action :authenticate_user!` を適用する。オプション認証（トークンがある場合のみ認証）は使用しない。
+
+### 2. `/v1` の外に置くコントローラ（`OauthController`）
+
+**追記日: 2026-08-10（issue #146）**
+
+OAuth の入口2本は `/v1` の名前空間の外に置き、`V1::BaseController` を継承しない。
+
+```
+ApplicationController
+├── OauthController                 # GET /auth/:provider
+│                                   # GET /auth/:provider/callback
+└── V1::BaseController
+```
+
+`app/controllers/oauth_controller.rb`（`v1/` 配下ではない）。
+
+**理由: これは JSON API ではない。**
+
+| | `/v1` 配下 | `OauthController` |
+|---|---|---|
+| 呼び出し元 | フロントの `fetch` | **ブラウザのトップレベル遷移**（リンククリック / IdP からの 302） |
+| 成功時の返し方 | `render json:` | **302 リダイレクト** |
+| 失敗時の返し方 | `ErrorHandler` が JSON エラー | **302 リダイレクト**（`/login?error=...`） |
+| バージョニング | `/v1` で固定 | **対外契約はリダイレクト先とエラーコード**であり、JSON スキーマを持たない |
+
+`ErrorHandler` を include しないのは、**全例外を JSON で返してしまうと
+生の JSON がページとして表示される**ため。ユーザーはブラウザで直接この URL を見ている。
+
+そのため `Oauth::CallbackService` は失敗を例外で返さず、すべてエラーコードに畳んで返す。
+Controller 側はリダイレクトだけを行う。
+
+`/v1` を付けない理由は、このエンドポイントの契約が JSON スキーマではなく
+**リダイレクト先とエラーコードの集合**であり、API バージョンと独立して変化するため。
+契約値（`/` `/signup` `/login`）は Controller の定数に置き、
+[docs/api/oauth/callback.md](../api/oauth/callback.md) に記載する。
+
+判断基準 → **ブラウザのトップレベル遷移で叩かれるなら `/v1` の外。**
+`fetch` で叩かれるなら `/v1` 配下。
+
+認証方式そのものの決定 → [009: 認証方式](./009-authentication.md)

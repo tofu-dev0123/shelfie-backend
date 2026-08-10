@@ -4,7 +4,7 @@
 
 - **spec を先に書く**（TDD：実装前に spec を書く）
 - **`described_class` を使う**（クラス名をハードコードしない）
-- **外部APIは必ずモックする**（Clerk・楽天書籍APIを実際に叩かない）
+- **外部APIは必ずモックする**（OAuth プロバイダ・楽天書籍APIを実際に叩かない）
 
 ## 構成
 
@@ -15,19 +15,28 @@ spec/
 ├── swagger_helper.rb      # rswag設定（Request specで require する）
 ├── factories/             # FactoryBot（テストデータのひな形）
 │   ├── users.rb
+│   ├── user_identities.rb
 │   ├── books.rb
 │   └── user_books.rb
 ├── models/                # Modelのバリデーションテスト
 │   └── user_spec.rb
+├── lib/                   # lib/ のユニットテスト
+│   └── oauth/
+│       ├── state_spec.rb
+│       └── providers/     # プロバイダごとの本人情報取り出し
 ├── services/              # Serviceのビジネスロジックテスト
-│   ├── users/
-│   │   └── create_service_spec.rb
-│   └── auth/
-│       └── login_service_spec.rb
+│   ├── oauth/
+│   │   └── callback_service_spec.rb
+│   └── users/
+│       └── create_service_spec.rb
 └── requests/              # APIエンドポイントテスト
+    ├── oauth_spec.rb      # /v1 外（リダイレクト系）
     └── v1/
         └── users_spec.rb
 ```
+
+`GET /auth/:provider` 系は JSON を返さないため rswag ではなく通常の request spec で書く。
+検証するのは**リダイレクト先と Set-Cookie** である。
 
 ## テスト用DB
 
@@ -105,24 +114,30 @@ end
 ```ruby
 # spec/services/users/create_service_spec.rb
 RSpec.describe Users::CreateService, type: :service do
+  let(:identity) do
+    Oauth::Identity.new(provider: "google", uid: "uid_123", email: "komu@example.com", name: "コムサン")
+  end
+  let(:signup_token) { TokenIssuer.issue_signup_token(identity) }
+
   describe ".call" do
     context "正常系" do
       it "ユーザーが作成される" do
-        allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" })
-        result = described_class.call(valid_params)
-        expect(result).to be_persisted
+        result = described_class.call(signup_token: signup_token, nickname: "コムサン", username: "komu")
+        expect(result[:access_token]).to be_present
       end
     end
 
     context "異常系" do
-      it "Clerkトークンが無効なとき例外を raise する" do
-        allow(ClerkClient).to receive(:verify).and_raise(ClerkClient::UnauthorizedError)
-        expect { described_class.call(valid_params) }.to raise_error(ClerkClient::UnauthorizedError)
+      it "signup_token が不正なとき UnauthorizedError を raise する" do
+        expect { described_class.call(signup_token: "invalid", nickname: "コムサン", username: "komu") }
+          .to raise_error(UnauthorizedError)
       end
     end
   end
 end
 ```
+
+`signup_token` は自前の JWT なので、スタブせず `TokenIssuer` で本物を発行する。
 
 ## Request spec
 
@@ -131,51 +146,66 @@ end
 ステータスコードごとに `response` ブロックを書き、`run_test!` で実際にリクエストを投げてテストする。
 
 ```ruby
-# spec/requests/v1/users_spec.rb
+# spec/requests/v1/me_spec.rb
 require "swagger_helper"
 
-RSpec.describe "Users API" do
-  path "/v1/users" do
-    post "ユーザーを作成する" do
-      tags "Users"
-      consumes "application/json"
+RSpec.describe "マイページ系", type: :request do
+  path "/v1/me" do
+    get "マイプロフィール取得API" do
+      tags "マイページ系"
       produces "application/json"
       security [ Bearer: [] ]
 
-      parameter name: :body, in: :body, required: true, schema: {
-        type: :object,
-        properties: {
-          username: { type: :string }
-        },
-        required: [ "username" ]
-      }
-
-      response "201", "作成成功" do
+      response "200", "プロフィール取得成功" do
+        let(:user) { create(:user) }
         let(:Authorization) { "Bearer valid_token" }
-        let(:body) { { username: "komu" } }
-        before { allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" }) }
+
+        before do
+          allow(TokenIssuer).to receive(:decode)
+            .with("valid_token", purpose: "access").and_return({ "user_id" => user.id })
+        end
+
         schema "$ref" => "#/components/schemas/User"
         run_test!
       end
 
-      response "422", "バリデーションエラー" do
-        let(:Authorization) { "Bearer valid_token" }
-        let(:body) { { username: "" } }
-        before { allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" }) }
-        schema "$ref" => "#/components/schemas/Error"
-        run_test!
-      end
-
-      response "401", "認証エラー" do
+      response "401", "アクセストークンが無効・期限切れ" do
         let(:Authorization) { "Bearer invalid_token" }
-        let(:body) { { username: "komu" } }
-        before { allow(ClerkClient).to receive(:verify).and_raise(ClerkClient::UnauthorizedError) }
+
+        before do
+          allow(TokenIssuer).to receive(:decode)
+            .with("invalid_token", purpose: "access").and_return(nil)
+        end
+
         schema "$ref" => "#/components/schemas/Error"
         run_test!
       end
     end
   end
 end
+```
+
+### 認証のテスト
+
+**`purpose` を必ず `with` に含める。** `TokenIssuer.decode` は `purpose` を必須キーワード
+引数で受け取るため、省略すると verifying partial double がシグネチャ違反で落ちる。
+
+| 認証方式 | spec での渡し方 |
+|---|---|
+| アクセストークン（`v1/me/` 等） | `let(:Authorization) { "Bearer valid_token" }` + `TokenIssuer.decode` をスタブ |
+| `signup_token` Cookie（`POST /v1/users` / `GET /v1/auth/signup_context`） | `let(:Cookie) { "signup_token=#{TokenIssuer.issue_signup_token(identity)}" }` |
+| `refresh_token` Cookie（`POST /v1/auth/refresh`） | `let(:Cookie) { "refresh_token=#{token}" }` |
+| `oauth_state` Cookie（`GET /auth/:provider/callback`） | `headers: { "Cookie" => "oauth_state=#{cookie}" }` |
+
+**Cookie 系は本物のトークンを発行する。** 自前の JWT なので `TokenIssuer` /
+`Oauth::State` をそのまま呼べる。スタブすると `purpose` の検証（実装の本体）を
+テストしないことになる。
+
+Rack 3 では `Set-Cookie` が複数あると配列になるため、まとめて1つの文字列にして検証する。
+
+```ruby
+set_cookie = Array(response.headers["Set-Cookie"]).join("\n")
+expect(set_cookie).to match(/refresh_token=/i)
 ```
 
 スペックが通ったら swagger.yaml を生成する。
@@ -186,14 +216,82 @@ bundle exec rails rswag:specs:swaggerize
 
 ## 外部APIのモック
 
-Clerkと楽天書籍APIは実際に叩かない。
+OAuth プロバイダと楽天書籍APIは実際に叩かない。**すべて WebMock で HTTP レベルにスタブする。**
 
 ```ruby
-# Clerk
-allow(ClerkClient).to receive(:verify).and_return({ user_id: "clerk_123" })
-allow(ClerkClient).to receive(:verify).and_raise(ClerkClient::UnauthorizedError)
-
-# 楽天書籍API（HTTPレベルでモック）
+# 楽天書籍API
 stub_request(:get, /app\.rakuten\.co\.jp\/services\/api\/BooksBook/)
   .to_return(status: 200, body: { Items: [{ Item: { isbn: "9784873116068", title: "テスト本", author: "著者名" } }] }.to_json)
+```
+
+### OAuth プロバイダ
+
+**JWKS のモックは不要。** `id_token` は token endpoint から直接受け取るため、
+署名検証を行わない（[ADR 009](../decisions/009-authentication.md)）。
+スタブするのはトークンエンドポイントと GitHub の User API だけである。
+
+```ruby
+# トークンエンドポイント（Google）
+stub_request(:post, Oauth::Providers::Google::TOKEN_ENDPOINT)
+  .to_return(status: 200, body: { id_token: id_token }.to_json,
+             headers: { "Content-Type" => "application/json" })
+
+# トークンエンドポイント（GitHub）
+stub_request(:post, Oauth::Providers::Github::TOKEN_ENDPOINT)
+  .to_return(status: 200, body: { access_token: "gho_xxx" }.to_json,
+             headers: { "Content-Type" => "application/json" })
+
+# GitHub の本人情報（/user と /user/emails の2本が必要）
+stub_request(:get, "#{Oauth::Providers::Github::API_BASE}/user")
+  .to_return(status: 200, body: { id: 12_345, name: "コムサン", login: "komusan" }.to_json,
+             headers: { "Content-Type" => "application/json" })
+
+stub_request(:get, "#{Oauth::Providers::Github::API_BASE}/user/emails")
+  .to_return(status: 200,
+             body: [ { email: "komu@example.com", primary: true, verified: true } ].to_json,
+             headers: { "Content-Type" => "application/json" })
+```
+
+Google の `id_token` は署名検証されないため、**鍵は何でもよい。**
+検証対象のクレーム（`iss` / `aud` / `exp` / `email_verified`）を入れて自分で組み立てる。
+
+```ruby
+let(:claims) do
+  { iss: "https://accounts.google.com", aud: client_id, sub: "108512345678901234567",
+    email: "user@example.com", email_verified: true, name: "コムサン",
+    exp: 10.minutes.from_now.to_i }
+end
+
+# 実装が JWT.decode(..., false) で読む前提なので、鍵は何でもよい
+def id_token(overrides = {})
+  JWT.encode(claims.merge(overrides), "signed-by-google", "HS256")
+end
+```
+
+異常系は `id_token(aud: "other-app")` のようにクレームを1つずつ壊して書く。
+
+**GitHub 特有の異常系も忘れずに書く。** 失敗時も 200 で `{ error: ... }` を返すため。
+
+```ruby
+stub_request(:post, Oauth::Providers::Github::TOKEN_ENDPOINT)
+  .to_return(status: 200, body: { error: "bad_verification_code" }.to_json,
+             headers: { "Content-Type" => "application/json" })
+```
+
+### 環境変数
+
+プロバイダ層は `ENV.fetch` を使うため、未設定だと `KeyError` になる。
+**spec 側でも明示して実行環境に依存させない。**
+
+```ruby
+around do |example|
+  original = ENV.to_h
+  ENV["GOOGLE_OAUTH_CLIENT_ID"]     = "google-client-id"
+  ENV["GOOGLE_OAUTH_CLIENT_SECRET"] = "google-client-secret"
+  ENV["API_BASE_URL"]               = "https://api.example.com"
+  ENV["FRONTEND_URL"]               = "https://app.example.com"
+  example.run
+ensure
+  ENV.replace(original)
+end
 ```

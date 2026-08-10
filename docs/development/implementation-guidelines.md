@@ -69,11 +69,14 @@ rspec / rubocop / steep / brakeman / bundler-audit のすべてが通って初�
 
 - Controller にビジネスロジックを書く
 - Controller から直接 Model を参照する（必ず Service を経由する）
+  - **例外: 認証。** `authenticate_user!` は全アクションの前段で走る横断的関心事であり、
+    1操作1クラスの Service 層とは性質が違う。`before_action` から Model を引いてよい
+    （issue #142 論点1 = 方針 B）
 - Service が Service を呼ぶ
 - Service に Model のバリデーションルールを重複して書く（`save!` / `update!` に任せる）
 - Serializer に gem を使う（Blueprinter 等）
 - 認証に Devise を使う
-- マジックナンバー・文字列リテラルの直書き（`app/constants/` を使う）
+- マジックナンバー・文字列リテラルの直書き（`app/constants/` を使う。線引き → [定数の置き場](#定数の置き場)）
 - 複数テーブルをまたぐクエリを Model のスコープに書く（Query Object に切り出す）
 - `ErrorHandler` を通さず Controller に `rescue_from` を直書きする
 - ユーザーの承認なしにファイルの新規作成・削除を行う
@@ -91,6 +94,22 @@ Rails 標準（ファイル名・クラス名・メソッド名等）は RuboCop
 | Query Object クラス | `{Resource}Query` | `BookReadersQuery` |
 | spec ファイル | ソースのパスをミラー | `spec/services/auth/login_service_spec.rb` |
 | Request spec ファイル | `spec/requests/v1/` 配下 | `spec/requests/v1/users_spec.rb` |
+
+---
+
+## 定数の置き場
+
+詳細 → [docs/development/constants.md](./constants.md)
+
+**そのクラスの仕様そのものである定数は当該クラスが持ち、業務ポリシーの定数は `app/constants/` に置く**（issue #142 論点2 = 寄せない）。
+
+| 置き場 | 性質 | 例 |
+|---|---|---|
+| そのクラス自身 | **形式・仕様そのものの定義** | `TokenIssuer::ACCESS_TOKEN_EXPIRY` / `PURPOSE_ACCESS`（そのトークンが何であるかの定義）|
+| `app/constants/` | **業務ポリシー・運用の判断** | `AuthConstants::REFRESH_ROTATION_THRESHOLD`（スライディングウィンドウの15日）|
+
+有効期限と `purpose` は「そのトークンが何であるか」なので発行するクラスが持つ。
+リフレッシュの回転閾値は「どう運用するか」の判断で、**変える理由がトークン形式とは独立している。**
 
 ---
 

@@ -80,19 +80,28 @@ end
 ### 認証イベント（INFO / WARN）
 
 ```ruby
-# app/services/auth/login_service.rb
+# app/services/oauth/callback_service.rb
 Rails.logger.info  "ログイン成功: user_id=#{user.id}"
-Rails.logger.warn  "ログイン失敗: トークンが無効"
-Rails.logger.warn  "トークン期限切れ: user_id=#{user.id}"
+Rails.logger.info  "サインアップ導線へ遷移: provider=#{identity.provider}"
+Rails.logger.warn  "コールバック失敗: state 検証に失敗 provider=#{provider}"
+Rails.logger.warn  "コールバック失敗: プロバイダ起因 #{e.class} #{e.message}"
+Rails.logger.error "コールバック失敗: 想定外の例外 #{e.class} #{e.message}"
 ```
+
+**OAuth のコールバックは `ErrorHandler` を通さない**（失敗もリダイレクトで返すため）。
+Service 側で出さないとどこにも残らないので、state 検証の失敗（CSRF 疑い）と
+想定外の例外は必ずここで記録する。
+
+**トークン・認可コード・`code_verifier` はログに出さない。**
+`provider` と `user_id` までに留める。
 
 ### 外部API呼び出し（INFO / WARN）
 
 ```ruby
-# lib/clients/clerk_client.rb
-Rails.logger.info "Clerk API 呼び出し開始"
-Rails.logger.info "Clerk API 呼び出し成功: duration=#{duration}ms"
-Rails.logger.warn "Clerk API 呼び出し失敗: #{e.message}"
+# lib/clients/rakuten_books_client.rb
+Rails.logger.info "楽天書籍API 呼び出し開始"
+Rails.logger.info "楽天書籍API 呼び出し成功: duration=#{duration}ms"
+Rails.logger.warn "楽天書籍API 呼び出し失敗: #{e.message}"
 ```
 
 ### メソッド入口（DEBUG・本番以外のみ）
