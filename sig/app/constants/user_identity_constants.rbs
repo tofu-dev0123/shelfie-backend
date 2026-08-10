@@ -1,0 +1,5 @@
+module UserIdentityConstants
+  PROVIDERS: ::Array[::String]
+  PROVIDER_UID_MAX_LENGTH: ::Integer
+  EMAIL_MAX_LENGTH: ::Integer
+end

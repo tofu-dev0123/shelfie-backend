@@ -42,12 +42,17 @@ class User < ApplicationRecord
   end
 
   def validate_links_input
-    if links_input.size > UserConstants::LINKS_MAX_COUNT
+    # 呼び出し条件（links_input が nil でないこと）は validate の if: で担保されているが、
+    # 型検査はその対応を追えないため、ローカルに束ね直して nil を除く
+    input = links_input
+    return if input.nil?
+
+    if input.size > UserConstants::LINKS_MAX_COUNT
       errors.add(:links, :too_many, count: UserConstants::LINKS_MAX_COUNT)
       return
     end
 
-    links_input.each_with_index do |url, i|
+    input.each_with_index do |url, i|
       errors.add(:links, "#{i + 1}件目のURLの形式が正しくありません") unless valid_link_url?(url)
     end
   end

@@ -1,0 +1,5 @@
+class UserIdentity < ::ApplicationRecord
+  private
+
+  def normalize_provider: () -> void
+end

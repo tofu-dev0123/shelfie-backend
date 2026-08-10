@@ -73,6 +73,9 @@ jobs:
       - name: Install RBS collection
         run: bundle exec rbs collection install
 
+      - name: Generate RBS for Active Record models
+        run: bundle exec rake rbs_rails:all
+
       - name: Run type check
         run: bundle exec steep check
 
