@@ -7,9 +7,15 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # /v1 の外に置く。ブラウザのトップレベル遷移で叩かれる（JSON API ではない）ため
+  get "auth/:provider",          to: "oauth#start",
+      constraints: { provider: Regexp.union(Oauth::Providers::NAMES) }
+  get "auth/:provider/callback", to: "oauth#callback",
+      constraints: { provider: Regexp.union(Oauth::Providers::NAMES) }
+
   namespace :v1 do
     namespace :auth do
-      post "login", to: "sessions#login"
+      get "signup_context", to: "signups#show"
       post "refresh", to: "sessions#refresh"
       delete "logout", to: "sessions#logout"
     end

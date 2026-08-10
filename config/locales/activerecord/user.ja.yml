@@ -2,7 +2,6 @@ ja:
   activerecord:
     attributes:
       user:
-        clerk_user_id: "Clerk ID"
         email:         "メールアドレス"
         username:      "ユーザー名"
         nickname:      "ニックネーム"
@@ -12,9 +11,6 @@ ja:
       models:
         user:
           attributes:
-            clerk_user_id:
-              blank: "は必須です"
-              taken: "はすでに使用されています"
             email:
               blank:   "は必須です"
               taken:   "はすでに使用されています"

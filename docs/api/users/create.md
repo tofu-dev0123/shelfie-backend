@@ -2,13 +2,15 @@
 
 ## 概要
 
-Clerk JWT を検証し、nickname・username を受け取って User レコードを作成する。作成後はそのままアクセストークン・リフレッシュトークンを発行してログイン状態にする。
+コールバックが発行した `signup_token` を検証し、nickname・username を受け取って User・UserIdentity レコードを作成する。作成後はそのままアクセストークン・リフレッシュトークンを発行してログイン状態にする。
 
 ## リクエスト
 
 ### 認証
 
-`Authorization: Bearer <Clerk JWT>`
+`Cookie: signup_token=<JWT>`（`purpose: "signup"`、10分）
+
+`provider` / `uid` / `email` は `signup_token` から取り出す。フロントから送らせない（詐称を防ぐため）。
 
 ### ボディ
 
@@ -26,13 +28,17 @@ Clerk JWT を検証し、nickname・username を受け取って User レコー�
 
 ## 処理詳細
 
-1. `Authorization` ヘッダーから Clerk JWT を検証し、`clerk_user_id` / `email` を取得
-2. `clerk_user_id` で既存 User レコードの存在チェック（重複登録防止）
+1. `signup_token` Cookie を `purpose` 込みで検証し、`provider` / `uid` / `email` / `name` を取得
+2. `(provider, provider_uid)` で `user_identities` の存在チェック（重複登録防止）
 3. `username` の重複チェック
-4. User レコードを作成
-5. アクセストークン（60分）・リフレッシュトークン（30日）を発行
-6. リフレッシュトークンを `refresh_tokens` テーブルに保存
-7. アクセストークンをレスポンスボディ、リフレッシュトークンを HttpOnly Cookie で返す
+4. 以下を**1トランザクション**で作成する
+   - User レコード
+   - UserIdentity レコード
+   - リフレッシュトークン（30日）と `refresh_tokens` レコード
+5. アクセストークン（60分）を発行
+6. アクセストークンをレスポンスボディ、リフレッシュトークンを HttpOnly Cookie で返し、`signup_token` Cookie を破棄する
+
+3つが揃って初めてログインできる状態になるため、途中で落ちたときに「連携先が無い」「セッションが張れない」ユーザーが残らないよう1トランザクションにまとめている。
 
 ## レスポンス
 
@@ -46,15 +52,16 @@ Clerk JWT を検証し、nickname・username を受け取って User レコー�
 ```
 
 ```
-Set-Cookie: refresh_token=eyJ...; HttpOnly; Secure; SameSite=Lax; Domain=shelfie.com
+Set-Cookie: refresh_token=eyJ...; Path=/; HttpOnly; Secure; SameSite=Lax; Domain=shelfie.com
+Set-Cookie: signup_token=; Path=/; Max-Age=0
 ```
 
 ### エラー
 
 | code | ステータス | 場面 |
 |---|---|---|
-| `UNAUTHORIZED` | 401 | Clerk JWT が無効・期限切れ |
-| `ACCOUNT_ALREADY_EXISTS` | 409 | `clerk_user_id` が重複（登録済みユーザー） |
+| `UNAUTHORIZED` | 401 | `signup_token` Cookie が無効・期限切れ・`purpose` 不一致 |
+| `ACCOUNT_ALREADY_EXISTS` | 409 | `(provider, provider_uid)` が既に `user_identities` に存在 |
 | `USERNAME_TAKEN` | 409 | `username` が重複 |
 | `UNPROCESSABLE_ENTITY` | 422 | nickname・username のバリデーション違反 |
 

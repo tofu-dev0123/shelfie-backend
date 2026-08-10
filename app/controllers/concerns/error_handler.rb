@@ -2,7 +2,7 @@ module ErrorHandler
   extend ActiveSupport::Concern
 
   included do
-    rescue_from ClerkClient::UnauthorizedError, InvalidRefreshTokenError, with: :render_unauthorized
+    rescue_from UnauthorizedError, InvalidRefreshTokenError, with: :render_unauthorized
     rescue_from UserNotFoundError, RecordNotFoundError, with: :render_not_found
     rescue_from AccountAlreadyExistsError, with: :render_account_already_exists
     rescue_from UsernameTakenError, with: :render_username_taken
@@ -36,7 +36,7 @@ module ErrorHandler
   end
 
   def render_account_already_exists
-    Rails.logger.warn "登録済みアカウント: clerk_user_id が重複"
+    Rails.logger.warn "登録済みアカウント: (provider, provider_uid) が重複"
     render json: {
       error: {
         code: ErrorCodes::ACCOUNT_ALREADY_EXISTS,

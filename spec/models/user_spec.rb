@@ -18,17 +18,6 @@ RSpec.describe User, type: :model do
       end
     end
 
-    context "clerk_user_id" do
-      it "空のとき無効" do
-        expect(build(:user, clerk_user_id: "")).not_to be_valid
-      end
-
-      it "重複のとき無効" do
-        create(:user, clerk_user_id: "clerk_dup")
-        expect(build(:user, clerk_user_id: "clerk_dup")).not_to be_valid
-      end
-    end
-
     context "email" do
       it "空のとき無効" do
         expect(build(:user, email: "")).not_to be_valid

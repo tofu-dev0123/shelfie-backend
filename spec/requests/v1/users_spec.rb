@@ -6,8 +6,14 @@ RSpec.describe "ユーザー系", type: :request do
       tags "ユーザー系"
       consumes "application/json"
       produces "application/json"
-      security [ Bearer: [] ]
 
+      let(:identity) do
+        Oauth::Identity.new(provider: "google", uid: "uid_123", email: "komu@example.com", name: "コムサン")
+      end
+      let(:signup_token) { TokenIssuer.issue_signup_token(identity) }
+
+      parameter name: "Cookie", in: :header, type: :string, required: true,
+        description: "`signup_token=<JWT>`（コールバックが発行した10分有効の Cookie）"
       parameter name: :body, in: :body, required: true, schema: {
         type: :object,
         properties: {
@@ -18,15 +24,8 @@ RSpec.describe "ユーザー系", type: :request do
       }
 
       response "201", "ユーザー作成成功" do
-        let(:Authorization) { "Bearer valid_clerk_token" }
+        let(:Cookie) { "signup_token=#{signup_token}" }
         let(:body) { { nickname: "コムさん", username: "komusan" } }
-
-        before do
-          allow(ClerkClient).to receive(:verify).and_return({
-            clerk_user_id: "clerk_abc123",
-            email: "komu@example.com"
-          })
-        end
 
         schema type: :object,
           properties: {
@@ -36,18 +35,19 @@ RSpec.describe "ユーザー系", type: :request do
 
         # サインアップ直後の SSR リダイレクトで Cookie を読めるよう Path=/ が付くことを保証する
         run_test! do |response|
-          expect(response.headers["Set-Cookie"]).to match(/refresh_token=/i)
-          expect(response.headers["Set-Cookie"]).to match(/path=\//i)
+          # Rack 3 では Set-Cookie が複数あると配列になるため、まとめて1つの文字列で検証する
+          set_cookie = Array(response.headers["Set-Cookie"]).join("\n")
+          expect(set_cookie).to match(/refresh_token=/i)
+          expect(set_cookie).to match(/path=\//i)
+          # 役目を終えた signup_token は破棄する
+          expect(set_cookie).to match(/signup_token=;/i)
+          expect(UserIdentity.last.provider_uid).to eq("uid_123")
         end
       end
 
-      response "401", "Clerk JWT が無効" do
-        let(:Authorization) { "Bearer invalid_token" }
+      response "401", "signup_token が無効" do
+        let(:Cookie) { "signup_token=invalid_token" }
         let(:body) { { nickname: "コムさん", username: "komusan" } }
-
-        before do
-          allow(ClerkClient).to receive(:verify).and_raise(ClerkClient::UnauthorizedError)
-        end
 
         schema type: :object,
           properties: {
@@ -63,17 +63,11 @@ RSpec.describe "ユーザー系", type: :request do
         run_test!
       end
 
-      response "409", "登録済みユーザー（clerk_user_id 重複）" do
-        let(:Authorization) { "Bearer valid_clerk_token" }
+      response "409", "登録済みユーザー（(provider, provider_uid) 重複）" do
+        let(:Cookie) { "signup_token=#{signup_token}" }
         let(:body) { { nickname: "コムさん", username: "komusan" } }
 
-        before do
-          allow(ClerkClient).to receive(:verify).and_return({
-            clerk_user_id: "clerk_abc123",
-            email: "komu@example.com"
-          })
-          create(:user, clerk_user_id: "clerk_abc123", email: "komu@example.com", username: "komusan")
-        end
+        before { create(:user_identity, provider: "google", provider_uid: "uid_123") }
 
         schema type: :object,
           properties: {
@@ -90,16 +84,10 @@ RSpec.describe "ユーザー系", type: :request do
       end
 
       response "409", "username 重複" do
-        let(:Authorization) { "Bearer valid_clerk_token" }
+        let(:Cookie) { "signup_token=#{signup_token}" }
         let(:body) { { nickname: "コムさん", username: "komusan" } }
 
-        before do
-          allow(ClerkClient).to receive(:verify).and_return({
-            clerk_user_id: "clerk_new123",
-            email: "new@example.com"
-          })
-          create(:user, username: "komusan")
-        end
+        before { create(:user, username: "komusan") }
 
         schema type: :object,
           properties: {
@@ -116,15 +104,8 @@ RSpec.describe "ユーザー系", type: :request do
       end
 
       response "422", "バリデーションエラー" do
-        let(:Authorization) { "Bearer valid_clerk_token" }
+        let(:Cookie) { "signup_token=#{signup_token}" }
         let(:body) { { nickname: "", username: "ab" } }
-
-        before do
-          allow(ClerkClient).to receive(:verify).and_return({
-            clerk_user_id: "clerk_abc123",
-            email: "komu@example.com"
-          })
-        end
 
         schema type: :object,
           properties: {

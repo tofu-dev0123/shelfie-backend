@@ -29,9 +29,6 @@ gem "lograge"
 # JWT認証
 gem "jwt"
 
-# Clerk JWT検証
-gem "clerk-sdk-ruby"
-
 group :development do
   # 型チェック
   gem "steep"

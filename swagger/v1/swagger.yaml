@@ -13,59 +13,9 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Clerk JWT トークン
+      description: アクセストークン（自前発行の JWT）
   schemas: {}
 paths:
-  "/v1/auth/login":
-    post:
-      summary: ログインAPI
-      tags:
-      - 認証系
-      security:
-      - Bearer: []
-      responses:
-        '200':
-          description: ログイン成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                    example: eyJ...
-                required:
-                - access_token
-        '401':
-          description: Clerk JWT が無効
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: UNAUTHORIZED
-                      message:
-                        type: string
-        '404':
-          description: ユーザーが存在しない
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: NOT_FOUND
-                      message:
-                        type: string
   "/v1/auth/logout":
     delete:
       summary: ログアウトAPI
@@ -104,6 +54,50 @@ paths:
                 - access_token
         '401':
           description: リフレッシュトークンが期限切れ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: UNAUTHORIZED
+                      message:
+                        type: string
+  "/v1/auth/signup_context":
+    get:
+      summary: サインアップコンテキスト取得API
+      tags:
+      - 認証系
+      parameters:
+      - name: Cookie
+        in: header
+        required: true
+        description: "`signup_token=<JWT>`（コールバックが発行した10分有効の Cookie）"
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    example: user@example.com
+                  nickname_suggestion:
+                    type: string
+                    example: コムサン
+                required:
+                - email
+                - nickname_suggestion
+        '401':
+          description: signup_token が無効・期限切れ・purpose 不一致
           content:
             application/json:
               schema:
@@ -1052,9 +1046,13 @@ paths:
       summary: ユーザー登録API
       tags:
       - ユーザー系
-      security:
-      - Bearer: []
-      parameters: []
+      parameters:
+      - name: Cookie
+        in: header
+        required: true
+        description: "`signup_token=<JWT>`（コールバックが発行した10分有効の Cookie）"
+        schema:
+          type: string
       responses:
         '201':
           description: ユーザー作成成功
@@ -1069,7 +1067,7 @@ paths:
                 required:
                 - access_token
         '401':
-          description: Clerk JWT が無効
+          description: signup_token が無効
           content:
             application/json:
               schema:
