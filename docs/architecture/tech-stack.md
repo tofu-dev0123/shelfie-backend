@@ -27,29 +27,43 @@
 
 ---
 
-## 認証：Clerk + JWT
+## 認証：OAuth 2.0（Google / GitHub）+ 自前 JWT
 
 ### 選定理由
 - ユーザーにパスワード管理を不要にし、ログイン UX を簡素化する
-- Google OAuth などの外部プロバイダー連携を Clerk に委譲し、認証実装のコストを削減する
-- フロントエンドと完全に分離された API として設計するため、フロント主導の認証フローを採用
-- バックエンド独自の JWT によりステートレスな認証を維持し、スケーラブルな設計を実現する
+- **認可コードフロー + PKCE(S256) を Rails が所有する。** `client_secret` の保管先を増やさず、
+  セッションの所有者を1つに保つ
+- IdP から受け取ったトークンは token endpoint から TLS 越しに直接受領するため、
+  **JWKS 検証という攻撃面を持たない**
+- バックエンド独自の JWT によりステートレスな認証を維持する
+
+比較検討した案（マネージド認証サービス / Auth.js + `id_token` / OmniAuth）と
+それぞれを外した理由は [ADR 009: 認証方式](../decisions/009-authentication.md) に記録している。
 
 ### 実装方針
-- フロントエンド (Next.js + Clerk SDK) が Google OAuth を処理し、取得した Clerk JWT をバックエンドに送信
-- バックエンドが Clerk JWT を検証し、独自の JWT（アクセストークン・リフレッシュトークン）を発行
-- セッション管理は行わず、JWT のみで認証を完結させる
+- 入口は `GET /auth/:provider` と `GET /auth/:provider/callback`（`/v1` の外）。
+  ブラウザのトップレベル遷移で叩かれるため、成否によらず 302 で返す
+- 認可コードの交換・本人情報の取り出しはバックエンドが行い、
+  **フロントエンドは IdP と直接やりとりしない**
+- 独自の JWT（`access_token` / `refresh_token` / `signup_token` / `oauth_state`）を発行し、
+  種別は `purpose` クレームで検証する
+- プロバイダ差は `lib/oauth/providers/` に閉じる。3つ目を足すときに触るのは
+  クラス1個とレジストリ1行だけ
 
 ### 使用 gem
 | gem | 用途 |
 |---|---|
-| `clerk-sdk-ruby` | Clerk JWT の検証 |
-| `jwt` | アクセストークン・リフレッシュトークンの発行・検証 |
+| `jwt` | 4種すべてのトークンの発行・検証 |
+
+**OAuth 移行にあたり gem の追加はゼロである。** 自前プロバイダ層で
+`config.api_only = true` を維持するため、OmniAuth は採用していない。
 
 > Devise は API mode では不要な機能が多いため採用しない
 
 ### 将来的な拡張
-- GitHub OAuth の追加を検討（Clerk の設定追加のみで対応可能）
+- 1アカウントへの複数プロバイダ連携（`intent=link`）と連携解除 UI。
+  `user_identities` は既にこれを表現できるスキーマになっており、
+  **スキーマ変更もデータ移行も不要**で足せる
 
 ---
 

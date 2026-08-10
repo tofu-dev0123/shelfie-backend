@@ -3,34 +3,35 @@
 ## ER図
 
 ```
-┌──────────────┐       ┌──────────────────┐
-│  user_links  │       │    user_books    │
-├──────────────┤       ├──────────────────┤
-│ id           │       │ id               │
-│ user_id      │  N:1  │ user_id          │
-│ url          │       │ book_id          │
-└──────┬───────┘       │ content          │
-       │               └──┬───────────────┘
-       │ N:1              │ N:1
-┌──────▼───────┐          │
-│    users     │──────────┘
-├──────────────┤
-│ id           │
-│ clerk_user_id│
-│ email        │
-│ nickname     │
-│ username     │
-│ bio          │
-└──────┬───────┘
-       │
-       └── 1:N ──►┌──────────────┐
-                  │    books     │
-                  ├──────────────┤
-                  │ id           │
-                  │ isbn         │
-                  │ title        │
-                  │ authors[]    │
-                  └──────────────┘
+┌──────────────────┐  ┌──────────────┐  ┌────────────────┐  ┌──────────────────┐
+│ user_identities  │  │  user_links  │  │ refresh_tokens │  │    user_books    │
+├──────────────────┤  ├──────────────┤  ├────────────────┤  ├──────────────────┤
+│ id               │  │ id           │  │ id             │  │ id               │
+│ user_id          │  │ user_id      │  │ user_id        │  │ user_id          │
+│ provider         │  │ url          │  │ token          │  │ book_id          │
+│ provider_uid     │  └──────┬───────┘  │ expires_at     │  │ content          │
+│ email            │         │          └────────┬───────┘  └────────┬─────────┘
+└────────┬─────────┘         │ N:1               │ N:1               │ N:1
+         │ N:1               │                   │                   │
+         └───────────────────┴─────────┬─────────┴───────────────────┘
+                                       │
+                              ┌────────▼───────┐
+                              │     users      │
+                              ├────────────────┤
+                              │ id             │
+                              │ email          │
+                              │ nickname       │
+                              │ username       │
+                              │ bio            │
+                              └────────────────┘
+
+                      ┌──────────────┐
+   user_books ── N:1 ─│    books     │
+                      ├──────────────┤
+                      │ id / isbn    │
+                      │ title        │
+                      │ authors[]    │
+                      └──────────────┘
 ```
 
 ---
@@ -39,7 +40,8 @@
 
 | テーブル | 用途 |
 |---|---|
-| [users](./tables/users.md) | ユーザー情報 |
+| [users](./tables/users.md) | ユーザーのプロフィール情報 |
+| [user_identities](./tables/user_identities.md) | 外部プロバイダ（Google / GitHub）との連携 |
 | [user_links](./tables/user_links.md) | プロフィールリンク（最大5件）|
 | [books](./tables/books.md) | 書籍データ（楽天書籍API キャッシュ）|
 | [user_books](./tables/user_books.md) | 本棚投稿 |
@@ -51,8 +53,10 @@
 
 | テーブル | 制約 | 意図 |
 |---|---|---|
-| users | UNIQUE (clerk_user_id) | Clerk アカウントの重複防止 |
+| users | UNIQUE (email) | 連絡先メールの一意性。同一メールで別プロバイダが来たときの拒否判定（P1）に使う |
 | users | UNIQUE (username) | ユーザー名の一意性 |
+| user_identities | UNIQUE (provider, provider_uid) | 同じ外部 ID が2ユーザーに紐づかない |
+| user_identities | UNIQUE (user_id, provider) | 同一プロバイダの二重連携を防ぐ |
 | books | UNIQUE (isbn) | 同一書籍の重複登録防止 |
 | user_books | UNIQUE (user_id, book_id) | 同じ本を複数回投稿不可 |
 
@@ -94,9 +98,10 @@ ORDER BY user_books.created_at DESC, user_books.id DESC;
 
 ```
 refresh_tokens
-  → user_links
-    → user_books
-      → users
+  → user_identities
+    → user_links
+      → user_books
+        → users
 ```
 
 `books` テーブルは他ユーザーも参照する共有データのため、ユーザー削除時には削除しません。
@@ -112,6 +117,7 @@ refresh_tokens
 | user_books | user_id | users | RESTRICT |
 | user_books | book_id | books | RESTRICT |
 | user_links | user_id | users | RESTRICT |
+| user_identities | user_id | users | RESTRICT |
 | refresh_tokens | user_id | users | RESTRICT |
 
 ---
