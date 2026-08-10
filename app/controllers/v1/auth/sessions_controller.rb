@@ -3,17 +3,6 @@ module V1
     class SessionsController < V1::BaseController
       include RefreshTokenCookie
 
-      def login
-        Rails.logger.debug "SessionsController#login に入りました"
-        result = ::Auth::LoginService.call(
-          clerk_token: clerk_token_from_header
-        )
-
-        set_refresh_token_cookie(result[:refresh_token], expires_at: result[:refresh_token_expires_at])
-
-        render json: { access_token: result[:access_token] }, status: :ok
-      end
-
       def refresh
         Rails.logger.debug "SessionsController#refresh に入りました"
         result = ::Auth::RefreshService.call(refresh_token: cookies[:refresh_token])

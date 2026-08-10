@@ -15,7 +15,6 @@ class User < ApplicationRecord
   # バリデーションの一意性チェック前に正規化することで、大文字小文字を区別しない一意性を保証する
   before_validation :normalize_username
 
-  validates :clerk_user_id, presence: true, uniqueness: true
   validates :email,
     presence: true,
     uniqueness: true,

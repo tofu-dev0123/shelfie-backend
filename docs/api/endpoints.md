@@ -5,11 +5,26 @@
 - **グループ名（tags）**: `〜系`
 - **オペレーション名（summary）**: `〜API`
 
+## `/v1` 外エンドポイント
+
+OAuth の認可リクエストとコールバックは `/v1` の外に置く。
+
+理由は3つある。①JSON API ではなくブラウザのトップレベル遷移で叩かれる ②レスポンスが常に 302 リダイレクトで、エラーも JSON ではなくリダイレクトで返す ③IdP に登録する `redirect_uri` は API のバージョンとは独立して安定していてほしい。
+
+そのため `V1::BaseController` を継承せず、`ErrorHandler` も通さない。Swagger にも載せない（リダイレクト系はスキーマで表現する価値が薄い）。
+
+| メソッド | パス | 説明 | 認証 | 仕様書 |
+|---|---|---|---|---|
+| GET | `/auth/:provider` | 認可リクエスト開始 | 不要 | [oauth/start.md](./oauth/start.md) |
+| GET | `/auth/:provider/callback` | 認可レスポンス受け取り | `oauth_state` Cookie | [oauth/callback.md](./oauth/callback.md) |
+
+`:provider` は `google` / `github` のみ。それ以外はルーティング制約で 404。
+
 ## 認証系
 
 | メソッド | パス | オペレーション名 | 説明 | 認証 |
 |---|---|---|---|---|
-| POST | `/v1/auth/login` | ログインAPI | Clerk JWT → 独自JWT発行 | Clerk JWT |
+| GET | `/v1/auth/signup_context` | サインアップコンテキスト取得API | サインアップ画面の初期表示情報 | `signup_token` Cookie |
 | POST | `/v1/auth/refresh` | アクセストークン再発行API | アクセストークン再発行 | Cookie |
 | DELETE | `/v1/auth/logout` | ログアウトAPI | ログアウト | アクセストークン |
 
@@ -17,7 +32,7 @@
 
 | メソッド | パス | オペレーション名 | 説明 | 認証 |
 |---|---|---|---|---|
-| POST | `/v1/users` | ユーザー登録API | ユーザー作成 | Clerk JWT |
+| POST | `/v1/users` | ユーザー登録API | ユーザー作成 | `signup_token` Cookie |
 | GET | `/v1/users/username/check?value=` | ユーザーネーム重複チェックAPI | username重複チェック | 不要 |
 | GET | `/v1/users/:username` | ユーザープロフィール取得API | ユーザープロフィール取得 | 不要 |
 

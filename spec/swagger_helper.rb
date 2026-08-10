@@ -35,7 +35,7 @@ RSpec.configure do |config|
             type: :http,
             scheme: :bearer,
             bearerFormat: "JWT",
-            description: "Clerk JWT トークン"
+            description: "アクセストークン（自前発行の JWT）"
           }
         },
         schemas: {}

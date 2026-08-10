@@ -4,7 +4,7 @@ module V1
 
     private
 
-    def clerk_token_from_header
+    def access_token_from_header
       request.headers["Authorization"]&.delete_prefix("Bearer ")
     end
 
@@ -15,16 +15,16 @@ module V1
     end
 
     # トークンが必須。トークンがない・不正・期限切れ・purpose が access でない場合は
-    # ClerkClient::UnauthorizedError を raise → 401
+    # UnauthorizedError を raise → 401
     def authenticate_user!
-      token = clerk_token_from_header
-      raise ClerkClient::UnauthorizedError unless token
+      token = access_token_from_header
+      raise UnauthorizedError unless token
 
       payload = TokenIssuer.decode(token, purpose: TokenIssuer::PURPOSE_ACCESS)
-      raise ClerkClient::UnauthorizedError unless payload
+      raise UnauthorizedError unless payload
 
       @current_user = User.find_by(id: payload["user_id"])
-      raise ClerkClient::UnauthorizedError unless @current_user
+      raise UnauthorizedError unless @current_user
     end
 
     def current_user

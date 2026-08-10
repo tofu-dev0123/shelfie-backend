@@ -1,6 +1,7 @@
 module V1
   class UsersController < BaseController
     include RefreshTokenCookie
+    include SignupTokenCookie
 
     def show
       Rails.logger.debug "UsersController#show に入りました"
@@ -17,12 +18,14 @@ module V1
     def create
       Rails.logger.debug "UsersController#create に入りました"
       result = Users::CreateService.call(
-        clerk_token: clerk_token_from_header,
+        signup_token: cookies[:signup_token],
         nickname: user_params[:nickname],
         username: user_params[:username]
       )
 
       set_refresh_token_cookie(result[:refresh_token], expires_at: result[:refresh_token_expires_at])
+      # 役目を終えたサインアップ用 Cookie は残さない
+      clear_signup_token_cookie
 
       render json: { access_token: result[:access_token] }, status: :created
     end
