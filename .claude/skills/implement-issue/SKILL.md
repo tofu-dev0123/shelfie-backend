@@ -135,7 +135,10 @@ issue の性質に応じて、必要なレイヤーだけ実施する。
 - `swagger_helper` を require する
 - `tags` はエンドポイント一覧の「グループ名」に合わせる（例: `"認証系"`, `"ユーザー系"`）
 - `security [ Bearer: [] ]` は認証が必要なエンドポイントのみ
-- Clerk JWT の検証は `allow(Clerk::Token).to receive(:decode).and_return(...)` でスタブ
+- アクセストークンの検証は `allow(TokenIssuer).to receive(:decode).with("valid_token", purpose: "access").and_return({ "user_id" => user.id })` でスタブ。
+  実例は `spec/requests/v1/me_spec.rb`
+- Cookie 経由のトークン（`signup_token` / `refresh_token`）は**スタブせず本物を発行する**
+- `purpose:` の扱いと全パターンは `docs/development/testing.md` の「認証のテスト」を見る
 - 外部API呼び出しは必ずモックする
 - `schema` には `$ref` でコンポーネントを参照する（定義がない場合はインラインで書く）
 
