@@ -53,6 +53,31 @@ jobs:
   type_check:
     runs-on: ubuntu-latest
 
+    # rbs_rails はモデルの RBS をカラム情報から生成するため DB 接続が必須
+    # （schema cache があっても klass.connection が実接続を要求する）。
+    # 型定義をスキーマから毎回生成することで、カラム追加と型のズレを原理的に防ぐ
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: shelfie_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -72,6 +97,12 @@ jobs:
 
       - name: Install RBS collection
         run: bundle exec rbs collection install
+
+      - name: Prepare database for RBS generation
+        run: bundle exec rails db:prepare
+
+      - name: Generate RBS for Active Record models
+        run: bundle exec rake rbs_rails:all
 
       - name: Run type check
         run: bundle exec steep check

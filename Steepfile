@@ -1,9 +1,16 @@
 D = Steep::Diagnostic
 
-target :app do
+target :models do
   signature "sig"
 
   check "app/models"
+
+  configure_code_diagnostics(D::Ruby.default)
+end
+
+target :rest do
+  signature "sig"
+
   check "app/controllers"
   check "lib"
 

@@ -1,0 +1,6 @@
+module Queries
+  class BookReadersQuery
+    # limit + 1 件を返す（次ページの有無を呼び出し側が判定するため）
+    def self.call: (isbn: ::String, ?after_id: ::Integer?, ?limit: ::Integer) -> ::User::ActiveRecord_Relation
+  end
+end
