@@ -135,7 +135,6 @@ jobs:
       RAKUTEN_APP_ID: dummy
       RAKUTEN_ACCESS_KEY: dummy
       JWT_SECRET_KEY: dummy_secret_for_ci
-      CLERK_SECRET_KEY: dummy_secret_for_ci
       # OAuth も同様。ENV.fetch を使うため未設定だと KeyError で落ちる
       GOOGLE_OAUTH_CLIENT_ID: dummy_google_client_id
       GOOGLE_OAUTH_CLIENT_SECRET: dummy_google_client_secret
