@@ -19,6 +19,8 @@
 | [008](./008-logging.md) | ログ設計方針 | stdout に lograge で1リクエスト1行の JSON を出し、`user_id` を含める |
 | [009](./009-authentication.md) | 認証方式 | **Rails が OAuth を所有する。** 認可コードフロー + PKCE(S256) を自前のプロバイダ層で実装し、gem は追加しない |
 | [010](./010-hosting.md) | ホスティング先 | **EC2 t4g.micro（東京）+ Neon + Cloudflare Tunnel。** インバウンドポートを1つも開けない |
+| [011](./011-deployment.md) | 本番デプロイ方式 | **Kamal を使わず GitHub Actions + SSM Run Command。** ゼロダウンタイムを捨てて SSH 鍵・メモリピーク・秘密の経路の3つを消す |
+| [012](./012-aws-account.md) | AWS アカウント構成 | **Shelfie 専用のメンバーアカウントを新設する。** 管理アカウントは SCP が効かないためワークロードを置かない |
 
 > **004 は欠番。** 埋めずに欠番のまま残す
 > （番号を詰めると既存のリンクと参照がずれる）。新規は最大番号の次を採る。
