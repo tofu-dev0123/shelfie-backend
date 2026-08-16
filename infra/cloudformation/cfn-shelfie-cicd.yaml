@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+# GitHub Actions からこのアカウントを操作するための入口。
+#
+# OIDC provider は「1アカウントに1つ」しか作れないため、
+# ワークロードと同じスタックに入れない。作り直しのたびに
+# 消えては困るし、将来ほかのスタックも使いうる。
+#
+# ★ このスタックはワークロードを参照しない。
+#   deploy ロールは Project タグでインスタンスを絞り、
+#   migrate ロールはパラメータの ARN を組み立てるため、
+#   クロススタック参照が発生しない。
+#
+# 命名規則と適用手順は infra/README.md を参照。
+Description: Shelfie CI/CD access - GitHub OIDC provider and the roles that GitHub Actions assumes
+
+Parameters:
+  GitHubRepository:
+    Type: String
+    Description: GitHub repository allowed to assume these roles.
+    Default: tofu-dev0123/shelfie-backend
+
+  ParameterPathPrefix:
+    Type: String
+    Description: SSM parameter path prefix that holds the application configuration.
+    Default: /shelfie/production
+
+  ProjectTag:
+    Type: String
+    Description: Value of the Project tag that limits which instances can receive commands.
+    Default: shelfie
+
+Resources:
+  # aud の検証は ClientIdList で行われる。
+  # AWS は主要 IdP のサムプリントを実質検証しないため、ThumbprintList は
+  # プレースホルダで運用する。
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - "1234567890123456789012345678901234567890"
+      Tags:
+        - { Key: Project, Value: shelfie }
+
+  # ---------------------------------------------------------------------------
+  # デプロイ用
+  #
+  # ★ 秘密を1つも読めない。読むのは EC2 のインスタンスロール。
+  # ★ sub を environment まで絞ることで、GitHub Environment の承認が
+  #   IAM レベルの前提条件になる（ワークフローを書き換えても迂回できない）。
+  # ---------------------------------------------------------------------------
+  GhaDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: shelfie-gha-deploy
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Federated: !Ref GitHubOidcProvider }
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              # StringLike は使わない。ワイルドカードを許すと
+              # 任意のブランチ・PR から assume できてしまう。
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepository}:environment:production-deploy
+      Policies:
+        - PolicyName: send-deploy-command
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ssm:SendCommand
+                # AWS 所有のドキュメントなのでアカウント ID の位置が空になる
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+                Condition:
+                  StringEquals:
+                    ssm:resourceTag/Project: !Ref ProjectTag
+              - Effect: Allow
+                Action:
+                  - ssm:GetCommandInvocation
+                  - ssm:ListCommandInvocations
+                Resource: "*"
+      Tags:
+        - { Key: Project, Value: shelfie }
+
+  # ---------------------------------------------------------------------------
+  # マイグレーション用
+  #
+  # Neon は公開エンドポイントなのでランナーから直接繋ぐ。EC2 を経由しない。
+  # rails db:prepare の起動に必要な秘密は DATABASE_URL と SECRET_KEY_BASE の
+  # 2つだけであることを実測で確認しているため、ARN を個別に列挙する。
+  # ---------------------------------------------------------------------------
+  GhaMigrateRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: shelfie-gha-migrate
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Federated: !Ref GitHubOidcProvider }
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepository}:environment:production-migrate
+      Policies:
+        - PolicyName: read-migration-parameters
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ParameterPathPrefix}/app/DATABASE_URL
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ParameterPathPrefix}/app/SECRET_KEY_BASE
+              - Effect: Allow
+                Action: kms:Decrypt
+                # AWS 管理キー alias/aws/ssm の ARN はテンプレート時点で分からないため、
+                # SSM 経由の復号に限定する条件で絞る。
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Tags:
+        - { Key: Project, Value: shelfie }
+
+Outputs:
+  DeployRoleArn:
+    Description: Role assumed by the deploy workflow. Register it as the AWS_DEPLOY_ROLE_ARN GitHub variable.
+    Value: !GetAtt GhaDeployRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-DeployRoleArn"
+
+  MigrateRoleArn:
+    Description: Role assumed by the migrate workflow. Register it as the AWS_MIGRATE_ROLE_ARN GitHub variable.
+    Value: !GetAtt GhaMigrateRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-MigrateRoleArn"
+
+  OidcProviderArn:
+    Description: GitHub OIDC provider ARN.
+    Value: !Ref GitHubOidcProvider
+    Export:
+      Name: !Sub "${AWS::StackName}-OidcProviderArn"
