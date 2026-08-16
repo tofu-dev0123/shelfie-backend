@@ -1,0 +1,276 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+# Shelfie のアプリ層。EC2 とその周辺だけを持つ、使い捨てのスタック。
+#
+# EC2 に永続データを置かない（DB は Neon / オブジェクトストレージ未使用）ため、
+# このスタックは単独で削除して作り直せる。土台（VPC / SG）は
+# cfn-shelfie-network.yaml が持っているので巻き込まない。
+#
+# 前提:
+#   1. cfn-shelfie-network.yaml が適用済みであること（Export を参照する）
+#   2. /shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN が SecureString として
+#      投入済みであること。user-data がこれを読むため、無いと初期化に失敗する
+#
+# 命名規則と適用手順は infra/README.md を参照。
+Description: Shelfie application tier - a single disposable EC2 instance and the non-secret configuration it reads
+
+Parameters:
+  NetworkStackName:
+    Type: String
+    Description: Name of the network stack whose exports this stack imports.
+    Default: shelfie-prod-network
+
+  AmiId:
+    Type: AWS::EC2::Image::Id
+    Description: >-
+      Ubuntu 24.04 arm64 AMI in this region. Resolve it with the SSM public parameter
+      /aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id
+      and pass the resulting id explicitly.
+
+  ParameterPathPrefix:
+    Type: String
+    Description: SSM parameter path prefix that holds the application configuration.
+    Default: /shelfie/production
+
+  ApiBaseUrl:
+    Type: String
+    Description: Public base URL of this API. Used to build OAuth redirect URIs.
+    Default: https://api.shelfie.jp
+
+  FrontendUrl:
+    Type: String
+    Description: Frontend base URL that OAuth flows redirect back to.
+    Default: https://shelfie.jp
+
+  CookieDomain:
+    Type: String
+    Description: Parent domain shared by the frontend and this API. Must start with a dot.
+    Default: .shelfie.jp
+    AllowedPattern: "^\\..+"
+    ConstraintDescription: Must start with a dot, for example .shelfie.jp
+
+  CorsAllowedOrigins:
+    Type: String
+    Description: Comma separated list of allowed CORS origins.
+    Default: https://shelfie.jp
+
+  RakutenOrigin:
+    Type: String
+    Description: Origin and Referer header sent to the Rakuten Books API.
+    Default: https://api.shelfie.jp
+
+  GoogleOauthClientId:
+    Type: String
+    Description: Google OAuth client id. Not a secret - it appears in the authorization URL.
+
+  GithubOauthClientId:
+    Type: String
+    Description: GitHub OAuth client id. Not a secret - it appears in the authorization URL.
+
+Resources:
+  # ---------------------------------------------------------------------------
+  # インスタンスロール
+  #
+  # 秘密を読むのはこのロールだけ。GitHub Actions 側のロール
+  # （cfn-shelfie-cicd.yaml）は deploy 用が何も読めず、migrate 用も2つだけ。
+  # ---------------------------------------------------------------------------
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: shelfie-ec2
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        # SSM Session Manager と Run Command に必要
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: read-shelfie-parameters
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                Resource:
+                  # GetParametersByPath はパス自体への権限も要る
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ParameterPathPrefix}
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ParameterPathPrefix}/*
+              - Effect: Allow
+                Action: kms:Decrypt
+                # AWS 管理キー alias/aws/ssm の ARN はテンプレート時点で分からないため、
+                # SSM 経由の復号に限定する条件で絞る。
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Tags:
+        - { Key: Project, Value: shelfie }
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  # ---------------------------------------------------------------------------
+  # EC2
+  # ---------------------------------------------------------------------------
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      # ADR 010: Graviton（arm64）。x86 に落とすと t3.micro で月 $2.05 高くなる。
+      InstanceType: t4g.micro
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId:
+        Fn::ImportValue: !Sub "${NetworkStackName}-PublicSubnetId"
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-SecurityGroupId"
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 20
+            # app.env が平文でディスク上に存在するため暗号化する。追加費用なし。
+            Encrypted: true
+            DeleteOnTermination: true
+      MetadataOptions:
+        # ★ 必須。IMDSv1 が有効だと、アプリに SSRF が1つあるだけで
+        #   インスタンスロールの一時クレデンシャルが盗まれ、
+        #   Parameter Store の全秘密に到達される。
+        #   本アプリは楽天 API への外部リクエストを持つ。
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+        HttpEndpoint: enabled
+      Tags:
+        - { Key: Name, Value: shelfie-prod }
+        # ★ このタグが無いと deploy ロールから SendCommand できない
+        - { Key: Project, Value: shelfie }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+
+          # ADR 010 のメモリ懸念への対処。
+          # Kamal を外して新旧2コンテナが並ばなくなったが、保険として張っておく。
+          fallocate -l 2G /swapfile
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+          # cloud-init と unattended-upgrades が apt のロックを持っていることがある
+          export DEBIAN_FRONTEND=noninteractive
+          for i in $(seq 1 30); do
+            if apt-get update -qq; then break; fi
+            sleep 10
+          done
+          apt-get install -y -qq docker.io unzip
+          systemctl enable --now docker
+
+          # AWS CLI v2（Ubuntu には入っていない / Graviton なので aarch64）
+          curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o /tmp/awscli.zip
+          unzip -q /tmp/awscli.zip -d /tmp
+          /tmp/aws/install
+          rm -rf /tmp/awscli.zip /tmp/aws
+
+          curl -fsSL -o /tmp/cloudflared.deb \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb
+          dpkg -i /tmp/cloudflared.deb || apt-get install -y -qq -f
+          rm -f /tmp/cloudflared.deb
+
+          # ★ トークンを user-data に直書きしない。
+          #   user-data は describe-instance-attribute で読めるうえ、
+          #   インスタンス内から認証なしでメタデータ経由で取得できる。
+          # ★ set +x でトレースを止める。-x のままだとトークンが
+          #   /var/log/cloud-init-output.log に平文で残る。
+          set +x
+          TUNNEL_TOKEN="$(aws ssm get-parameter \
+            --name ${ParameterPathPrefix}/host/CLOUDFLARE_TUNNEL_TOKEN \
+            --with-decryption --query Parameter.Value --output text \
+            --region ${AWS::Region})"
+          cloudflared service install "${!TUNNEL_TOKEN}"
+          unset TUNNEL_TOKEN
+          set -x
+
+          systemctl enable cloudflared
+
+          mkdir -p /opt/shelfie
+          chmod 700 /opt/shelfie
+
+          # ★ CFN は user-data の失敗を検知しない（死んでも CREATE_COMPLETE になる）。
+          #   デプロイスクリプトが冒頭でこのファイルの存在を確認することで、
+          #   初期化の失敗が「デプロイが赤くなる」形で顕在化する。
+          touch /opt/shelfie/.initialized
+
+  # ---------------------------------------------------------------------------
+  # SSM パラメータ（String のみ）
+  #
+  # SecureString は CloudFormation で作成できないため、秘密は手作業で投入する
+  # （docs/development/secrets.md）。このテンプレートは git で管理されるので、
+  # 秘密が書けない方が安全である。
+  #
+  # 値をテンプレート自身が持つため、スタックを削除しても再適用で復元される。
+  # ---------------------------------------------------------------------------
+  ApiBaseUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${ParameterPathPrefix}/app/API_BASE_URL
+      Type: String
+      Value: !Ref ApiBaseUrl
+
+  FrontendUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${ParameterPathPrefix}/app/FRONTEND_URL
+      Type: String
+      Value: !Ref FrontendUrl
+
+  # 空やホスト名だけだとホストオンリー Cookie になり、
+  # API 通信は動くまま Next.js 側の判定だけが静かに死ぬ（ADR 010 の既知の罠）。
+  CookieDomainParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${ParameterPathPrefix}/app/COOKIE_DOMAIN
+      Type: String
+      Value: !Ref CookieDomain
+
+  CorsAllowedOriginsParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${ParameterPathPrefix}/app/CORS_ALLOWED_ORIGINS
+      Type: String
+      Value: !Ref CorsAllowedOrigins
+
+  RakutenOriginParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${ParameterPathPrefix}/app/RAKUTEN_ORIGIN
+      Type: String
+      Value: !Ref RakutenOrigin
+
+  GoogleOauthClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${ParameterPathPrefix}/app/GOOGLE_OAUTH_CLIENT_ID
+      Type: String
+      Value: !Ref GoogleOauthClientId
+
+  GithubOauthClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${ParameterPathPrefix}/app/GITHUB_OAUTH_CLIENT_ID
+      Type: String
+      Value: !Ref GithubOauthClientId
+
+Outputs:
+  InstanceId:
+    Description: EC2 instance id. Register it as the EC2_INSTANCE_ID GitHub variable.
+    Value: !Ref Instance
+    Export:
+      Name: !Sub "${AWS::StackName}-InstanceId"

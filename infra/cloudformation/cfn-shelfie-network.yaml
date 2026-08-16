@@ -1,0 +1,154 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+# Shelfie のネットワーク土台。
+#
+# 変更頻度が極めて低いため、使い捨てのアプリ層（cfn-shelfie-app.yaml）と
+# スタックを分けている。EC2 を作り直したいときに VPC を巻き込まない。
+#
+# ★ ingress を1つも開けないのがこの構成の要。
+#   cloudflared が EC2 側から外向きに接続を張り、その上をリクエストが流れる。
+#   ファイアウォールが判定するのは「どちらが接続を張ったか」なので、
+#   外から接続を受け付けるポートが1つも要らない。
+#
+# 命名規則と適用手順は infra/README.md を参照。
+Description: Shelfie network foundation - VPC with a single public subnet and a security group that accepts no inbound traffic
+
+Parameters:
+  VpcCidr:
+    Type: String
+    Description: CIDR block for the VPC.
+    Default: 10.0.0.0/16
+
+  PublicSubnetCidr:
+    Type: String
+    Description: CIDR block for the single public subnet.
+    Default: 10.0.0.0/24
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - { Key: Name, Value: shelfie-vpc }
+        - { Key: Project, Value: shelfie }
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - { Key: Name, Value: shelfie-igw }
+        - { Key: Project, Value: shelfie }
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  # ALB を使わないため複数 AZ は不要。private サブネットも作らない
+  # （NAT Gateway が月 $40 前後かかり、ADR 010 の予算 $13.45 が壊れる）。
+  # ingress を1つも開けないので、public サブネットでも外から到達できない。
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref PublicSubnetCidr
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      # cloudflared / SSM / GHCR / Neon への外向き通信に IPv4 が要る。
+      # Tunnel なので固定は不要（EIP と料金は同じ）。
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: shelfie-public-subnet }
+        - { Key: Project, Value: shelfie }
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - { Key: Name, Value: shelfie-public-rt }
+        - { Key: Project, Value: shelfie }
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # ★ SecurityGroupEgress を1つでも書くと、CFN は既定の全許可を置き換える。
+  #   7844 を落とすと Tunnel が張れず全断するので、消さないこと。
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: No inbound access. Outbound limited to what the tunnel and the app need.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress: []
+      SecurityGroupEgress:
+        - Description: SSM / Parameter Store / GHCR / AWS APIs
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - Description: cloudflared over QUIC
+          IpProtocol: udp
+          FromPort: 7844
+          ToPort: 7844
+          CidrIp: 0.0.0.0/0
+        - Description: cloudflared HTTP/2 fallback
+          IpProtocol: tcp
+          FromPort: 7844
+          ToPort: 7844
+          CidrIp: 0.0.0.0/0
+        - Description: Neon PostgreSQL
+          IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+        - Description: apt and the cloudflared deb download
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - Description: DNS over UDP
+          IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+        - Description: DNS over TCP
+          IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - { Key: Name, Value: shelfie-sg }
+        - { Key: Project, Value: shelfie }
+
+Outputs:
+  VpcId:
+    Description: VPC id.
+    Value: !Ref Vpc
+    Export:
+      Name: !Sub "${AWS::StackName}-VpcId"
+
+  PublicSubnetId:
+    Description: Public subnet id. Imported by the app stack.
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetId"
+
+  SecurityGroupId:
+    Description: Security group id. Imported by the app stack.
+    Value: !Ref InstanceSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-SecurityGroupId"

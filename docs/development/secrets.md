@@ -19,7 +19,7 @@
 
 | 型 | 作り方 | 変数 |
 |---|---|---|
-| **String** | **CloudFormation が作る**（`cfn-shelfie-workload.yaml`） | `API_BASE_URL` / `FRONTEND_URL` / `COOKIE_DOMAIN` / `CORS_ALLOWED_ORIGINS` / `RAKUTEN_ORIGIN` / `GOOGLE_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_ID` |
+| **String** | **CloudFormation が作る**（`cfn-shelfie-app.yaml`） | `API_BASE_URL` / `FRONTEND_URL` / `COOKIE_DOMAIN` / `CORS_ALLOWED_ORIGINS` / `RAKUTEN_ORIGIN` / `GOOGLE_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_ID` |
 | **SecureString** | **人間が手で投入する** | `SECRET_KEY_BASE` / `DATABASE_URL` / `GOOGLE_OAUTH_CLIENT_SECRET` / `GITHUB_OAUTH_CLIENT_SECRET` / `RAKUTEN_APP_ID` / `RAKUTEN_ACCESS_KEY` / `CLOUDFLARE_TUNNEL_TOKEN` |
 
 **`SecureString` は CloudFormation で作成できない**（`AWS::SSM::Parameter` の `Type` は
@@ -90,7 +90,7 @@ put_secret /shelfie/production/app/RAKUTEN_ACCESS_KEY
 put_secret /shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN
 ```
 
-**`CLOUDFLARE_TUNNEL_TOKEN` は `cfn-shelfie-workload.yaml` を適用する前に投入する。**
+**`CLOUDFLARE_TUNNEL_TOKEN` は `cfn-shelfie-app.yaml` を適用する前に投入する。**
 EC2 の user-data がこれを読むため、無いと初期化に失敗する。
 
 ## 検証する

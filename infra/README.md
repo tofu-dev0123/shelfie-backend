@@ -16,16 +16,18 @@ cfn-shelfie-<リソース名 または 用途名>.yaml
 - `cfn-` … CloudFormation のテンプレートであることを示す
 - `shelfie-` … プロジェクト名。**AWS アカウントを分けた後も残す**
   （ARN やスタック名を単体で見たときに、どのプロジェクトのものか分かるようにするため）
-- 末尾 … **主となるリソース名**（`budget`）**または用途名**（`workload`）
+- 末尾 … **主となるリソース名**（`budget`）**または用途名**（`network`）
 
 例。
 
 | ファイル | 末尾の由来 |
 |---|---|
 | `cfn-shelfie-budget.yaml` | リソース名（AWS Budgets） |
-| `cfn-shelfie-workload.yaml` | 用途名（VPC / SG / IAM / EC2 をまとめたもの） |
+| `cfn-shelfie-cicd.yaml` | 用途名（CI/CD からこのアカウントを操作する入口） |
+| `cfn-shelfie-network.yaml` | 用途名（ネットワーク土台） |
+| `cfn-shelfie-app.yaml` | 用途名（アプリを動かす層） |
 
-**1ファイル1用途にする。** 「baseline」「common」のような曖昧な括りは避ける。
+**1ファイル1用途にする。** 「baseline」「common」「workload」のような曖昧な括りは避ける。
 入れる場所に迷うリソースが出たら、それは新しいファイルを作る合図。
 
 ### スタック名
@@ -41,7 +43,9 @@ shelfie-<環境>-<リソース名 または 用途名>
 | ファイル | スタック名 |
 |---|---|
 | `cfn-shelfie-budget.yaml` | `shelfie-prod-budget` |
-| `cfn-shelfie-workload.yaml` | `shelfie-prod-workload` |
+| `cfn-shelfie-cicd.yaml` | `shelfie-prod-cicd` |
+| `cfn-shelfie-network.yaml` | `shelfie-prod-network` |
+| `cfn-shelfie-app.yaml` | `shelfie-prod-app` |
 
 CloudFormation のスタックに `cfn-` を付けるのは冗長なので落とす。
 
@@ -49,14 +53,40 @@ CloudFormation のスタックに `cfn-` を付けるのは冗長なので落と
 
 **寿命が違うものは同じスタックに置かない。**
 
-| テンプレート | 寿命 | 内容 |
-|---|---|---|
-| [`cloudformation/cfn-shelfie-budget.yaml`](./cloudformation/cfn-shelfie-budget.yaml) | **アカウントと同じ** | 予算アラート |
-| [`cloudformation/cfn-shelfie-workload.yaml`](./cloudformation/cfn-shelfie-workload.yaml) | **ワークロードと同じ** | VPC / SG / IAM / OIDC / EC2 / SSM パラメータ |
+| テンプレート | 寿命 | 内容 | 数 |
+|---|---|---|---|
+| [`cfn-shelfie-budget.yaml`](./cloudformation/cfn-shelfie-budget.yaml) | **アカウント** | 予算アラート | 1 |
+| [`cfn-shelfie-cicd.yaml`](./cloudformation/cfn-shelfie-cicd.yaml) | **アカウント / CI・CD** | GitHub OIDC provider + Actions が引き受けるロール2つ | 3 |
+| [`cfn-shelfie-network.yaml`](./cloudformation/cfn-shelfie-network.yaml) | **土台** | VPC / Subnet / IGW / RouteTable / SG | 8 |
+| [`cfn-shelfie-app.yaml`](./cloudformation/cfn-shelfie-app.yaml) | **使い捨て** | インスタンスロール / EC2 / SSM パラメータ | 10 |
 
-ワークロードのスタックは作り直す前提で設計している。EC2 に永続データが無い
-（DB は Neon、オブジェクトストレージ未使用）ため、**スタックごと削除して再作成できる。**
-そのたびに消えては困るものを分けている。
+分割の軸は**寿命**である。
+
+- **OIDC provider は1アカウントに1つしか作れない。** ワークロードと同じスタックに入れると、
+  作り直しのたびに消えることになり、将来ほかのスタックからも使えない
+- **EC2 に永続データが無い**（DB は Neon、オブジェクトストレージ未使用）ため、
+  `app` スタックは**単独で削除して作り直せる**。土台の VPC を巻き込まない
+- **SSM の String パラメータは値をテンプレート自身が持つ**ので、
+  消えても再適用で復元される。「消えては困るもの」ではないため `app` に同居させている
+
+### 依存関係
+
+```
+shelfie-prod-budget     独立
+shelfie-prod-cicd       独立
+shelfie-prod-network    独立
+      │ Export: PublicSubnetId / SecurityGroupId
+      ▼
+shelfie-prod-app        network の Export を ImportValue で参照する
+```
+
+**適用は上から、削除は下から。** `app` が Export を参照している間、
+CloudFormation は `network` の削除を拒否する。これは依存の取り違えを防ぐ安全弁として働く。
+
+`cicd` がワークロードを参照していないのは意図的である。
+deploy ロールは `Project` タグでインスタンスを絞り、migrate ロールは
+パラメータの ARN をアカウント ID とリージョンから組み立てるため、
+**クロススタック参照が発生しない。**
 
 ## 前提
 
@@ -134,11 +164,70 @@ aws budgets describe-notifications-for-budget \
 > **`FORECASTED` は稼働直後には発火しない。** AWS が予測を出すには数週間の課金履歴が要る。
 > 最初のうちに鳴るのは `ACTUAL` の2件だけ。
 
-### cfn-shelfie-workload.yaml
+### cfn-shelfie-cicd.yaml
 
-**前提**: `/shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN` が投入済みであること。
-**user-data がこれを読むため、無いと初期化に失敗する。**
-秘密の投入手順は [docs/development/secrets.md](../docs/development/secrets.md) を参照。
+独立して適用できる。ワークロードを参照しない。
+
+```bash
+aws cloudformation deploy \
+  --template-file infra/cloudformation/cfn-shelfie-cicd.yaml \
+  --stack-name shelfie-prod-cicd \
+  --capabilities CAPABILITY_NAMED_IAM
+```
+
+> **`CAPABILITY_NAMED_IAM` が必要。** IAM ロールに名前を明示しているため
+> （信頼ポリシーやドキュメントから参照するので、生成名だと扱いづらい）。
+
+**確認する。**
+
+```bash
+aws cloudformation describe-stacks --stack-name shelfie-prod-cicd \
+  --query 'Stacks[0].Outputs[].[OutputKey,OutputValue]' --output table
+```
+
+`DeployRoleArn` / `MigrateRoleArn` は **GitHub の Variables に登録する**（#175）。
+
+信頼ポリシーが `environment` まで絞れているかを確認する。ここが緩いと
+**任意のブランチや PR から assume できてしまう。**
+
+```bash
+aws iam get-role --role-name shelfie-gha-deploy \
+  --query 'Role.AssumeRolePolicyDocument.Statement[].Condition' --output json
+```
+
+- `StringEquals` であること（**`StringLike` ではない**）
+- `sub` が `repo:<owner>/<repo>:environment:production-deploy` で終わっていること
+
+### cfn-shelfie-network.yaml
+
+独立して適用できる。
+
+```bash
+aws cloudformation deploy \
+  --template-file infra/cloudformation/cfn-shelfie-network.yaml \
+  --stack-name shelfie-prod-network
+```
+
+**確認する。この構成の要は ingress が0件であること。**
+
+```bash
+# ★ [] が返ること
+aws ec2 describe-security-groups --filters Name=tag:Project,Values=shelfie \
+  --query 'SecurityGroups[].IpPermissions' --output json
+
+# egress に UDP/TCP 7844 の両方があること（落とすと Tunnel が張れず全断する）
+aws ec2 describe-security-groups --filters Name=tag:Project,Values=shelfie \
+  --query 'SecurityGroups[].IpPermissionsEgress[].[IpProtocol,FromPort]' --output text
+```
+
+### cfn-shelfie-app.yaml
+
+**前提が2つある。**
+
+1. `shelfie-prod-network` が適用済みであること（Export を参照する）
+2. **`/shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN` が投入済みであること**
+   — user-data がこれを読むため、無いと初期化に失敗する。
+   手順は [docs/development/secrets.md](../docs/development/secrets.md) を参照
 
 AMI は**パラメータで明示的に渡す。** SSM パブリックパラメータで自動解決する書き方は、
 **スタックを更新するたびにインスタンスが置換される**（＝全断 + 再デプロイ）ため採用していない。
@@ -150,8 +239,8 @@ AMI_ID="$(aws ssm get-parameter \
   --query 'Parameter.Value' --output text)"
 
 aws cloudformation deploy \
-  --template-file infra/cloudformation/cfn-shelfie-workload.yaml \
-  --stack-name shelfie-prod-workload \
+  --template-file infra/cloudformation/cfn-shelfie-app.yaml \
+  --stack-name shelfie-prod-app \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
       AmiId="$AMI_ID" \
@@ -159,41 +248,10 @@ aws cloudformation deploy \
       GithubOauthClientId='<GitHub の client id>'
 ```
 
-> **`CAPABILITY_NAMED_IAM` が必要。** IAM ロールに名前を明示しているため
-> （信頼ポリシーやドキュメントから参照するので、生成名だと扱いづらい）。
-
-**適用前に変更内容を確認したい場合**は、変更セットを作って中身を見てから消せる。
-リソースは作られない。
-
-```bash
-aws cloudformation create-change-set \
-  --stack-name shelfie-prod-workload --change-set-name review \
-  --change-set-type CREATE \
-  --template-body file://infra/cloudformation/cfn-shelfie-workload.yaml \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --parameters ParameterKey=AmiId,ParameterValue="$AMI_ID" \
-               ParameterKey=GoogleOauthClientId,ParameterValue=x \
-               ParameterKey=GithubOauthClientId,ParameterValue=x
-
-aws cloudformation describe-change-set --stack-name shelfie-prod-workload \
-  --change-set-name review --query 'Changes[].ResourceChange.[ResourceType,LogicalResourceId]' --output table
-
-aws cloudformation delete-change-set --stack-name shelfie-prod-workload --change-set-name review
-aws cloudformation delete-stack --stack-name shelfie-prod-workload   # REVIEW_IN_PROGRESS の空スタックを消す
-```
-
 **確認する。**
 
 ```bash
-# ★ この構成の要。ingress が0件であること
-aws ec2 describe-security-groups --filters Name=tag:Project,Values=shelfie \
-  --query 'SecurityGroups[].IpPermissions' --output json
-
-# egress に UDP/TCP 7844 の両方があること（落とすと Tunnel が張れず全断する）
-aws ec2 describe-security-groups --filters Name=tag:Project,Values=shelfie \
-  --query 'SecurityGroups[].IpPermissionsEgress[].[IpProtocol,FromPort]' --output text
-
-INSTANCE_ID="$(aws cloudformation describe-stacks --stack-name shelfie-prod-workload \
+INSTANCE_ID="$(aws cloudformation describe-stacks --stack-name shelfie-prod-app \
   --query 'Stacks[0].Outputs[?OutputKey==`InstanceId`].OutputValue' --output text)"
 
 # IMDSv2 が必須になっていること
@@ -225,6 +283,25 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://api.shelfie.jp/up
 - **502** … Tunnel は生きていて、アプリのコンテナがまだ無い状態。**この時点では正常**
 - **1033** … cloudflared が Cloudflare に接続できていない。egress の 7844 とトークンを疑う
 
+### 適用前に中身を確認したいとき
+
+変更セットを作れば、リソースを作らずに作成計画を見られる。
+
+```bash
+aws cloudformation create-change-set \
+  --stack-name shelfie-prod-network --change-set-name review \
+  --change-set-type CREATE \
+  --template-body file://infra/cloudformation/cfn-shelfie-network.yaml
+
+aws cloudformation describe-change-set --stack-name shelfie-prod-network \
+  --change-set-name review \
+  --query 'Changes[].ResourceChange.[ResourceType,LogicalResourceId]' --output table
+
+aws cloudformation delete-change-set --stack-name shelfie-prod-network --change-set-name review
+# --change-set-type CREATE は REVIEW_IN_PROGRESS の空スタックを残すので消す
+aws cloudformation delete-stack --stack-name shelfie-prod-network
+```
+
 ## 変更するとき
 
 テンプレートは git で管理し、**手でコンソールから変更しない。**
@@ -237,5 +314,5 @@ aws cloudformation detect-stack-drift --stack-name shelfie-prod-budget
 ## 関連ドキュメント
 
 - [ADR 010: ホスティング先](../docs/decisions/010-hosting.md) — 構成とコストの根拠
-- ADR 011: 本番デプロイ方式 — Kamal を使わない理由（**未作成**）
-- ADR 012: AWS アカウント構成 — アカウントを分ける理由（**未作成**）
+- [ADR 011: 本番デプロイ方式](../docs/decisions/011-deployment.md) — Kamal を使わない理由
+- [ADR 012: AWS アカウント構成](../docs/decisions/012-aws-account.md) — アカウントを分ける理由
