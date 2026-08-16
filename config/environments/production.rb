@@ -53,9 +53,6 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
-
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {
   #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
@@ -84,8 +81,8 @@ Rails.application.configure do
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
-  # フロントエンド（app.shelfie.com）とバックエンド（api.shelfie.com）で
+  # フロントエンド（app.shelfie.jp）とバックエンド（api.shelfie.jp）で
   # 同一の refresh_token Cookie を共有するため、親ドメインを環境変数経由で指定する
-  # 例: COOKIE_DOMAIN=.shelfie.com
+  # 例: COOKIE_DOMAIN=.shelfie.jp
   config.cookie_domain = ENV["COOKIE_DOMAIN"]
 end

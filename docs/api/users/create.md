@@ -52,7 +52,7 @@
 ```
 
 ```
-Set-Cookie: refresh_token=eyJ...; Path=/; HttpOnly; Secure; SameSite=Lax; Domain=shelfie.com
+Set-Cookie: refresh_token=eyJ...; Path=/; HttpOnly; Secure; SameSite=Lax; Domain=shelfie.jp
 Set-Cookie: signup_token=; Path=/; Max-Age=0
 ```
 

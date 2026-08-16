@@ -4,7 +4,6 @@ development:
 test:
   adapter: test
 
+# ActionCable は未使用（app/channels が無い）。本番のためだけに redis を立てないよう async のままにする
 production:
-  adapter: redis
-  url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" } %>
-  channel_prefix: shelfie_backend_production
+  adapter: async

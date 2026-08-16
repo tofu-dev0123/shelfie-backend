@@ -34,7 +34,7 @@
 | 変数 | 理由 |
 |---|---|
 | `RAILS_MASTER_KEY` | credentials を使わない（[ADR 011](../decisions/011-deployment.md)） |
-| `JWT_SECRET_KEY` | **現状どこからも読まれていない。** 署名鍵は `secret_key_base` |
+| JWT 署名鍵の専用変数 | 署名鍵は `secret_key_base` を使う（`lib/token_issuer.rb`） |
 | `RAILS_ENV` | `Dockerfile` が設定している |
 
 ## 秘密の出所

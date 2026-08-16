@@ -4,9 +4,10 @@
 
 | 項目 | 方針 |
 |---|---|
-| 出力先 | 標準出力（stdout）→ Railwayがキャプチャ |
+| 出力先 | 標準出力（stdout）→ Docker の json-file ドライバがキャプチャ |
 | フォーマット | JSON形式（lograge） |
-| ログビューア | Railway内蔵 |
+| ログビューア | SSM Session Manager で EC2 に接続し `docker logs` |
+| 保持 | `max-size` 10m × 3 世代でローテーション |
 
 ## logrageの設定
 
