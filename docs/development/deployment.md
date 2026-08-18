@@ -104,6 +104,7 @@ expand / contract 手順のように「新コードを先に出す」場合は�
 | `未適用のマイグレーションが N 件あります` | `migrate.yml` を先に実行する |
 | `インスタンスの初期化が未完了です` | EC2 の user-data が失敗している。`/var/log/cloud-init-output.log` |
 | `manifest unknown` / `unauthorized` | そのタグが GHCR に無い（`build.yml` の完了前）か、パッケージが private のまま |
+| `exec format error` | イメージ（arm64）とランナーのアーキテクチャが合っていない。**イメージを `docker run` するジョブは `ubuntu-24.04-arm` で動かす** |
 | `db:migrate:status の実行に失敗しました` | DB に届かないかイメージが壊れている。**未適用0件と区別して落としている** |
 | SSM が `Failed` で終わる | ジョブのログに EC2 側の stdout / stderr がそのまま出る |
 | `起動確認に失敗しました` | コンテナは入れ替わったが `/up` が返らない。Tunnel かアプリの起動を疑う |
