@@ -23,6 +23,7 @@
 | [Docker 環境構築](./docker.md) | サービス構成・環境変数・セットアップ手順 |
 | [インフラ](../../infra/README.md) | CloudFormation の命名規則・テンプレートの適用手順 |
 | [本番の秘密の管理](./secrets.md) | Parameter Store のパス設計・投入手順・読める主体 |
+| [デプロイ](./deployment.md) | 3本のワークフロー・GitHub 側の設定・手順・落ちたときに見るところ |
 
 ## 環境構築からの流れ
 
