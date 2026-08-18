@@ -1,9 +1,0 @@
-development:
-  adapter: async
-
-test:
-  adapter: test
-
-# ActionCable は未使用（app/channels が無い）。本番のためだけに redis を立てないよう async のままにする
-production:
-  adapter: async
