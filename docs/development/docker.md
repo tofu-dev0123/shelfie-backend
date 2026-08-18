@@ -86,7 +86,13 @@ volumes:
 
 機密情報は `.env.local` で管理し、`.env.example` をリポジトリに含めます。
 
-全項目は `.env.example` を参照。OAuth に必要なのは以下6件である。
+全項目は `.env.example` を参照。
+
+| 変数名 | 説明 |
+|---|---|
+| `JWT_SECRET_KEY` | JWT（access / refresh / signup / oauth_state）の署名鍵。`bin/rails secret` で生成する。**開発とテストは未設定でも既定値で動くが、production は未設定だと起動に失敗する** |
+
+OAuth に必要なのは以下6件である。
 
 | 変数名 | 説明 |
 |---|---|

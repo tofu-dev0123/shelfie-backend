@@ -35,8 +35,21 @@
 
 ## 4種のトークン
 
-すべて `jwt` gem の JWT（HS256・`secret_key_base` で署名）で、
-**種別は `purpose` クレームにしか書かれていない。**
+すべて `jwt` gem の JWT（HS256）で、**種別は `purpose` クレームにしか書かれていない。**
+
+### 署名鍵
+
+**署名鍵は環境変数 `JWT_SECRET_KEY`**（`TokenIssuer::SECRET_KEY`）。
+`Oauth::State` もこの定数を参照するため、鍵の定義は1箇所しかない。
+
+Rails の `secret_key_base` とは**分けている**。フレームワークが署名 Cookie・`signed_id` 等に
+使う汎用の鍵と共有すると、認証トークンだけをローテーションできず、漏洩時の影響範囲も広がるため。
+
+未設定（および空文字）のときは production の**起動時**に `KeyError` で落ちる
+（`secret_key_base` へ静かにフォールバックしない）。開発とテストのみ既定値を持つ。
+
+鍵を `app/constants/` ではなく `TokenIssuer` に置いているのは、`lib/` から `app/` への
+依存を作らないため。有効期限や `purpose` と同じく、**発行するクラスが持つ**。
 
 | トークン | `purpose` | 有効期限 | 置き場 | 中身 |
 |---|---|---|---|---|

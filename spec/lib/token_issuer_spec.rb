@@ -8,6 +8,26 @@ RSpec.describe TokenIssuer do
     Oauth::Identity.new(provider: "google", uid: "uid_123", email: "komu@example.com", name: "コムサン")
   end
 
+  describe "SECRET_KEY" do
+    it "secret_key_base とは別の鍵で署名する" do
+      expect(described_class::SECRET_KEY).not_to eq(Rails.application.secret_key_base)
+    end
+
+    it "secret_key_base で署名したトークンは検証に通らない" do
+      payload = { user_id: user.id, purpose: "access", exp: 60.minutes.from_now.to_i }
+      forged  = JWT.encode(payload, Rails.application.secret_key_base, "HS256")
+
+      expect(described_class.decode(forged, purpose: "access")).to be_nil
+    end
+
+    it "Oauth::State と同じ鍵を共有する" do
+      state_cookie, = Oauth::State.issue(provider: "google")
+
+      expect(JWT.decode(state_cookie, described_class::SECRET_KEY, true, algorithms: [ "HS256" ]).first["purpose"])
+        .to eq(Oauth::State::PURPOSE)
+    end
+  end
+
   describe ".issue_signup_token と .decode_signup_token" do
     it "provider / uid / email / name を復元できる" do
       payload = described_class.decode_signup_token(described_class.issue_signup_token(identity))

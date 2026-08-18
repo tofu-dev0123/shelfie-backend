@@ -47,7 +47,7 @@ RSpec.describe Oauth::State do
           purpose: "signup", provider: "google", state: "s", code_verifier: "v",
           exp: 10.minutes.from_now.to_i
         }
-        cookie = JWT.encode(payload, Rails.application.secret_key_base, "HS256")
+        cookie = JWT.encode(payload, TokenIssuer::SECRET_KEY, "HS256")
 
         expect(described_class.decode(cookie)).to be_nil
       end

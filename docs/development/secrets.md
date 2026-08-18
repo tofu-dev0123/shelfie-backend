@@ -20,7 +20,7 @@
 | 型 | 作り方 | 変数 |
 |---|---|---|
 | **String** | **CloudFormation が作る**（`cfn-shelfie-app.yaml`） | `API_BASE_URL` / `FRONTEND_URL` / `COOKIE_DOMAIN` / `CORS_ALLOWED_ORIGINS` / `RAKUTEN_ORIGIN` / `GOOGLE_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_ID` |
-| **SecureString** | **人間が手で投入する** | `SECRET_KEY_BASE` / `DATABASE_URL` / `GOOGLE_OAUTH_CLIENT_SECRET` / `GITHUB_OAUTH_CLIENT_SECRET` / `RAKUTEN_APP_ID` / `RAKUTEN_ACCESS_KEY` / `CLOUDFLARE_TUNNEL_TOKEN` |
+| **SecureString** | **人間が手で投入する** | `SECRET_KEY_BASE` / `JWT_SECRET_KEY` / `DATABASE_URL` / `GOOGLE_OAUTH_CLIENT_SECRET` / `GITHUB_OAUTH_CLIENT_SECRET` / `RAKUTEN_APP_ID` / `RAKUTEN_ACCESS_KEY` / `CLOUDFLARE_TUNNEL_TOKEN` |
 
 **`SecureString` は CloudFormation で作成できない**（`AWS::SSM::Parameter` の `Type` は
 `String` / `StringList` のみ）。この制約を分離線として使っている。
@@ -34,7 +34,6 @@
 | 変数 | 理由 |
 |---|---|
 | `RAILS_MASTER_KEY` | credentials を使わない（[ADR 011](../decisions/011-deployment.md)） |
-| JWT 署名鍵の専用変数 | 署名鍵は `secret_key_base` を使う（`lib/token_issuer.rb`） |
 | `RAILS_ENV` | `Dockerfile` が設定している |
 
 ## 秘密の出所
@@ -42,15 +41,20 @@
 | 変数 | 取得元 |
 |---|---|
 | `SECRET_KEY_BASE` | `bin/rails secret` で生成する |
+| `JWT_SECRET_KEY` | `bin/rails secret` で生成する（`SECRET_KEY_BASE` とは**別の値**にする） |
 | `DATABASE_URL` | Neon のダッシュボード（**pooled** の接続文字列） |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google Cloud Console |
 | `GITHUB_OAUTH_CLIENT_SECRET` | GitHub の Developer settings |
 | `RAKUTEN_APP_ID` / `RAKUTEN_ACCESS_KEY` | 楽天ウェブサービスのアプリ管理 |
 | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Zero Trust の Tunnel 作成画面 |
 
-> `SECRET_KEY_BASE` は **Shelfie の認証システム全体の唯一の署名鍵**である
-> （access / refresh / signup / oauth_state の4種すべて。`lib/token_issuer.rb` / `lib/oauth/state.rb`）。
+> `JWT_SECRET_KEY` は **4種のトークン（access / refresh / signup / oauth_state）の署名鍵**である
+> （`lib/token_issuer.rb` / `lib/oauth/state.rb`）。
 > **漏れると任意の `user_id` のアクセストークンを偽造できる。**
+> 未設定のまま本番を起動すると `KeyError` で落ちる（静かに `SECRET_KEY_BASE` へ落ちない）。
+>
+> `SECRET_KEY_BASE` は Rails フレームワーク側（署名 Cookie・`signed_id` 等）の鍵で、
+> **認証トークンの署名には使わない**（issue #168 で分離した）。
 
 ## 投入する
 
@@ -78,10 +82,11 @@ put_secret() {
 
 > `--key-id` を省略すると AWS 管理キー `alias/aws/ssm` が使われる。**追加費用はかからない。**
 
-### 7個を投入する
+### 8個を投入する
 
 ```bash
 put_secret /shelfie/production/app/SECRET_KEY_BASE
+put_secret /shelfie/production/app/JWT_SECRET_KEY
 put_secret /shelfie/production/app/DATABASE_URL
 put_secret /shelfie/production/app/GOOGLE_OAUTH_CLIENT_SECRET
 put_secret /shelfie/production/app/GITHUB_OAUTH_CLIENT_SECRET
@@ -102,7 +107,7 @@ aws ssm get-parameters-by-path --path /shelfie/production/ --recursive \
   --query 'Parameters[].[Name,Type]' --output table
 ```
 
-- `SecureString` が **7個**（`app/` に6個・`host/` に1個）
+- `SecureString` が **8個**（`app/` に7個・`host/` に1個）
 - `String` が **7個**（すべて `app/`。CloudFormation 由来）
 
 名前の綴りを必ず確認する。デプロイスクリプトが `grep "^KEY="` で存在を検証するため、
