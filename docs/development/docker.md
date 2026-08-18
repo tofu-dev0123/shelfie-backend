@@ -120,7 +120,7 @@ volumes:
 ```bash
 # .env.local を作成
 cp .env.example .env.local
-# 値を設定（DB_PASSWORD, JWT_SECRET_KEY, OAuth の4件など）
+# 値を設定（DB_PASSWORD, OAuth の4件など）
 
 # コンテナを起動
 docker compose up
