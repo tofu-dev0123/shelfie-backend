@@ -1,0 +1,73 @@
+name: Migrate (production)
+
+# スキーマ変更は不可逆なので、承認ゲートはここにだけ置く（ADR 011）。
+# Environment 名は IAM の信頼ポリシーの sub 条件に使われているため、
+# この YAML を書き換えても承認を迂回できない（AssumeRole が通らない）。
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "適用に使うイメージのタグ（例: sha-1a2b3c4）。省略時は main の HEAD"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production-migrate
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Resolve image tag
+        id: image
+        # 入力は env 経由で受ける。run: に直接展開するとスクリプトに注入できる。
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          tag="${IMAGE_TAG}"
+          if [ -z "${tag}" ]; then
+            tag="sha-$(git rev-parse --short=7 HEAD)"
+          fi
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "image tag: ${tag}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_MIGRATE_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Fetch parameters
+        # rails db:prepare の起動に要るのはこの2つだけ。
+        # JWT_SECRET_KEY は不要（rake タスクは rake_eager_load が既定 false のため
+        # TokenIssuer::SECRET_KEY が評価されない）。IAM 側もこの2つしか許可していない。
+        run: |
+          set -euo pipefail
+          for key in DATABASE_URL SECRET_KEY_BASE; do
+            value=$(aws ssm get-parameter \
+              --name "/shelfie/production/app/${key}" --with-decryption \
+              --query Parameter.Value --output text)
+            echo "::add-mask::${value}"
+            echo "${key}=${value}" >> "$GITHUB_ENV"
+          done
+
+      - name: Run db:prepare
+        # db:migrate ではなく db:prepare。Neon は空から始まるため初回は schema.rb の
+        # ロードが要る。db:prepare なら初回も2回目以降も同じコマンドで扱える。
+        #
+        # EC2 は経由しない。Neon は公開エンドポイントなのでランナーから直接繋がる。
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e RAILS_ENV=production -e DATABASE_URL -e SECRET_KEY_BASE \
+            "ghcr.io/${GITHUB_REPOSITORY}:${{ steps.image.outputs.tag }}" \
+            ./bin/rails db:prepare
