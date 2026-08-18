@@ -17,7 +17,10 @@ permissions:
 
 jobs:
   migrate:
-    runs-on: ubuntu-latest
+    # build.yml が arm64（EC2 が Graviton のため）でビルドしているので、
+    # そのイメージを docker run するこのジョブも arm64 で動かす。
+    # amd64 ランナーだと exec format error になる。
+    runs-on: ubuntu-24.04-arm
     environment: production-migrate
 
     steps:
