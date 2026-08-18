@@ -1,0 +1,22 @@
+ja:
+  messages:
+    errors:
+      unauthorized: "認証に失敗しました"
+      not_found: "ユーザーが見つかりません"
+      account_already_exists: "すでに登録済みのアカウントです"
+      username_taken: "このユーザー名はすでに使用されています"
+      unprocessable_entity: "入力内容に誤りがあります"
+      bad_request: "必須パラメータが不足しています"
+      validation_error: "ユーザー名の形式が正しくありません"
+      internal_server_error: "サーバーエラーが発生しました"
+      external_api_error: "外部サービスとの通信に失敗しました。しばらく時間をおいて再度お試しください"
+      conflict: "すでに登録済みの書籍です"
+    me:
+      books:
+        created: "登録が完了しました"
+        updated: "更新が完了しました"
+        destroyed: "削除が完了しました"
+    auth:
+      logout:
+        logged_out: "ログアウトしました。"
+        already_logged_out: "すでにログアウト済みです。"

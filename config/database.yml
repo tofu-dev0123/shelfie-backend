@@ -1,0 +1,34 @@
+# PostgreSQL. Versions 9.3 and up are supported.
+#
+# Install the pg driver:
+#   gem install pg
+# On macOS with Homebrew:
+#   gem install pg -- --with-pg-config=/opt/homebrew/bin/pg_config
+# On Windows:
+#   gem install pg
+#       Choose the win32 build.
+#       Install PostgreSQL and put its /bin directory on your path.
+#
+# Configure Using Gemfile
+# gem "pg"
+#
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("DB_HOST") { "localhost" } %>
+  port: <%= ENV.fetch("DB_PORT") { 5432 } %>
+  username: <%= ENV["DB_USER"] %>
+  password: <%= ENV["DB_PASSWORD"] %>
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME") { "shelfie_development" } %>
+
+test:
+  <<: *default
+  database: shelfie_test
+
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>

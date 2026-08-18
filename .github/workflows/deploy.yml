@@ -1,0 +1,165 @@
+name: Deploy (production)
+
+# push: main での自動デプロイはしない。マイグレーションが手動なので、
+# 自動にすると「マージ → 自動デプロイ → 未マイグレーションの DB に新コードが当たる」が起きる。
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "配置するイメージのタグ（例: sha-1a2b3c4）。省略時は main の HEAD"
+        required: false
+        type: string
+      skip_migration_check:
+        description: "未適用マイグレーションの検知をスキップする（expand / contract 手順のとき）"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production-deploy
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Resolve image tag
+        id: image
+        # 入力は env 経由で受ける。run: に直接展開するとスクリプトに注入できる。
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          tag="${IMAGE_TAG}"
+          if [ -z "${tag}" ]; then
+            tag="sha-$(git rev-parse --short=7 HEAD)"
+          fi
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "image tag: ${tag}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Send deploy command
+        id: send
+        # 秘密はこのワークフローを1つも通らない。Parameter Store から読むのは
+        # EC2 自身（インスタンスロール）で、ランナーは SSM に指示を出すだけ。
+        env:
+          TAG: ${{ steps.image.outputs.tag }}
+          SKIP_MIGRATION_CHECK: ${{ inputs.skip_migration_check }}
+          INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # 本体は展開させず、上書きされたくない値だけを先頭で束縛する。
+          # shebang は必須。AWS-RunShellScript は /bin/sh で実行され、Ubuntu では dash なので
+          # pipefail も %q のクォート形式も解釈できない（1行目で全体が落ちる）。
+          script=$(printf '#!/bin/bash\nTAG=%q\nSKIP_MIGRATION_CHECK=%q\nIMAGE=%q\n%s' \
+            "$TAG" "$SKIP_MIGRATION_CHECK" "$IMAGE" "$(cat <<'REMOTE'
+          set -euo pipefail
+
+          # 0. 初期化の確認（user-data の失敗は CloudFormation が検知しない）
+          [ -f /opt/shelfie/.initialized ] || { echo "インスタンスの初期化が未完了です"; exit 1; }
+
+          # 1. 秘密を Parameter Store から取得して app.env を生成
+          aws ssm get-parameters-by-path \
+            --path /shelfie/production/app/ --recursive --with-decryption \
+            --query 'Parameters[].[Name,Value]' --output text \
+          | awk -F'\t' '{ sub(/.*\//, "", $1); print $1 "=" $2 }' > /opt/shelfie/app.env.new
+          install -m 600 -o root -g root /opt/shelfie/app.env.new /opt/shelfie/app.env
+          rm -f /opt/shelfie/app.env.new
+
+          # 2. 必須キーの検証。投入漏れを「起動してから 500」ではなく
+          #    「デプロイが赤くなる」に変える。
+          for k in DATABASE_URL SECRET_KEY_BASE JWT_SECRET_KEY \
+                   GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_CLIENT_SECRET \
+                   GITHUB_OAUTH_CLIENT_ID GITHUB_OAUTH_CLIENT_SECRET API_BASE_URL FRONTEND_URL \
+                   COOKIE_DOMAIN CORS_ALLOWED_ORIGINS RAKUTEN_APP_ID RAKUTEN_ACCESS_KEY RAKUTEN_ORIGIN; do
+            grep -q "^${k}=" /opt/shelfie/app.env || { echo "missing parameter: $k"; exit 1; }
+          done
+
+          # 3. 未適用マイグレーションの検知（適用はしない。適用は migrate.yml の担当）
+          docker pull "${IMAGE}:${TAG}"
+          if [ "${SKIP_MIGRATION_CHECK}" != "true" ]; then
+            # db:migrate:status 自体の失敗（DB に届かない・イメージが壊れている）を
+            # 「未適用0件」に潰さない。ここが唯一の防波堤なので、黙って通すと差し替えてしまう。
+            if ! STATUS_OUTPUT=$(docker run --rm --env-file /opt/shelfie/app.env \
+              "${IMAGE}:${TAG}" ./bin/rails db:migrate:status 2>&1); then
+              echo "db:migrate:status の実行に失敗しました"; echo "${STATUS_OUTPUT}"; exit 1
+            fi
+            PENDING=$(printf '%s\n' "${STATUS_OUTPUT}" | grep -c '^ *down' || true)
+            [ "$PENDING" -eq 0 ] || { echo "未適用のマイグレーションが ${PENDING} 件あります"; exit 1; }
+          fi
+
+          # 4. 差し替え
+          #    -p 127.0.0.1:8080:8080 は、SG を誤って開けたときに素通しにしないための二重の防御。
+          docker rm -f shelfie 2>/dev/null || true
+          docker run -d --name shelfie \
+            --restart unless-stopped \
+            --env-file /opt/shelfie/app.env \
+            --log-opt max-size=10m --log-opt max-file=3 \
+            -p 127.0.0.1:8080:8080 \
+            "${IMAGE}:${TAG}"
+          REMOTE
+          )")
+
+          command_id=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --parameters "$(jq -n --arg s "$script" '{ commands: [ $s ] }')" \
+            --query Command.CommandId --output text)
+          echo "command_id=${command_id}" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the command to finish
+        env:
+          COMMAND_ID: ${{ steps.send.outputs.command_id }}
+          INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          # aws ssm wait は 5秒 × 20回 = 100秒で諦める。実処理は docker pull と
+          # Rails のフルブート（Neon のスケールゼロ復帰を含む）を挟むので足りない。
+          # 自前でポーリングし、上限は10分にする。
+          status=InProgress
+          for _ in $(seq 1 120); do
+            # send-command の直後は InvocationDoesNotExist が返りうるので Pending 扱いにする
+            status=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            case "$status" in
+              Pending|InProgress|Delayed) sleep 5 ;;
+              *) break ;;
+            esac
+          done
+
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text
+
+          if [ "$status" != "Success" ]; then
+            aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+              --query StandardErrorContent --output text >&2
+            echo "SSM の実行が ${status} で終了しました" >&2
+            exit 1
+          fi
+
+      - name: Verify
+        # EC2 の中から localhost:8080 を叩かない。Tunnel が死んでいても成功してしまう。
+        # 公開 URL を叩くことで Cloudflare エッジ → Tunnel → cloudflared → Rails の経路全体を確認する。
+        run: |
+          for _ in $(seq 1 10); do
+            curl -fsS https://api.shelfie.jp/up > /dev/null && { echo OK; exit 0; }
+            sleep 5
+          done
+          echo "起動確認に失敗しました"; exit 1

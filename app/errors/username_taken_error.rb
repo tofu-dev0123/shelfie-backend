@@ -1,0 +1,1 @@
+class UsernameTakenError < StandardError; end

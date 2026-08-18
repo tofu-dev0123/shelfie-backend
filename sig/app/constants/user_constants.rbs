@@ -1,0 +1,8 @@
+module UserConstants
+  USERNAME_REGEX: ::Regexp
+  USERNAME_MIN_LENGTH: ::Integer
+  USERNAME_MAX_LENGTH: ::Integer
+  NICKNAME_MAX_LENGTH: ::Integer
+  BIO_MAX_LENGTH: ::Integer
+  LINKS_MAX_COUNT: ::Integer
+end

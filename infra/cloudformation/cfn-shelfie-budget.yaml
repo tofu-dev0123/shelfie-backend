@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+# Shelfie の予算アラート。
+#
+# アカウントと同じ寿命を持つため、使い捨てのアプリ層（cfn-shelfie-app.yaml）とは
+# スタックを分けている。あちらは EC2 に永続データが無く作り直す前提なので、
+# 消えては困るものを混ぜない。
+#
+# 命名規則と適用手順は infra/README.md を参照。
+Description: Shelfie budget guardrail - lives as long as the AWS account, outliving the application stack
+
+Parameters:
+  NotificationEmail:
+    Type: String
+    Description: Email address that receives budget alerts. Passed at deploy time because this repository is public.
+    AllowedPattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+    ConstraintDescription: Must be a valid email address.
+
+  MonthlyBudgetUsd:
+    Type: Number
+    Description: Monthly budget in USD. ADR 010 estimates 13.45 USD per month, so 20 leaves roughly 50 percent headroom.
+    Default: 20
+    MinValue: 1
+
+Resources:
+  # 月額コストの予算。閾値を超えるとメールが飛ぶ。
+  #
+  # ADR 010 は月 $13.45（EC2 $7.88 + EBS $1.92 + IPv4 $3.65 + Neon $0）を想定している。
+  # これを超えるとしたら、インスタンスタイプの誤り・リソースの消し忘れ・
+  # Neon の課金開始のいずれかであり、いずれも早く気づきたい。
+  MonthlyCostBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: shelfie-monthly-cost
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: !Ref MonthlyBudgetUsd
+          Unit: USD
+        CostTypes:
+          # クレジットと返金を差し引かない = 実際の使用量ベースで見る。
+          # 組織のメンバーアカウントにクレジットは付与されないが、
+          # 将来付いたときに「クレジットで相殺されて気づかない」を避ける。
+          IncludeCredit: false
+          IncludeRefund: false
+          IncludeTax: true
+          IncludeSubscription: true
+
+      NotificationsWithSubscribers:
+        # 実績が予算の 80% を超えたとき。月の途中で気づくための一次警告。
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref NotificationEmail
+
+        # 実績が予算を超えたとき。
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref NotificationEmail
+
+        # 予測が予算を超えたとき。実績より早く鳴るのが利点。
+        # ただし AWS が予測を出すには数週間の課金履歴が要るため、
+        # 稼働直後は発火しない。
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref NotificationEmail
+
+Outputs:
+  BudgetName:
+    Description: Name of the monthly cost budget created by this stack
+    Value: shelfie-monthly-cost
+    Export:
+      Name: !Sub "${AWS::StackName}-BudgetName"

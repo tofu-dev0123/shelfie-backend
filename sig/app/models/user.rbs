@@ -1,0 +1,17 @@
+class User < ::ApplicationRecord
+  # プロフィール更新時にリンクの配列を受け取るための仮想属性。
+  # 永続化はせず、validate_links_input の検証を通ってから user_links へ変換される
+  attr_accessor links_input: ::Array[::String]?
+
+  def links: () -> ::Array[::String]
+
+  private
+
+  def normalize_username: () -> void
+
+  def no_consecutive_underscores: () -> void
+
+  def validate_links_input: () -> void
+
+  def valid_link_url?: (::String) -> bool
+end

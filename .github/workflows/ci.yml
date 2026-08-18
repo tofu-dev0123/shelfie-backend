@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  scan_ruby:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Scan for common Rails security vulnerabilities using static analysis
+        run: bin/brakeman --no-pager
+      
+      - name: Scan for known security vulnerabilities in gems used
+        run: bin/bundler-audit
+      
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      RUBOCOP_CACHE_ROOT: tmp/rubocop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Prepare RuboCop cache
+        uses: actions/cache@v5
+        env:
+          DEPENDENCIES_HASH: ${{ hashFiles('.ruby-version', '**/.rubocop.yml', '**/.rubocop_todo.yml', 'Gemfile.lock') }}
+        with:
+          path: ${{ env.RUBOCOP_CACHE_ROOT }}
+          key: rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-${{ github.ref_name == github.event.repository.default_branch && github.run_id || 'default' }}
+          restore-keys: |
+            rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
+
+      - name: Lint code for consistent style
+        run: bin/rubocop -f github
+
+  type_check:
+    runs-on: ubuntu-latest
+
+    # rbs_rails はモデルの RBS をカラム情報から生成するため DB 接続が必須
+    # （schema cache があっても klass.connection が実接続を要求する）。
+    # 型定義をスキーマから毎回生成することで、カラム追加と型のズレを原理的に防ぐ
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: shelfie_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Cache gem RBS collection
+        uses: actions/cache@v5
+        with:
+          path: .gem_rbs_collection
+          key: rbs-collection-${{ runner.os }}-${{ hashFiles('rbs_collection.yaml', 'Gemfile.lock') }}
+          restore-keys: |
+            rbs-collection-${{ runner.os }}-
+
+      - name: Install RBS collection
+        run: bundle exec rbs collection install
+
+      - name: Prepare database for RBS generation
+        run: bundle exec rails db:prepare
+
+      - name: Generate RBS for Active Record models
+        run: bundle exec rake rbs_rails:all
+
+      - name: Run type check
+        run: bundle exec steep check
+
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: shelfie_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      # 外部APIはWebMockでスタブされるためダミー値で問題ない
+      RAKUTEN_APP_ID: dummy
+      RAKUTEN_ACCESS_KEY: dummy
+      # JWT の署名鍵。test では既定値でも動くが、CI は本番と同じく明示して渡す
+      JWT_SECRET_KEY: dummy_jwt_secret_key
+      # OAuth も同様。ENV.fetch を使うため未設定だと KeyError で落ちる
+      GOOGLE_OAUTH_CLIENT_ID: dummy_google_client_id
+      GOOGLE_OAUTH_CLIENT_SECRET: dummy_google_client_secret
+      GITHUB_OAUTH_CLIENT_ID: dummy_github_client_id
+      GITHUB_OAUTH_CLIENT_SECRET: dummy_github_client_secret
+      API_BASE_URL: https://api.example.com
+      FRONTEND_URL: https://example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Prepare test database
+        run: bundle exec rails db:prepare
+
+      - name: Run RSpec
+        run: bundle exec rspec

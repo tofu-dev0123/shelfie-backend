@@ -1,0 +1,149 @@
+name: エージェントタスク
+description: ループが自走で実装する issue を起票する（完了条件を機械判定できるものに限る）
+title: "「」"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        このテンプレートは、ループが無人で実装する issue 用です。
+
+        着手前に `/loop-triage` が契約のプレフライト検査を行い、
+        **必須ブロックのいずれかが不十分だと着手せず差し戻します。**
+
+        起票を補助するスキルがあります → `/agent-issue`
+
+        自律度ラベル（`agent:pr` など）の付与は**人間の専権事項**です。
+        起票後に手動で付けてください。ラベルが無い issue には着手しません。
+
+  - type: dropdown
+    id: change_type
+    attributes:
+      label: 変更の種類
+      description: 実装するレイヤーの判断に使います。
+      options:
+        - 新機能（API 追加）
+        - 既存改修（振る舞いの変更）
+        - 削除（機能・コードの除去）
+        - リファクタ（振る舞いを変えない）
+        - 設定・基盤（CI / ドキュメント / ツール）
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景
+      description: なぜこの変更が必要か。判断に迷ったとき、ループはここを根拠にします。
+      placeholder: |
+        現状 XXX になっており、YYY という問題がある。
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: やること
+      description: |
+        何を作る・変える・消すのかを箇条書きで。
+        完了条件だけでは「何を作るのか」が伝わりません。
+      placeholder: |
+        - `GET /v1/me/books` を追加する
+        - レスポンスは仕様書 `docs/api/user_books/index.md` に従う
+        - ページネーションは既存の Query Object を再利用する
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完了条件（この issue 固有のもの）
+      description: |
+        **機械判定できるチェックボックスで書いてください。**
+        「正しく動くこと」「使いやすくすること」のような文は差し戻されます。
+        コマンドと期待結果、または「このファイルにこの記述が存在する」の形に落としてください。
+
+        rspec / rubocop / steep / brakeman / bundler-audit の5ゲートは
+        `gate-verifier` が毎回必ず実行するので、ここに書く必要はありません。
+        **この issue でしか確認できないこと**を書いてください。
+
+        ⚠️ **差分のファイル数を固定する条件は書かないでください。**
+        （例: 「`git diff --name-only` の出力が1行のみ」）
+        ループは終了時に必ず `.claude/state/loop.md` を更新するため、差分は必ず1件増えます。
+        スコープ逸脱を防ぎたい場合は「特定のディレクトリに差分が無いこと」の形で書いてください。
+        例: `git diff --name-only develop...HEAD | grep -qE '^(app|db|spec|config)/' が失敗する`
+      placeholder: |
+        - [ ] `spec/requests/v1/me/books_spec.rb` が存在し、200 / 401 / 404 をカバーしている
+        - [ ] `docker compose exec web bundle exec rails routes | grep 'v1/me/books'` が GET を返す
+        - [ ] `swagger/v1/swagger.yaml` に `/v1/me/books` の定義が含まれる
+      value: |
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: allowed_files
+    attributes:
+      label: 触ってよいファイル
+      description: |
+        グロブで書いてください。ここに書かれていないファイルには手を出しません。
+
+        ⚠️ API を追加・変更する issue では、**該当する `docs/api/**` を必ず含めてください。**
+        仕様書は実装と同じ PR で更新する運用のため、ここに無いとループが着手できません。
+      placeholder: |
+        - `app/controllers/v1/**`
+        - `app/services/**`
+        - `spec/requests/v1/**`
+        - `config/routes.rb`
+        - `docs/api/user_books/index.md`
+    validations:
+      required: true
+
+  - type: textarea
+    id: forbidden_files
+    attributes:
+      label: 触ってはいけないファイル
+      description: |
+        変更が必要になった時点でループは停止し、draft PR を出して人間に判断を求めます。
+        「無し」ではなく、必ず明示してください。
+
+        ⚠️ **`.claude/**` とまとめて禁止しないでください。**
+        `.claude/state/loop.md` はループが終了時に必ず更新する記帳ファイルで、
+        どの契約でも例外的に更新してよいことになっています（`.claude/rules/loop-policy.md` §2）。
+        まとめて禁止すると、ループが着手できずに差し戻します。
+        禁止したいのは強制層（`settings.json` / `hooks/**` / `rules/**`）です。
+      value: |
+        - `db/migrate/**` — 適用済みマイグレーションの改変は禁止（フックでもブロック）
+        - `.github/workflows/**` — CI の変更は別 issue
+        - `Gemfile` `Gemfile.lock` — 依存追加は人間の判断
+        - `.claude/settings.json` `.claude/hooks/**` `.claude/rules/**` — 強制層は人間の専権
+    validations:
+      required: true
+
+  - type: textarea
+    id: escalation
+    attributes:
+      label: エスカレーション条件
+      description: |
+        どうなったら止まって人間に聞くか。
+        **ここに書かれていない迷いは、ループが自分で判断して進みます。**
+        判断を委ねたくない論点があるなら、必ずここに書いてください。
+      value: |
+        - 3回試して完了条件を満たせない場合は draft PR を出して停止する
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 参考
+      description: |
+        関連 issue・既存の仕様書・外部ドキュメントなど。
+        API を追加・変更する issue は、仕様そのものを「やること」に書ききってください。
+        **仕様の正はこの issue** で、`docs/api/**` は実装と同じ PR で更新します。
+        既存 API を変更する場合は、現行の仕様書のパスをここに書いてください。
+      placeholder: |
+        - `docs/api/user_books/index.md`
+        - #123
+    validations:
+      required: false

@@ -1,0 +1,5 @@
+ja:
+  user_books:
+    errors:
+      isbn_invalid: "ISBNは13桁の数字で入力してください"
+      content_too_long: "contentは%{count}文字以内で入力してください"
