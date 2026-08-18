@@ -1,3 +1,8 @@
+# net/http は default gem で Gemfile に無いため Bundler.require では読まれない。
+# 開発とテストでは他の gem が間接的に読むので気づけないが、production では
+# Net::HTTP が未定義になる。使う側で明示的に require する。
+require "net/http"
+
 module Oauth
   module Providers
     # サブクラスは NAME / AUTHORIZE_ENDPOINT / TOKEN_ENDPOINT / SCOPE と
