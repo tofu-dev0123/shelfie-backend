@@ -134,6 +134,8 @@ jobs:
       # 外部APIはWebMockでスタブされるためダミー値で問題ない
       RAKUTEN_APP_ID: dummy
       RAKUTEN_ACCESS_KEY: dummy
+      # JWT の署名鍵。test では既定値でも動くが、CI は本番と同じく明示して渡す
+      JWT_SECRET_KEY: dummy_jwt_secret_key
       # OAuth も同様。ENV.fetch を使うため未設定だと KeyError で落ちる
       GOOGLE_OAUTH_CLIENT_ID: dummy_google_client_id
       GOOGLE_OAUTH_CLIENT_SECRET: dummy_google_client_secret

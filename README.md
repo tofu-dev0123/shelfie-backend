@@ -42,6 +42,7 @@ cp .env.example .env.local
 |--------|------|
 | `DB_HOST` | DB ホスト（Docker なら `db`） |
 | `DB_PASSWORD` | PostgreSQL パスワード |
+| `JWT_SECRET_KEY` | JWT の署名鍵（`bin/rails secret` で生成。開発・テストは未設定でも既定値で動く） |
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Google Cloud Console から取得 |
 | `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth App から取得 |
 | `API_BASE_URL` | このアプリ自身の公開 URL（`redirect_uri` の組立に使う。ローカルは `http://localhost:8080`） |

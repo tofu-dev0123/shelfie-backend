@@ -42,7 +42,9 @@ module Oauth
     end
     private_class_method :code_challenge
 
-    def self.secret = Rails.application.secret_key_base
+    # 署名鍵は TokenIssuer と共有する。oauth_state も認証フローの一部で、
+    # ローテーションの単位を分ける理由が無いため（鍵の定義は1箇所に置く）。
+    def self.secret = TokenIssuer::SECRET_KEY
     private_class_method :secret
   end
 end
