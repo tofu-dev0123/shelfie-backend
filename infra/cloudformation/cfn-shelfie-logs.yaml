@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+# Shelfie のアプリケーションログの置き場。
+#
+# 寿命は「データ」。ログは再適用で復元できないため、使い捨てのアプリ層
+# （cfn-shelfie-app.yaml）とはスタックを分けている。あちらは単独で削除して
+# 作り直す前提なので、同居させるとスタックの作り直しで過去のログが消える。
+#
+# **このスタックは削除しない。** 削除するとロググループごとログが消える。
+#
+# 命名規則と適用手順は infra/README.md を参照。
+Description: Shelfie application log destination - holds data that re-applying a template cannot restore
+
+Parameters:
+  LogGroupName:
+    Type: String
+    Description: Name of the CloudWatch Logs group that receives application logs.
+    Default: /shelfie/production/app
+
+Resources:
+  # アプリケーションログのロググループ。
+  #
+  # RetentionInDays は必須。指定しないと既定は無期限になり、消し忘れがそのまま
+  # 保存料金として積み上がる。30日は障害の調査に足り、費用も月 $1 未満に収まる。
+  #
+  # 削除時の保護は付けない。付けるとスタックを作り直したときに
+  # 「既に存在する」で失敗し、孤児になったリソースを手で消すことになる。
+  # 誤削除の抑止は、app スタックがこの Export を参照していることが担う
+  # （参照されている間、CloudFormation はこのスタックの削除を拒否する）。
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref LogGroupName
+      RetentionInDays: 30
+      Tags:
+        - { Key: Project, Value: shelfie }
+
+Outputs:
+  LogGroupArn:
+    Description: ARN of the application log group. The application stack imports it to scope its IAM policy.
+    Value: !GetAtt AppLogGroup.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-LogGroupArn"
