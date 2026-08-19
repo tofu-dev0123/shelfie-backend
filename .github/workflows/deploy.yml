@@ -104,11 +104,26 @@ jobs:
 
           # 4. 差し替え
           #    -p 127.0.0.1:8080:8080 は、SG を誤って開けたときに素通しにしないための二重の防御。
+          #
+          #    ログは awslogs ドライバで CloudWatch Logs へ直接送る。ロググループは
+          #    cfn-shelfie-logs.yaml が保持期間30日付きで作るので、ここでは自動作成を
+          #    有効にしない（既定は無効）。ドライバがグループを作れると、保持期間が
+          #    未設定＝無期限のグループができてしまう。
+          #    ★ グループ名はテンプレートと二重管理になる。実行時に Export を引くと
+          #      デプロイのたびに CloudFormation への依存が増えるため、ここは直書きにした。
+          #    ★ mode=non-blocking は必須。config/puma.rb はスレッド3本・ワーカーなしなので、
+          #      blocking のままだと CloudWatch 側が詰まった瞬間に全スレッドがログ待ちになり全断する。
+          #      引き換えにバッファが溢れるとログは欠落する（欠落の検知手段は今のところ無い）。
+          #    バッファ上限は既定の 1MB（およそ 3,200 行）で足りるため指定しない。
           docker rm -f shelfie 2>/dev/null || true
           docker run -d --name shelfie \
             --restart unless-stopped \
             --env-file /opt/shelfie/app.env \
-            --log-opt max-size=10m --log-opt max-file=3 \
+            --log-driver awslogs \
+            --log-opt awslogs-region=ap-northeast-1 \
+            --log-opt awslogs-group=/shelfie/production/app \
+            --log-opt "awslogs-stream=shelfie/${TAG}" \
+            --log-opt mode=non-blocking \
             -p 127.0.0.1:8080:8080 \
             "${IMAGE}:${TAG}"
           REMOTE

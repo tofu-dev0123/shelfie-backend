@@ -45,6 +45,7 @@ shelfie-<環境>-<リソース名 または 用途名>
 | `cfn-shelfie-budget.yaml` | `shelfie-prod-budget` |
 | `cfn-shelfie-cicd.yaml` | `shelfie-prod-cicd` |
 | `cfn-shelfie-network.yaml` | `shelfie-prod-network` |
+| `cfn-shelfie-logs.yaml` | `shelfie-prod-logs` |
 | `cfn-shelfie-app.yaml` | `shelfie-prod-app` |
 
 CloudFormation のスタックに `cfn-` を付けるのは冗長なので落とす。
@@ -58,6 +59,7 @@ CloudFormation のスタックに `cfn-` を付けるのは冗長なので落と
 | [`cfn-shelfie-budget.yaml`](./cloudformation/cfn-shelfie-budget.yaml) | **アカウント** | 予算アラート | 1 |
 | [`cfn-shelfie-cicd.yaml`](./cloudformation/cfn-shelfie-cicd.yaml) | **アカウント / CI・CD** | GitHub OIDC provider + Actions が引き受けるロール2つ | 3 |
 | [`cfn-shelfie-network.yaml`](./cloudformation/cfn-shelfie-network.yaml) | **土台** | VPC / Subnet / IGW / RouteTable / SG | 8 |
+| [`cfn-shelfie-logs.yaml`](./cloudformation/cfn-shelfie-logs.yaml) | **データ** | アプリケーションログのロググループ | 1 |
 | [`cfn-shelfie-app.yaml`](./cloudformation/cfn-shelfie-app.yaml) | **使い捨て** | インスタンスロール / EC2 / SSM パラメータ | 10 |
 
 分割の軸は**寿命**である。
@@ -68,20 +70,27 @@ CloudFormation のスタックに `cfn-` を付けるのは冗長なので落と
   `app` スタックは**単独で削除して作り直せる**。土台の VPC を巻き込まない
 - **SSM の String パラメータは値をテンプレート自身が持つ**ので、
   消えても再適用で復元される。「消えては困るもの」ではないため `app` に同居させている
+- **ログは再適用で復元できない。** 上の SSM パラメータと対になる判断で、
+  ロググループは `app` に同居させずに `logs` へ分けている。同居させると
+  `app` を作り直すたびに過去のログが消える
 
 ### 依存関係
 
 ```
 shelfie-prod-budget     独立
 shelfie-prod-cicd       独立
-shelfie-prod-network    独立
-      │ Export: PublicSubnetId / SecurityGroupId
-      ▼
-shelfie-prod-app        network の Export を ImportValue で参照する
+shelfie-prod-network    独立            shelfie-prod-logs    独立
+      │ Export: PublicSubnetId               │ Export: LogGroupArn
+      │         SecurityGroupId              │
+      └──────────────┬───────────────────────┘
+                     ▼
+shelfie-prod-app        network と logs の Export を ImportValue で参照する
 ```
 
 **適用は上から、削除は下から。** `app` が Export を参照している間、
-CloudFormation は `network` の削除を拒否する。これは依存の取り違えを防ぐ安全弁として働く。
+CloudFormation は `network` と `logs` の削除を拒否する。これは依存の取り違えを防ぐ安全弁として働く。
+
+ただし `logs` は**そもそも削除しない**。消すとロググループごと過去のログが失われる。
 
 `cicd` がワークロードを参照していないのは意図的である。
 deploy ロールは `Project` タグでインスタンスを絞り、migrate ロールは
@@ -235,12 +244,39 @@ aws ec2 describe-security-groups --filters Name=tag:Project,Values=shelfie \
   --query 'SecurityGroups[].IpPermissionsEgress[].[IpProtocol,FromPort]' --output text
 ```
 
+### cfn-shelfie-logs.yaml
+
+独立して適用できる。`app` より先に適用する（`app` が Export を参照する）。
+
+```bash
+aws cloudformation deploy \
+  --template-file infra/cloudformation/cfn-shelfie-logs.yaml \
+  --stack-name shelfie-prod-logs
+```
+
+**確認する。**
+
+```bash
+aws logs describe-log-groups --log-group-name-prefix /shelfie/production/app \
+  --query 'logGroups[].[logGroupName,retentionInDays]' --output table
+```
+
+- `/shelfie/production/app` / `30` が返ること（**保持期間が空欄なら無期限になっている**）
+
+ログが届き始めるのは `deploy.yml` でコンテナを差し替えた後。ストリームは
+`shelfie/<イメージタグ>` の形で、イメージタグごとに分かれる。
+
+> **`LogGroupName` を既定から変えるなら、`deploy.yml` の `awslogs-group` も同時に直す。**
+> デプロイ時に Export を引かず直書きしているため、片方だけ変えると
+> `docker run` がログドライバの初期化に失敗して**コンテナ不在のまま止まる**。
+
 ### cfn-shelfie-app.yaml
 
-**前提が2つある。**
+**前提が3つある。**
 
 1. `shelfie-prod-network` が適用済みであること（Export を参照する）
-2. **`/shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN` が投入済みであること**
+2. `shelfie-prod-logs` が適用済みであること（Export を参照する）
+3. **`/shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN` が投入済みであること**
    — user-data がこれを読むため、無いと初期化に失敗する。
    手順は [docs/development/secrets.md](../docs/development/secrets.md) を参照
 

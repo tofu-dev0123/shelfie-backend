@@ -8,7 +8,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 #
 # 前提:
 #   1. cfn-shelfie-network.yaml が適用済みであること（Export を参照する）
-#   2. /shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN が SecureString として
+#   2. cfn-shelfie-logs.yaml が適用済みであること（Export を参照する）
+#   3. /shelfie/production/host/CLOUDFLARE_TUNNEL_TOKEN が SecureString として
 #      投入済みであること。user-data がこれを読むため、無いと初期化に失敗する
 #
 # 命名規則と適用手順は infra/README.md を参照。
@@ -19,6 +20,11 @@ Parameters:
     Type: String
     Description: Name of the network stack whose exports this stack imports.
     Default: shelfie-prod-network
+
+  LogsStackName:
+    Type: String
+    Description: Name of the logs stack whose exports this stack imports.
+    Default: shelfie-prod-logs
 
   AmiId:
     Type: AWS::EC2::Image::Id
@@ -109,6 +115,23 @@ Resources:
                 Condition:
                   StringEquals:
                     kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+        - PolicyName: write-shelfie-logs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # ロググループを作る権限は与えない。与えると保持期間が未設定の
+              # グループを作れてしまい、消し忘れが無期限に課金される。
+              # グループは cfn-shelfie-logs.yaml が作る。
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                # ★ Export された ARN は末尾に `:*` を含むため、そのままで
+                #   ロググループ配下のログストリームに一致する。
+                #   「ストリームまで届いていない」と思って `:*` を足すと `:*:*` になり、
+                #   何にも一致せず本番でログが1行も出ない。cfn-lint も5ゲートも検出しない。
+                Resource:
+                  Fn::ImportValue: !Sub "${LogsStackName}-LogGroupArn"
       Tags:
         - { Key: Project, Value: shelfie }
 
