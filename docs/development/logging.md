@@ -4,10 +4,39 @@
 
 | 項目 | 方針 |
 |---|---|
-| 出力先 | 標準出力（stdout）→ Docker の json-file ドライバがキャプチャ |
+| 出力先 | 標準出力（stdout）→ Docker の awslogs ログドライバ → CloudWatch Logs |
 | フォーマット | JSON形式（lograge） |
-| ログビューア | SSM Session Manager で EC2 に接続し `docker logs` |
-| 保持 | `max-size` 10m × 3 世代でローテーション |
+| ログビューア | CloudWatch Logs Insights（ロググループ `/shelfie/production/app`） |
+| 保持 | 30日（ロググループの `RetentionInDays`） |
+| ストリーム | `shelfie/<イメージタグ>`。**イメージタグごと**に分かれる |
+
+同じタグを再デプロイした場合（ワークフローの再実行・切り戻し）は、同じストリームに
+追記される。「1ストリーム = 1回のデプロイ」ではない。
+
+ロググループは `infra/cloudformation/cfn-shelfie-logs.yaml` が作る。
+ドライバの指定は `.github/workflows/deploy.yml` の `docker run` にある。
+
+### 本番で `RAILS_LOG_LEVEL` を `debug` にしない
+
+理由は2つある。
+
+1. **SQL のバインド値がログに出る。** `refresh_tokens.token` はハッシュ化せず保存しているため、
+   有効なリフレッシュトークンが平文で残り、ログを読める人が任意のセッションを奪える
+2. **ログ量が10倍以上になる。** 取り込みは $0.76/GB なので、そのまま費用に効く
+
+`config/environments/production.rb` が許可リスト（`info` / `warn` / `error` / `fatal`）で
+弾くため、`debug` を入れても `info` に落ちる。**設定が効かないのではなく、意図的に無視している。**
+
+### 残存リスク
+
+- **ログは欠落しうる。** `mode=non-blocking` で動かしているため、CloudWatch 側が詰まって
+  バッファが溢れた分は捨てられる。blocking にするとログ待ちでアプリが全断するので、
+  欠落を選んでいる。**欠落したことを検知する手段は現状ない**
+- **検索クエリは30日残る。** `app/services/books/search_service.rb` の検索ログは
+  `request_id` 経由で `user_id` と紐づく。「誰が何を検索したか」が30日保持される
+- **`docker logs` が読めるかは未検証。** Docker の dual logging が `mode=non-blocking` と
+  併用できるかを確認していない。読めない場合は、同じイメージを json-file ドライバで
+  一時的に起動して確認する
 
 ## logrageの設定
 
@@ -118,7 +147,9 @@ end
 
 ```ruby
 # config/environments/production.rb
-config.log_level = :info   # DEBUG は出力しない
+# 環境変数で変えられるが、許可リストに無い値（debug を含む）は info に落ちる
+level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+config.log_level = %w[info warn error fatal].include?(level) ? level : "info"
 
 # config/environments/development.rb
 config.log_level = :debug  # DEBUG も出力する

@@ -108,3 +108,26 @@ expand / contract 手順のように「新コードを先に出す」場合は�
 | `db:migrate:status の実行に失敗しました` | DB に届かないかイメージが壊れている。**未適用0件と区別して落としている** |
 | SSM が `Failed` で終わる | ジョブのログに EC2 側の stdout / stderr がそのまま出る |
 | `起動確認に失敗しました` | コンテナは入れ替わったが `/up` が返らない。Tunnel かアプリの起動を疑う |
+| `failed to initialize logging driver` | `shelfie-prod-logs` が未適用か、`shelfie-prod-app` の IAM 更新が未反映。**古いコンテナは既に消えているので全断する** |
+
+アプリ自身のログ（起動時の例外・リクエストログ）は **CloudWatch Logs** にある。
+`起動確認に失敗しました` のように「デプロイは進んだがアプリが応答しない」症状は、
+SSM のジョブログではなくこちらを見る。
+
+- ロググループ: `/shelfie/production/app`
+- ストリーム: `shelfie/<イメージタグ>`（同じタグを再デプロイすると同じストリームに追記される）
+
+> **ログ設定はデプロイの前提になっている。** `docker run` はコンテナを消してから
+> 実行するため、ログドライバの初期化に失敗するとコンテナ不在のまま止まる。
+> `shelfie-prod-logs` の適用と `shelfie-prod-app` の更新（IAM ポリシー）を先に済ませること。
+
+CloudWatch Logs Insights の例。
+
+```
+fields @timestamp, @message
+| filter @logStream = 'shelfie/sha-xxxxxxx'
+| sort @timestamp desc
+| limit 100
+```
+
+設計と残存リスクは [logging.md](./logging.md) を参照。
