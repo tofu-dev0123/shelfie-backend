@@ -62,8 +62,11 @@ module Oauth
 
         def parse_json(body)
           JSON.parse(body.to_s, symbolize_names: true)
-        rescue JSON::ParserError => e
-          raise ProviderError, "レスポンスが JSON ではありません: #{e.message}"
+        rescue JSON::ParserError
+          # JSON::ParserError の message はエラー位置周辺の最大32文字を含む（先頭とは限らない）。
+          # トークンエンドポイントのレスポンス本文（アクセストークンを含みうる）が
+          # ログに出るため載せない。
+          raise ProviderError, "レスポンスが JSON ではありません"
         end
 
         def build_identity(_token) = raise NotImplementedError

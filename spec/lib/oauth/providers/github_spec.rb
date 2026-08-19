@@ -21,9 +21,11 @@ RSpec.describe Oauth::Providers::Github do
     ENV.replace(original)
   end
 
-  def stub_token_endpoint(body: { access_token: "gho_dummy" }, status: 200)
+  # raw_body は非 JSON の本文を返すケース用。JSON にできない値は body: では表現できない。
+  def stub_token_endpoint(body: { access_token: "gho_dummy" }, status: 200, raw_body: nil)
     stub_request(:post, described_class::TOKEN_ENDPOINT)
-      .to_return(status: status, body: body.to_json, headers: { "Content-Type" => "application/json" })
+      .to_return(status: status, body: raw_body || body.to_json,
+                 headers: { "Content-Type" => "application/json" })
   end
 
   def stub_user(body: nil)
@@ -85,6 +87,14 @@ RSpec.describe Oauth::Providers::Github do
         stub_token_endpoint(body: { error: "incorrect_client_credentials" }, status: 401)
 
         expect { fetch_identity }.to raise_error(Oauth::ProviderError)
+      end
+
+      # Accept ヘッダが効かなくなると form-encoded が返る。そのとき例外の message に
+      # レスポンス本文（アクセストークンを含みうる）を載せないことを固定する。
+      it "200 かつ body が非 JSON のとき、ProviderError の message にレスポンス本文を含めない" do
+        stub_token_endpoint(raw_body: "access_token=gho_dummy&scope=&token_type=bearer")
+
+        expect { fetch_identity }.to raise_error(Oauth::ProviderError, "レスポンスが JSON ではありません")
       end
     end
   end
