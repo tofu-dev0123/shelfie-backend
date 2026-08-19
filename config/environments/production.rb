@@ -31,8 +31,12 @@ Rails.application.configure do
   config.log_tags = [ :request_id ]
   config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
 
-  # Change to "debug" to log everything (including potentially personally-identifiable information!).
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  # 本番で debug を許すと SQL のバインド値がそのままログに出る。
+  # refresh_tokens.token はハッシュ化せず保存しているため、環境変数の設定ミス1つで
+  # 有効なリフレッシュトークンがログに残り、読める人が任意のセッションを奪える。
+  # ドキュメントの注意書きでは防げないので、許可リストで debug と未知の値を info に落とす。
+  level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  config.log_level = %w[info warn error fatal].include?(level) ? level : "info"
 
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
